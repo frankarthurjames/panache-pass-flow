@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { Calendar, User, LogOut, Plus } from "lucide-react";
+import { Calendar, User, LogOut } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,13 +46,6 @@ export const Navbar = () => {
           <div className="flex items-center space-x-4">
             {user ? (
               <div className="flex items-center space-x-2">
-                <Button asChild size="sm" className="hidden sm:flex">
-                  <Link to="/dashboard/events/new">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Créer un événement
-                  </Link>
-                </Button>
-                
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="sm" className="flex items-center space-x-2">
