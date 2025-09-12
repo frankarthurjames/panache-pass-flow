@@ -271,14 +271,24 @@ const EventDetail = () => {
                 {/* Location */}
                 <div className="mt-6 pt-6 border-t">
                   <h4 className="font-medium mb-3">Lieu de l'événement</h4>
-                  <div className="text-sm space-y-1">
+                  <div className="text-sm space-y-1 mb-4">
                     <div className="font-medium">{event.venue}</div>
                     <div className="text-muted-foreground">{event.address}</div>
                   </div>
-                  <Button variant="outline" size="sm" className="w-full mt-3">
-                    <MapPin className="w-4 h-4 mr-2" />
-                    Voir sur la carte
-                  </Button>
+                  
+                  {/* Google Maps Embed */}
+                  <div className="aspect-video rounded-lg overflow-hidden border">
+                    <iframe
+                      src="https://maps.google.com/maps?q=Gymnase+Jean+Moulin+123+Avenue+des+Sports+75012+Paris&output=embed"
+                      width="100%"
+                      height="100%"
+                      style={{ border: 0 }}
+                      allowFullScreen
+                      loading="lazy"
+                      referrerPolicy="no-referrer-when-downgrade"
+                      title="Localisation de l'événement"
+                    />
+                  </div>
                 </div>
               </CardContent>
             </Card>
