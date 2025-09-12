@@ -137,7 +137,7 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            Panache Esport
+            Panache
           </CardTitle>
           <CardDescription>
             Votre plateforme de billetterie sportive
