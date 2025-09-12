@@ -53,65 +53,77 @@ const Index = () => {
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="group cursor-pointer">
-              <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary-glow/20 rounded-2xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-                <Zap className="h-12 w-12 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Setup rapide</h3>
-              <p className="text-muted-foreground">
-                Créez votre événement en quelques clics et commencez à vendre immédiatement
-              </p>
-            </div>
+            <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-0 bg-gradient-to-br from-background to-muted/50">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                  <Zap className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle className="mb-2">Setup rapide</CardTitle>
+                <CardDescription>
+                  Créez votre événement en quelques clics et commencez à vendre immédiatement
+                </CardDescription>
+              </CardContent>
+            </Card>
 
-            <div className="group cursor-pointer">
-              <div className="aspect-square bg-gradient-to-br from-success/20 to-success/30 rounded-2xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-                <Shield className="h-12 w-12 text-success" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Paiements sécurisés</h3>
-              <p className="text-muted-foreground">
-                Intégration Stripe complète avec gestion automatique des paiements et des remboursements
-              </p>
-            </div>
+            <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-0 bg-gradient-to-br from-background to-muted/50">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-success/20 transition-colors">
+                  <Shield className="h-6 w-6 text-success" />
+                </div>
+                <CardTitle className="mb-2">Paiements sécurisés</CardTitle>
+                <CardDescription>
+                  Intégration Stripe complète avec gestion automatique des paiements et des remboursements
+                </CardDescription>
+              </CardContent>
+            </Card>
 
-            <div className="group cursor-pointer">
-              <div className="aspect-square bg-gradient-to-br from-warning/20 to-warning/30 rounded-2xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-                <Heart className="h-12 w-12 text-warning" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Expérience utilisateur</h3>
-              <p className="text-muted-foreground">
-                Interface intuitive et responsive pour une expérience d'achat optimale sur tous les appareils
-              </p>
-            </div>
+            <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-0 bg-gradient-to-br from-background to-muted/50">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-warning/20 transition-colors">
+                  <Heart className="h-6 w-6 text-warning" />
+                </div>
+                <CardTitle className="mb-2">Expérience utilisateur</CardTitle>
+                <CardDescription>
+                  Interface intuitive et responsive pour une expérience d'achat optimale sur tous les appareils
+                </CardDescription>
+              </CardContent>
+            </Card>
 
-            <div className="group cursor-pointer">
-              <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary-glow/20 rounded-2xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-                <Users className="h-12 w-12 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Gestion des participants</h3>
-              <p className="text-muted-foreground">
-                Suivez vos inscriptions, exportez les données et gérez vos participants facilement
-              </p>
-            </div>
+            <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-0 bg-gradient-to-br from-background to-muted/50">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-accent/20 transition-colors">
+                  <Users className="h-6 w-6 text-accent" />
+                </div>
+                <CardTitle className="mb-2">Gestion des participants</CardTitle>
+                <CardDescription>
+                  Suivez vos inscriptions, exportez les données et gérez vos participants facilement
+                </CardDescription>
+              </CardContent>
+            </Card>
 
-            <div className="group cursor-pointer">
-              <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary-glow/20 rounded-2xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-                <Trophy className="h-12 w-12 text-primary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Analytics avancées</h3>
-              <p className="text-muted-foreground">
-                Dashboard complet avec statistiques détaillées sur vos ventes et performances
-              </p>
-            </div>
+            <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-0 bg-gradient-to-br from-background to-muted/50">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                  <Trophy className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle className="mb-2">Analytics avancées</CardTitle>
+                <CardDescription>
+                  Dashboard complet avec statistiques détaillées sur vos ventes et performances
+                </CardDescription>
+              </CardContent>
+            </Card>
 
-            <div className="group cursor-pointer">
-              <div className="aspect-square bg-gradient-to-br from-success/20 to-success/30 rounded-2xl mb-4 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
-                <Star className="h-12 w-12 text-success" />
-              </div>
-              <h3 className="text-xl font-semibold mb-2">Support dédié</h3>
-              <p className="text-muted-foreground">
-                Équipe support réactive et documentation complète pour vous accompagner
-              </p>
-            </div>
+            <Card className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:-translate-y-1 border-0 bg-gradient-to-br from-background to-muted/50">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center mb-4 group-hover:bg-success/20 transition-colors">
+                  <Star className="h-6 w-6 text-success" />
+                </div>
+                <CardTitle className="mb-2">Support dédié</CardTitle>
+                <CardDescription>
+                  Équipe support réactive et documentation complète pour vous accompagner
+                </CardDescription>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
@@ -153,30 +165,34 @@ const Index = () => {
                 participants: "64/80"
               }
             ].map((event, index) => (
-              <div key={index} className="group cursor-pointer">
-                <div className="aspect-[4/3] bg-gradient-to-br from-primary/30 to-primary-glow/20 rounded-2xl mb-4 group-hover:scale-105 transition-transform duration-300" />
-                <div className="space-y-3">
-                  <h3 className="font-semibold text-lg">{event.title}</h3>
-                  <div className="space-y-1 text-sm text-muted-foreground">
-                    <div className="flex items-center">
-                      <Calendar className="w-4 h-4 mr-2" />
-                      {event.date}
+              <Card key={index} className="group cursor-pointer hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border-0 overflow-hidden">
+                <div className="aspect-[4/3] bg-gradient-to-br from-primary/20 to-primary-glow/10 group-hover:from-primary/30 group-hover:to-primary-glow/20 transition-all duration-300" />
+                <CardContent className="p-6">
+                  <CardTitle className="mb-4 text-lg">{event.title}</CardTitle>
+                  <div className="space-y-3 mb-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center text-sm text-muted-foreground">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        {event.date}
+                      </div>
+                      <Badge variant="secondary" className="bg-primary/10 text-primary font-bold text-lg px-3 py-1">
+                        {event.price}
+                      </Badge>
                     </div>
-                    <div className="flex items-center">
+                    <div className="flex items-center text-sm text-muted-foreground">
                       <MapPin className="w-4 h-4 mr-2" />
                       {event.location}
                     </div>
-                    <div className="flex items-center">
+                    <div className="flex items-center text-sm text-muted-foreground">
                       <Users className="w-4 h-4 mr-2" />
                       {event.participants}
                     </div>
                   </div>
-                  <div className="flex justify-between items-center pt-2">
-                    <span className="text-xl font-bold text-primary">{event.price}</span>
-                    <Button size="sm" className="group-hover:bg-primary-glow">Réserver</Button>
-                  </div>
-                </div>
-              </div>
+                  <Button className="w-full group-hover:bg-primary-glow transition-colors">
+                    Réserver maintenant
+                  </Button>
+                </CardContent>
+              </Card>
             ))}
           </div>
           
