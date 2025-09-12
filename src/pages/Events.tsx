@@ -8,52 +8,58 @@ import { Filter, Calendar, MapPin } from "lucide-react";
 const Events = () => {
   const events = [
     {
+      id: 1,
       title: "Tournoi de Tennis de Table Pro",
       date: "15 Jan 2025",
       price: "25€",
       location: "Paris, France",
       participants: "120/150",
-      image: "bg-gradient-to-br from-orange-400 to-red-500"
+      image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=400&fit=crop"
     },
     {
+      id: 2,
       title: "Marathon International de Lyon",
       date: "22 Jan 2025", 
       price: "45€",
       location: "Lyon, France",
       participants: "890/1000",
-      image: "bg-gradient-to-br from-blue-400 to-purple-500"
+      image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&h=400&fit=crop"
     },
     {
+      id: 3,
       title: "Championnat National Badminton",
       date: "28 Jan 2025",
       price: "30€",
       location: "Marseille, France", 
       participants: "64/80",
-      image: "bg-gradient-to-br from-green-400 to-blue-500"
+      image: "https://images.unsplash.com/photo-1606339812200-e2916e060c9d?w=500&h=400&fit=crop"
     },
     {
+      id: 4,
       title: "Coupe de France Cyclisme",
       date: "5 Fév 2025",
       price: "35€",
       location: "Nice, France",
       participants: "200/250",
-      image: "bg-gradient-to-br from-purple-400 to-pink-500"
+      image: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?w=500&h=400&fit=crop"
     },
     {
+      id: 5,
       title: "Tournoi Basketball 3x3",
       date: "12 Fév 2025",
       price: "20€",
       location: "Bordeaux, France",
       participants: "48/64",
-      image: "bg-gradient-to-br from-red-400 to-orange-500"
+      image: "https://images.unsplash.com/photo-1546519638-68e109498ffc?w=500&h=400&fit=crop"
     },
     {
+      id: 6,
       title: "Semi-Marathon de Strasbourg",
       date: "19 Fév 2025",
       price: "40€",
       location: "Strasbourg, France",
       participants: "650/800",
-      image: "bg-gradient-to-br from-teal-400 to-blue-500"
+      image: "https://images.unsplash.com/photo-1544717297-fa95b6ee9643?w=500&h=400&fit=crop"
     }
   ];
 
@@ -117,6 +123,7 @@ const Events = () => {
             {events.map((event, index) => (
               <EventCard
                 key={index}
+                id={event.id}
                 title={event.title}
                 date={event.date}
                 price={event.price}

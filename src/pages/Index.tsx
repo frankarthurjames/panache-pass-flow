@@ -175,32 +175,36 @@ const Index = () => {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
             {[
               {
+                id: 1,
                 title: "Tournoi de Tennis de Table Pro",
                 date: "15 Jan 2025",
                 price: "25€",
                 location: "Paris, France",
                 participants: "120/150",
-                image: "bg-gradient-to-br from-orange-400 to-red-500"
+                image: "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=400&fit=crop"
               },
               {
+                id: 2,
                 title: "Marathon International de Lyon",
                 date: "22 Jan 2025", 
                 price: "45€",
                 location: "Lyon, France",
                 participants: "890/1000",
-                image: "bg-gradient-to-br from-blue-400 to-purple-500"
+                image: "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=500&h=400&fit=crop"
               },
               {
+                id: 3,
                 title: "Championnat National Badminton",
                 date: "28 Jan 2025",
                 price: "30€",
                 location: "Marseille, France", 
                 participants: "64/80",
-                image: "bg-gradient-to-br from-green-400 to-blue-500"
+                image: "https://images.unsplash.com/photo-1606339812200-e2916e060c9d?w=500&h=400&fit=crop"
               }
             ].map((event, index) => (
               <EventCard
                 key={index}
+                id={event.id}
                 title={event.title}
                 date={event.date}
                 price={event.price}
