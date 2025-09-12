@@ -1,12 +1,24 @@
+import { useState, useMemo } from "react";
 import { Navbar } from "@/components/Navbar";
 import { EventCard } from "@/components/EventCard";
 import { SearchSection } from "@/components/SearchSection";
+import { FilterDialog } from "@/components/FilterDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Filter, Calendar, MapPin } from "lucide-react";
+import { Calendar, MapPin } from "lucide-react";
+
+interface Filters {
+  sport?: string;
+  location?: string;
+  priceMin?: string;
+  priceMax?: string;
+  date?: string;
+}
 
 const Events = () => {
-  const events = [
+  const [filters, setFilters] = useState<Filters>({});
+  
+  const allEvents = [
     {
       id: 1,
       title: "Tournoi de Tennis de Table Pro",
@@ -63,28 +75,47 @@ const Events = () => {
     }
   ];
 
+  const filteredEvents = useMemo(() => {
+    return allEvents.filter(event => {
+      // Filter by sport
+      if (filters.sport) {
+        const sportKeywords = {
+          tennis: ['tennis'],
+          marathon: ['marathon'],
+          badminton: ['badminton'],
+          cyclisme: ['cyclisme'],
+          basketball: ['basketball']
+        };
+        const keywords = sportKeywords[filters.sport] || [];
+        if (!keywords.some(keyword => event.title.toLowerCase().includes(keyword))) {
+          return false;
+        }
+      }
+
+      // Filter by location
+      if (filters.location) {
+        if (!event.location.toLowerCase().includes(filters.location.toLowerCase())) {
+          return false;
+        }
+      }
+
+      // Filter by price
+      const eventPrice = parseInt(event.price.replace('€', ''));
+      if (filters.priceMin && eventPrice < parseInt(filters.priceMin)) {
+        return false;
+      }
+      if (filters.priceMax && eventPrice > parseInt(filters.priceMax)) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [allEvents, filters]);
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       
-      {/* Header Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/10 via-transparent to-primary/5">
-        <div className="container mx-auto text-center">
-          <Badge variant="secondary" className="mb-6 text-sm font-medium px-4 py-2">
-            🎯 Tous les événements sportifs
-          </Badge>
-          <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-            Découvrez les meilleurs{" "}
-            <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-              événements sportifs
-            </span>
-          </h1>
-          <p className="text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            Participez aux tournois et compétitions près de chez vous. 
-            Plus de 500 événements disponibles partout en France.
-          </p>
-        </div>
-      </section>
 
       {/* Search Section */}
       <SearchSection />
@@ -94,12 +125,9 @@ const Events = () => {
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row justify-between items-center gap-6">
             <div className="flex items-center gap-4">
-              <Button variant="outline" size="sm">
-                <Filter className="w-4 h-4 mr-2" />
-                Filtres
-              </Button>
+              <FilterDialog onFiltersChange={setFilters} />
               <div className="text-sm text-muted-foreground">
-                <span className="font-medium">156 événements</span> trouvés
+                <span className="font-medium">{filteredEvents.length} événements</span> trouvés
               </div>
             </div>
             <div className="flex items-center gap-6">
@@ -120,7 +148,7 @@ const Events = () => {
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto">
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {events.map((event, index) => (
+            {filteredEvents.map((event, index) => (
               <EventCard
                 key={index}
                 id={event.id}
