@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
 import { EventCard } from "@/components/EventCard";
 import { FeatureCard } from "@/components/FeatureCard";
+import { SearchSection } from "@/components/SearchSection";
 import { ArrowRight, Play, Zap, Shield, BarChart3 } from "lucide-react";
 
 const Index = () => {
@@ -58,6 +59,9 @@ const Index = () => {
           </div>
         </div>
       </section>
+
+      {/* Search Section */}
+      <SearchSection />
 
       {/* How it works */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/30">
