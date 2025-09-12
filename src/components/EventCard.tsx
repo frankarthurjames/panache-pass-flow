@@ -11,7 +11,7 @@ interface EventCardProps {
 
 export const EventCard = ({ title, date, price, location, participants, image }: EventCardProps) => {
   return (
-    <div className="group cursor-pointer overflow-hidden hover:shadow-xl transition-all duration-300 rounded-2xl">
+    <div className="group cursor-pointer overflow-hidden rounded-2xl">
       {/* Image Section */}
       <div className={`aspect-[4/3] ${image} relative rounded-2xl mb-4 group-hover:scale-[1.02] transition-transform duration-300`}>
         <div className="absolute top-4 right-4">
