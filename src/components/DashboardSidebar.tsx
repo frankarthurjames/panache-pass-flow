@@ -1,0 +1,166 @@
+import { useState } from "react";
+import { Building2, LayoutDashboard, Settings, Users, Calendar, BarChart3, CreditCard, Plus } from "lucide-react";
+import { NavLink, useParams } from "react-router-dom";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarTrigger,
+  useSidebar,
+} from "@/components/ui/sidebar";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+// Mock data - sera remplacé par des données réelles
+const organizations = [
+  { id: "1", name: "SportClub Lyon", logo: null },
+  { id: "2", name: "Tennis Academy", logo: null },
+];
+
+const mainMenuItems = [
+  { title: "Vue d'ensemble", url: "/dashboard", icon: LayoutDashboard, exact: true },
+  { title: "Organisations", url: "/dashboard/organizations", icon: Building2 },
+];
+
+const orgMenuItems = [
+  { title: "Tableau de bord", url: "/dashboard/org/:orgId", icon: LayoutDashboard },
+  { title: "Événements", url: "/dashboard/org/:orgId/events", icon: Calendar },
+  { title: "Participants", url: "/dashboard/org/:orgId/participants", icon: Users },
+  { title: "Statistiques", url: "/dashboard/org/:orgId/analytics", icon: BarChart3 },
+  { title: "Intégrations", url: "/dashboard/org/:orgId/integrations", icon: CreditCard },
+  { title: "Paramètres", url: "/dashboard/org/:orgId/settings", icon: Settings },
+];
+
+export function DashboardSidebar() {
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
+  const { orgId } = useParams();
+  const [selectedOrg, setSelectedOrg] = useState(orgId || "");
+
+  const currentOrg = organizations.find(org => org.id === selectedOrg);
+
+  const getNavClassName = ({ isActive }: { isActive: boolean }) =>
+    isActive ? "bg-muted text-primary font-medium" : "hover:bg-muted/50";
+
+  return (
+    <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible="icon">
+      <SidebarTrigger className="m-2 self-end" />
+      
+      <SidebarContent className="px-2">
+        {/* Organisation Selector */}
+        {!collapsed && (
+          <div className="px-2 py-4">
+            <Select value={selectedOrg} onValueChange={setSelectedOrg}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Sélectionner une organisation">
+                  {currentOrg && (
+                    <div className="flex items-center gap-2">
+                      <Avatar className="w-5 h-5">
+                        <AvatarImage src={currentOrg.logo || ""} />
+                        <AvatarFallback className="text-xs">
+                          {currentOrg.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="truncate">{currentOrg.name}</span>
+                    </div>
+                  )}
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent>
+                {organizations.map((org) => (
+                  <SelectItem key={org.id} value={org.id}>
+                    <div className="flex items-center gap-2">
+                      <Avatar className="w-5 h-5">
+                        <AvatarImage src={org.logo || ""} />
+                        <AvatarFallback className="text-xs">
+                          {org.name.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span>{org.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {/* Main Navigation */}
+        <SidebarGroup>
+          <SidebarGroupLabel>Principal</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {mainMenuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink 
+                      to={item.url} 
+                      end={item.exact} 
+                      className={getNavClassName}
+                    >
+                      <item.icon className="w-4 h-4" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Organization Navigation */}
+        {selectedOrg && (
+          <SidebarGroup>
+            <SidebarGroupLabel>
+              {!collapsed ? currentOrg?.name : "Org"}
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {orgMenuItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink 
+                        to={item.url.replace(':orgId', selectedOrg)} 
+                        className={getNavClassName}
+                      >
+                        <item.icon className="w-4 h-4" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Create Organization */}
+        <div className="mt-auto p-2">
+          <Button 
+            variant="outline" 
+            size={collapsed ? "icon" : "sm"} 
+            className="w-full"
+            asChild
+          >
+            <NavLink to="/dashboard/organizations/new">
+              <Plus className="w-4 h-4" />
+              {!collapsed && <span className="ml-2">Nouvelle organisation</span>}
+            </NavLink>
+          </Button>
+        </div>
+      </SidebarContent>
+    </Sidebar>
+  );
+}
