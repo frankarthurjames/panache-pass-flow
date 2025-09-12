@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Navbar } from "@/components/Navbar";
-import { Calendar, MapPin, Users, Trophy, Zap, Shield, Heart, ArrowRight, Play, CheckCircle, BarChart3 } from "lucide-react";
+import { EventCard } from "@/components/EventCard";
+import { FeatureCard } from "@/components/FeatureCard";
+import { ArrowRight, Play, Zap, Shield, BarChart3 } from "lucide-react";
 
 const Index = () => {
   return (
@@ -121,91 +122,39 @@ const Index = () => {
             </p>
           </div>
           
-          <div className="grid lg:grid-cols-2 gap-16 items-center mb-20">
-            <div>
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6">
-                <Zap className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">Création ultra-rapide</h3>
-              <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                Notre assistant IA vous aide à créer votre événement en quelques minutes. 
-                Templates pré-conçus pour tous types de sports.
-              </p>
-              <ul className="space-y-3">
-                <li className="flex items-center text-muted-foreground">
-                  <CheckCircle className="h-5 w-5 text-primary mr-3 flex-shrink-0" />
-                  Assistant IA pour la création
-                </li>
-                <li className="flex items-center text-muted-foreground">
-                  <CheckCircle className="h-5 w-5 text-primary mr-3 flex-shrink-0" />
-                  Templates pour 20+ sports
-                </li>
-                <li className="flex items-center text-muted-foreground">
-                  <CheckCircle className="h-5 w-5 text-primary mr-3 flex-shrink-0" />
-                  Import depuis Excel/CSV
-                </li>
-              </ul>
-            </div>
-            <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 rounded-3xl" />
-          </div>
+          <FeatureCard
+            icon={<Zap className="h-8 w-8 text-primary" />}
+            title="Création ultra-rapide"
+            description="Notre assistant IA vous aide à créer votre événement en quelques minutes. Templates pré-conçus pour tous types de sports."
+            features={[
+              "Assistant IA pour la création",
+              "Templates pour 20+ sports", 
+              "Import depuis Excel/CSV"
+            ]}
+          />
 
-          <div className="grid lg:grid-cols-2 gap-16 items-center mb-20">
-            <div className="order-2 lg:order-1">
-              <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 rounded-3xl" />
-            </div>
-            <div className="order-1 lg:order-2">
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6">
-                <Shield className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">Paiements ultra-sécurisés</h3>
-              <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                Intégration native avec Stripe. Acceptez tous les modes de paiement, 
-                gérez les remboursements automatiquement.
-              </p>
-              <ul className="space-y-3">
-                <li className="flex items-center text-muted-foreground">
-                  <CheckCircle className="h-5 w-5 text-primary mr-3 flex-shrink-0" />
-                  Certification PCI DSS
-                </li>
-                <li className="flex items-center text-muted-foreground">
-                  <CheckCircle className="h-5 w-5 text-primary mr-3 flex-shrink-0" />
-                  Paiements en plusieurs fois
-                </li>
-                <li className="flex items-center text-muted-foreground">
-                  <CheckCircle className="h-5 w-5 text-primary mr-3 flex-shrink-0" />
-                  Remboursements automatiques
-                </li>
-              </ul>
-            </div>
-          </div>
+          <FeatureCard
+            icon={<Shield className="h-8 w-8 text-primary" />}
+            title="Paiements ultra-sécurisés"
+            description="Intégration native avec Stripe. Acceptez tous les modes de paiement, gérez les remboursements automatiquement."
+            features={[
+              "Certification PCI DSS",
+              "Paiements en plusieurs fois",
+              "Remboursements automatiques"
+            ]}
+            imagePosition="left"
+          />
 
-          <div className="grid lg:grid-cols-2 gap-16 items-center">
-            <div>
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-6">
-                <BarChart3 className="h-8 w-8 text-primary" />
-              </div>
-              <h3 className="text-2xl font-bold mb-4">Analytics en temps réel</h3>
-              <p className="text-lg text-muted-foreground mb-6 leading-relaxed">
-                Suivez vos ventes, analysez vos performances et optimisez vos événements 
-                grâce à notre tableau de bord avancé.
-              </p>
-              <ul className="space-y-3">
-                <li className="flex items-center text-muted-foreground">
-                  <CheckCircle className="h-5 w-5 text-primary mr-3 flex-shrink-0" />
-                  Dashboard temps réel
-                </li>
-                <li className="flex items-center text-muted-foreground">
-                  <CheckCircle className="h-5 w-5 text-primary mr-3 flex-shrink-0" />
-                  Rapports détaillés
-                </li>
-                <li className="flex items-center text-muted-foreground">
-                  <CheckCircle className="h-5 w-5 text-primary mr-3 flex-shrink-0" />
-                  Export des données
-                </li>
-              </ul>
-            </div>
-            <div className="aspect-square bg-gradient-to-br from-primary/20 to-primary/5 rounded-3xl" />
-          </div>
+          <FeatureCard
+            icon={<BarChart3 className="h-8 w-8 text-primary" />}
+            title="Analytics en temps réel"
+            description="Suivez vos ventes, analysez vos performances et optimisez vos événements grâce à notre tableau de bord avancé."
+            features={[
+              "Dashboard temps réel",
+              "Rapports détaillés", 
+              "Export des données"
+            ]}
+          />
         </div>
       </section>
 
@@ -246,33 +195,15 @@ const Index = () => {
                 image: "bg-gradient-to-br from-green-400 to-blue-500"
               }
             ].map((event, index) => (
-              <Card key={index} className="group cursor-pointer overflow-hidden border-0 hover:shadow-xl transition-all duration-300">
-                <div className={`aspect-[4/3] ${event.image} relative`}>
-                  <div className="absolute top-4 left-4 bg-background/90 backdrop-blur-sm rounded-full px-3 py-1">
-                    <span className="text-sm font-semibold text-primary">{event.price}</span>
-                  </div>
-                </div>
-                <CardContent className="p-6">
-                  <h3 className="font-bold text-lg mb-3 group-hover:text-primary transition-colors">{event.title}</h3>
-                  <div className="space-y-2 text-sm text-muted-foreground mb-6">
-                    <div className="flex items-center">
-                      <Calendar className="w-4 h-4 mr-2 flex-shrink-0" />
-                      {event.date}
-                    </div>
-                    <div className="flex items-center">
-                      <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
-                      {event.location}
-                    </div>
-                    <div className="flex items-center">
-                      <Users className="w-4 h-4 mr-2 flex-shrink-0" />
-                      {event.participants} participants
-                    </div>
-                  </div>
-                  <Button size="sm" className="w-full group-hover:bg-primary/90">
-                    Réserver maintenant
-                  </Button>
-                </CardContent>
-              </Card>
+              <EventCard
+                key={index}
+                title={event.title}
+                date={event.date}
+                price={event.price}
+                location={event.location}
+                participants={event.participants}
+                image={event.image}
+              />
             ))}
           </div>
           
