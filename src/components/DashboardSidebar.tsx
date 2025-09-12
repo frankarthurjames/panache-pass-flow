@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Building2, LayoutDashboard, Settings, Users, Calendar, BarChart3, CreditCard, Plus } from "lucide-react";
-import { NavLink, useParams } from "react-router-dom";
+import { NavLink, useParams, useNavigate } from "react-router-dom";
 import {
   Sidebar,
   SidebarContent,
@@ -47,9 +47,22 @@ export function DashboardSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const { orgId } = useParams();
+  const navigate = useNavigate();
   const [selectedOrg, setSelectedOrg] = useState(orgId || "");
 
+  // Synchroniser selectedOrg avec l'URL
+  useEffect(() => {
+    if (orgId !== selectedOrg) {
+      setSelectedOrg(orgId || "");
+    }
+  }, [orgId]);
+
   const currentOrg = organizations.find(org => org.id === selectedOrg);
+
+  const handleOrgChange = (newOrgId: string) => {
+    setSelectedOrg(newOrgId);
+    navigate(`/dashboard/org/${newOrgId}`);
+  };
 
   const getNavClassName = ({ isActive }: { isActive: boolean }) =>
     isActive ? "bg-muted text-foreground font-medium" : "hover:bg-muted/50 text-muted-foreground";
@@ -62,21 +75,9 @@ export function DashboardSidebar() {
         {/* Organisation Selector */}
         {!collapsed && (
           <div className="px-2 py-4">
-            <Select value={selectedOrg} onValueChange={setSelectedOrg}>
+            <Select value={selectedOrg} onValueChange={handleOrgChange}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Sélectionner une organisation">
-                  {currentOrg && (
-                    <div className="flex items-center gap-2">
-                      <Avatar className="w-5 h-5">
-                        <AvatarImage src={currentOrg.logo || ""} />
-                        <AvatarFallback className="text-xs">
-                          {currentOrg.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="truncate">{currentOrg.name}</span>
-                    </div>
-                  )}
-                </SelectValue>
+                <SelectValue placeholder="Sélectionner une organisation" />
               </SelectTrigger>
               <SelectContent>
                 {organizations.map((org) => (

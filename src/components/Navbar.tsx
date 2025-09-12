@@ -24,10 +24,10 @@ export const Navbar = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-gradient-to-br from-primary to-accent rounded-lg flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-primary-foreground" />
+            <div className="w-8 h-8 bg-muted border rounded-lg flex items-center justify-center">
+              <Calendar className="w-5 h-5 text-muted-foreground" />
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <span className="text-xl font-bold text-foreground">
               Panache
             </span>
           </Link>
