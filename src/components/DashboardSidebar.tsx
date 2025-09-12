@@ -52,7 +52,7 @@ export function DashboardSidebar() {
   const currentOrg = organizations.find(org => org.id === selectedOrg);
 
   const getNavClassName = ({ isActive }: { isActive: boolean }) =>
-    isActive ? "bg-muted text-primary font-medium" : "hover:bg-muted/50";
+    isActive ? "bg-muted text-foreground font-medium" : "hover:bg-muted/50 text-muted-foreground";
 
   return (
     <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible="icon">
