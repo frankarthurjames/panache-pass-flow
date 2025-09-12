@@ -283,6 +283,7 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
+          siret_number: string | null
           slug: string | null
           stripe_account_id: string | null
           updated_at: string | null
@@ -295,6 +296,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
+          siret_number?: string | null
           slug?: string | null
           stripe_account_id?: string | null
           updated_at?: string | null
@@ -307,6 +309,7 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
+          siret_number?: string | null
           slug?: string | null
           stripe_account_id?: string | null
           updated_at?: string | null
