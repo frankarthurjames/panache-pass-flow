@@ -5,6 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { EventCard } from "@/components/EventCard";
 import { FeatureCard } from "@/components/FeatureCard";
 import { SearchSection } from "@/components/SearchSection";
+import { Footer } from "@/components/Footer";
 import { ArrowRight, Play, Zap, Shield, BarChart3 } from "lucide-react";
 
 const Index = () => {
