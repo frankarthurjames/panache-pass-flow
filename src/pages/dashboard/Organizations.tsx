@@ -4,33 +4,96 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Building2, Users, Calendar, TrendingUp, Activity, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const Organizations = () => {
-  // Mock data - sera remplacé par des données réelles
-  const organizations = [
-    {
-      id: "1",
-      name: "SportClub Lyon",
-      logo: null,
-      eventsCount: 12,
-      totalParticipants: 156,
-      monthlyRevenue: "2,450€",
-      status: "Actif",
-      lastActivity: "Il y a 2h",
-      createdAt: "15 Jan 2025"
-    },
-    {
-      id: "2", 
-      name: "Tennis Academy",
-      logo: null,
-      eventsCount: 8,
-      totalParticipants: 89,
-      monthlyRevenue: "1,680€",
-      status: "Actif",
-      lastActivity: "Il y a 1 jour",
-      createdAt: "22 Déc 2024"
-    }
-  ];
+  const { user } = useAuth();
+  const [organizations, setOrganizations] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      if (!user) return;
+      
+      try {
+        // Récupérer les organisations où l'utilisateur est membre
+        const { data: orgMembers, error: membersError } = await supabase
+          .from('organization_members')
+          .select(`
+            organization_id,
+            role,
+            organizations (
+              id,
+              name,
+              logo_url,
+              created_at
+            )
+          `)
+          .eq('user_id', user.id);
+
+        if (membersError) throw membersError;
+
+        if (orgMembers) {
+          // Pour chaque organisation, récupérer les statistiques
+          const orgsWithStats = await Promise.all(
+            orgMembers.map(async (member: any) => {
+              const org = member.organizations;
+              
+              // Compter les événements
+              const { count: eventsCount } = await supabase
+                .from('events')
+                .select('*', { count: 'exact', head: true })
+                .eq('organization_id', org.id);
+
+              // Compter les participants
+              const { count: participantsCount } = await supabase
+                .from('registrations')
+                .select('*, events!inner(*)')
+                .eq('events.organization_id', org.id);
+
+              // Calculer les revenus du mois
+              const startOfMonth = new Date();
+              startOfMonth.setDate(1);
+              const { data: payments } = await supabase
+                .from('payments')
+                .select('amount_cents, orders!inner(*, events!inner(*))')
+                .eq('orders.events.organization_id', org.id)
+                .gte('created_at', startOfMonth.toISOString());
+
+              const monthlyRevenue = payments?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
+
+              return {
+                id: org.id,
+                name: org.name,
+                logo: org.logo_url,
+                eventsCount: eventsCount || 0,
+                totalParticipants: participantsCount || 0,
+                monthlyRevenue: `${(monthlyRevenue / 100).toFixed(0)}€`,
+                status: "Actif",
+                lastActivity: "Il y a 2h", // À implémenter plus tard
+                createdAt: new Date(org.created_at).toLocaleDateString('fr-FR', { 
+                  day: 'numeric', 
+                  month: 'short', 
+                  year: 'numeric' 
+                })
+              };
+            })
+          );
+
+          setOrganizations(orgsWithStats);
+        }
+      } catch (error) {
+        console.error('Error fetching organizations:', error);
+        setOrganizations([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrganizations();
+  }, [user]);
 
   return (
     <div className="space-y-8">
@@ -52,7 +115,9 @@ const Organizations = () => {
 
       {/* Organizations List */}
       <div className="space-y-4">
-        {organizations.map((org) => (
+        {loading ? (
+          <div className="text-center py-8">Chargement...</div>
+        ) : organizations.map((org) => (
           <Card key={org.id} className="hover:shadow-lg transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">

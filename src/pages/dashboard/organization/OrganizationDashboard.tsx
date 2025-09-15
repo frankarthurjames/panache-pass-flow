@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Calendar, Users, TrendingUp, Eye, Edit, MoreHorizontal } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,64 +15,125 @@ import {
 
 const OrganizationDashboard = () => {
   const { orgId } = useParams();
+  const [organization, setOrganization] = useState<any>(null);
+  const [userEvents, setUserEvents] = useState<any[]>([]);
+  const [stats, setStats] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data - sera remplacé par des données réelles
-  const organization = {
-    id: orgId,
-    name: "SportClub Lyon",
-    logo: null,
-  };
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!orgId) return;
+      
+      try {
+        // Récupérer l'organisation
+        const { data: org, error: orgError } = await supabase
+          .from('organizations')
+          .select('*')
+          .eq('id', orgId)
+          .single();
 
-  const userEvents = [
-    {
-      id: 1,
-      title: "Mon Tournoi de Tennis",
-      date: "25 Jan 2025",
-      status: "Publié",
-      participants: "45/60",
-      revenue: "1,125€",
-      statusColor: "bg-green-500"
-    },
-    {
-      id: 2,
-      title: "Course à Pied Solidaire",
-      date: "15 Fév 2025",
-      status: "Brouillon",
-      participants: "0/100",
-      revenue: "0€",
-      statusColor: "bg-yellow-500"
-    },
-    {
-      id: 3,
-      title: "Championnat Badminton Local",
-      date: "8 Mar 2025",
-      status: "En attente",
-      participants: "12/40",
-      revenue: "360€",
-      statusColor: "bg-blue-500"
-    }
-  ];
+        if (orgError) throw orgError;
+        setOrganization(org);
 
-  const stats = [
-    {
-      title: "Événements créés",
-      value: "3",
-      change: "+1 ce mois",
-      icon: Calendar,
-    },
-    {
-      title: "Total participants",
-      value: "57",
-      change: "+12 cette semaine",
-      icon: Users,
-    },
-    {
-      title: "Revenus générés",
-      value: "1,485€",
-      change: "+280€ ce mois",
-      icon: TrendingUp,
-    },
-  ];
+        // Récupérer les événements récents
+        const { data: events, error: eventsError } = await supabase
+          .from('events')
+          .select(`
+            id,
+            title,
+            starts_at,
+            status,
+            capacity,
+            created_at
+          `)
+          .eq('organization_id', orgId)
+          .order('created_at', { ascending: false })
+          .limit(5);
+
+        if (eventsError) throw eventsError;
+
+        // Pour chaque événement, récupérer les statistiques
+        const eventsWithStats = await Promise.all(
+          events.map(async (event: any) => {
+            // Compter les participants
+            const { count: participantsCount } = await supabase
+              .from('registrations')
+              .select('*', { count: 'exact', head: true })
+              .eq('event_id', event.id);
+
+            // Calculer les revenus
+            const { data: payments } = await supabase
+              .from('payments')
+              .select('amount_cents, orders!inner(*)')
+              .eq('orders.event_id', event.id);
+
+            const revenue = payments?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
+
+            const statusMap: any = {
+              'published': { label: 'Publié', color: 'bg-green-500' },
+              'draft': { label: 'Brouillon', color: 'bg-yellow-500' },
+              'cancelled': { label: 'Annulé', color: 'bg-red-500' }
+            };
+
+            return {
+              id: event.id,
+              title: event.title,
+              date: new Date(event.starts_at).toLocaleDateString('fr-FR', { 
+                day: 'numeric', 
+                month: 'short', 
+                year: 'numeric' 
+              }),
+              status: statusMap[event.status]?.label || 'En attente',
+              participants: `${participantsCount || 0}/${event.capacity || 0}`,
+              revenue: `${(revenue / 100).toFixed(0)}€`,
+              statusColor: statusMap[event.status]?.color || 'bg-blue-500'
+            };
+          })
+        );
+
+        setUserEvents(eventsWithStats);
+
+        // Calculer les stats globales
+        const totalEvents = events.length;
+        const totalParticipants = eventsWithStats.reduce((sum, event) => {
+          const participants = parseInt(event.participants.split('/')[0]);
+          return sum + participants;
+        }, 0);
+        const totalRevenue = eventsWithStats.reduce((sum, event) => {
+          const revenue = parseInt(event.revenue.replace('€', ''));
+          return sum + revenue;
+        }, 0);
+
+        setStats([
+          {
+            title: "Événements créés",
+            value: totalEvents.toString(),
+            change: "+1 ce mois",
+            icon: Calendar,
+          },
+          {
+            title: "Total participants",
+            value: totalParticipants.toString(),
+            change: "+12 cette semaine",
+            icon: Users,
+          },
+          {
+            title: "Revenus générés",
+            value: `${totalRevenue}€`,
+            change: "+280€ ce mois",
+            icon: TrendingUp,
+          },
+        ]);
+
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [orgId]);
 
   return (
     <div className="space-y-8">
@@ -128,7 +191,9 @@ const OrganizationDashboard = () => {
         </div>
         
         <div className="grid gap-4">
-          {userEvents.map((event) => (
+          {loading ? (
+            <div className="text-center py-8">Chargement...</div>
+          ) : userEvents.map((event) => (
             <Card key={event.id} className="hover:shadow-lg transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">
