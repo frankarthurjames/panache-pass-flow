@@ -463,7 +463,7 @@ const CreateEvent = () => {
                         <span className="font-medium">{ticket.name}</span>
                         <div className="text-right">
                           <div className="font-semibold">
-                            {ticket.price ? `${ticket.price}€` : "Gratuit"}
+                            {ticket.priceCents && parseInt(ticket.priceCents) > 0 ? `${(parseInt(ticket.priceCents) / 100).toFixed(2)}€` : "Gratuit"}
                           </div>
                           <div className="text-sm text-muted-foreground">
                             {ticket.quantity} billets
