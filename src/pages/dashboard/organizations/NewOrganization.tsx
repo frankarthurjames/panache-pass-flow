@@ -16,13 +16,12 @@ const NewOrganization = () => {
   const [formData, setFormData] = useState({
     // Step 1: Informations générales
     name: "",
-    description: "",
-    website: "",
+    slug: "",
+    logoUrl: "",
     // Step 2: Informations légales
     siretNumber: "",
     billingEmail: "",
     billingCountry: "FR",
-    address: "",
     // Step 3: Configuration Stripe
     stripeAccountId: "",
     acceptStripeTerms: false,
@@ -74,7 +73,7 @@ const NewOrganization = () => {
   const canProceedFromStep = (step: number) => {
     switch (step) {
       case 1:
-        return formData.name.trim() !== "";
+        return formData.name.trim() !== "" && formData.slug.trim() !== "";
       case 2:
         return formData.billingEmail.trim() !== "";
       case 3:
@@ -110,24 +109,26 @@ const NewOrganization = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => handleInputChange("description", e.target.value)}
-                placeholder="Décrivez votre organisation..."
-                rows={4}
+              <Label htmlFor="slug">Identifiant unique (slug) *</Label>
+              <Input
+                id="slug"
+                value={formData.slug}
+                onChange={(e) => handleInputChange("slug", e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '-'))}
+                placeholder="club-sportif-lyon"
               />
+              <p className="text-sm text-muted-foreground">
+                Utilisé dans l'URL de vos pages publiques
+              </p>
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="website">Site web</Label>
+              <Label htmlFor="logoUrl">Logo (URL)</Label>
               <Input
-                id="website"
+                id="logoUrl"
                 type="url"
-                value={formData.website}
-                onChange={(e) => handleInputChange("website", e.target.value)}
-                placeholder="https://www.votre-site.fr"
+                value={formData.logoUrl}
+                onChange={(e) => handleInputChange("logoUrl", e.target.value)}
+                placeholder="https://www.exemple.com/logo.png"
               />
             </div>
           </div>
@@ -161,16 +162,6 @@ const NewOrganization = () => {
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="address">Adresse complète</Label>
-              <Textarea
-                id="address"
-                value={formData.address}
-                onChange={(e) => handleInputChange("address", e.target.value)}
-                placeholder="123 Rue de la République, 69000 Lyon, France"
-                rows={3}
-              />
-            </div>
           </div>
         );
 
@@ -226,6 +217,10 @@ const NewOrganization = () => {
               <div className="flex justify-between py-2 border-b">
                 <span className="font-medium">Nom :</span>
                 <span>{formData.name}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b">
+                <span className="font-medium">Slug :</span>
+                <span>{formData.slug}</span>
               </div>
               <div className="flex justify-between py-2 border-b">
                 <span className="font-medium">Email de facturation :</span>

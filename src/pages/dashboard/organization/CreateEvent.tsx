@@ -40,26 +40,26 @@ const CreateEvent = () => {
     title: "",
     description: "",
     category: "",
+    coverImageUrl: "",
     // Step 2: Date et lieu
-    startDate: null as Date | null,
-    endDate: null as Date | null,
+    startsAt: null as Date | null,
+    endsAt: null as Date | null,
     venue: "",
-    address: "",
+    city: "",
     capacity: "",
     // Step 3: Types de billets
     ticketTypes: [
       {
         id: 1,
         name: "Standard",
-        price: "",
+        priceCents: "",
         quantity: "",
-        description: "",
-        maxPerOrder: 10
+        maxPerOrder: 10,
+        currency: "EUR"
       }
     ],
     // Step 4: Configuration
-    status: "draft" as "draft" | "published",
-    coverImageUrl: ""
+    status: "draft" as "draft" | "published"
   });
 
   const steps = [
@@ -108,10 +108,10 @@ const CreateEvent = () => {
     const newType = {
       id: Date.now(),
       name: "",
-      price: "",
+      priceCents: "",
       quantity: "",
-      description: "",
-      maxPerOrder: 10
+      maxPerOrder: 10,
+      currency: "EUR"
     };
     setFormData(prev => ({
       ...prev,
@@ -143,7 +143,7 @@ const CreateEvent = () => {
       case 1:
         return formData.title.trim() !== "" && formData.category !== "";
       case 2:
-        return formData.startDate && formData.venue.trim() !== "";
+        return formData.startsAt && formData.venue.trim() !== "" && formData.city.trim() !== "";
       case 3:
         return formData.ticketTypes.every(t => t.name.trim() !== "" && t.quantity.trim() !== "");
       default:
@@ -228,12 +228,12 @@ const CreateEvent = () => {
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !formData.startDate && "text-muted-foreground"
+                        !formData.startsAt && "text-muted-foreground"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.startDate ? (
-                        format(formData.startDate, "PPP", { locale: fr })
+                      {formData.startsAt ? (
+                        format(formData.startsAt, "PPP", { locale: fr })
                       ) : (
                         <span>Sélectionner une date</span>
                       )}
@@ -242,8 +242,8 @@ const CreateEvent = () => {
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={formData.startDate || undefined}
-                      onSelect={(date) => handleInputChange("startDate", date)}
+                      selected={formData.startsAt || undefined}
+                      onSelect={(date) => handleInputChange("startsAt", date)}
                       disabled={(date) =>
                         date < new Date()
                       }
@@ -262,12 +262,12 @@ const CreateEvent = () => {
                       variant="outline"
                       className={cn(
                         "w-full justify-start text-left font-normal",
-                        !formData.endDate && "text-muted-foreground"
+                        !formData.endsAt && "text-muted-foreground"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {formData.endDate ? (
-                        format(formData.endDate, "PPP", { locale: fr })
+                      {formData.endsAt ? (
+                        format(formData.endsAt, "PPP", { locale: fr })
                       ) : (
                         <span>Même jour</span>
                       )}
@@ -276,10 +276,10 @@ const CreateEvent = () => {
                   <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
                       mode="single"
-                      selected={formData.endDate || undefined}
-                      onSelect={(date) => handleInputChange("endDate", date)}
+                      selected={formData.endsAt || undefined}
+                      onSelect={(date) => handleInputChange("endsAt", date)}
                       disabled={(date) =>
-                        date < (formData.startDate || new Date())
+                        date < (formData.startsAt || new Date())
                       }
                       initialFocus
                       className="p-3 pointer-events-auto"
@@ -300,13 +300,12 @@ const CreateEvent = () => {
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="address">Adresse complète</Label>
-              <Textarea
-                id="address"
-                value={formData.address}
-                onChange={(e) => handleInputChange("address", e.target.value)}
-                placeholder="123 Avenue des Sports, 75012 Paris"
-                rows={3}
+              <Label htmlFor="city">Ville *</Label>
+              <Input
+                id="city"
+                value={formData.city}
+                onChange={(e) => handleInputChange("city", e.target.value)}
+                placeholder="Ex: Lyon"
               />
             </div>
             
@@ -376,8 +375,12 @@ const CreateEvent = () => {
                         id={`price-${index}`}
                         type="number"
                         step="0.01"
-                        value={ticketType.price}
-                        onChange={(e) => handleTicketTypeChange(index, "price", e.target.value)}
+                        value={ticketType.priceCents ? (parseInt(ticketType.priceCents) / 100).toString() : ""}
+                        onChange={(e) => {
+                          const euros = parseFloat(e.target.value) || 0;
+                          const cents = Math.round(euros * 100);
+                          handleTicketTypeChange(index, "priceCents", cents.toString());
+                        }}
                         placeholder="25.00"
                       />
                       <p className="text-xs text-muted-foreground">
@@ -408,16 +411,6 @@ const CreateEvent = () => {
                     </div>
                   </div>
                   
-                  <div className="mt-4 space-y-2">
-                    <Label htmlFor={`description-${index}`}>Description (optionnel)</Label>
-                    <Textarea
-                      id={`description-${index}`}
-                      value={ticketType.description}
-                      onChange={(e) => handleTicketTypeChange(index, "description", e.target.value)}
-                      placeholder="Décrivez ce qui est inclus avec ce type de billet..."
-                      rows={2}
-                    />
-                  </div>
                 </Card>
               ))}
             </div>
@@ -450,13 +443,13 @@ const CreateEvent = () => {
                   <div className="flex justify-between">
                     <span className="font-medium">Date :</span>
                     <span>
-                      {formData.startDate && format(formData.startDate, "dd/MM/yyyy", { locale: fr })}
-                      {formData.endDate && format(formData.endDate, " - dd/MM/yyyy", { locale: fr })}
+                      {formData.startsAt && format(formData.startsAt, "dd/MM/yyyy", { locale: fr })}
+                      {formData.endsAt && format(formData.endsAt, " - dd/MM/yyyy", { locale: fr })}
                     </span>
                   </div>
                   <div className="flex justify-between">
                     <span className="font-medium">Lieu :</span>
-                    <span className="text-right">{formData.venue}</span>
+                    <span className="text-right">{formData.venue}, {formData.city}</span>
                   </div>
                 </div>
               </div>

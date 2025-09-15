@@ -25,6 +25,7 @@ const Integrations = () => {
       bgColor: "bg-blue-50",
       connected: organization.stripeConnected,
       category: "Paiement",
+      available: true,
       features: ["Paiements sécurisés", "Facturation automatique", "Rapports financiers"]
     },
     {
@@ -32,10 +33,11 @@ const Integrations = () => {
       name: "Mailchimp",
       description: "Envoyez des emails et newsletters à vos participants",
       icon: Mail,
-      color: "text-yellow-600",
-      bgColor: "bg-yellow-50",
+      color: "text-muted-foreground",
+      bgColor: "bg-muted/30",
       connected: false,
       category: "Marketing",
+      available: false,
       features: ["Campagnes email", "Segmentation", "Automatisation"]
     },
     {
@@ -43,10 +45,11 @@ const Integrations = () => {
       name: "Zapier",
       description: "Automatisez vos tâches avec plus de 5000 applications",
       icon: Webhook,
-      color: "text-orange-600",
-      bgColor: "bg-orange-50",
+      color: "text-muted-foreground",
+      bgColor: "bg-muted/30",
       connected: false,
       category: "Automatisation",
+      available: false,
       features: ["Webhooks", "Automatisation", "Synchronisation"]
     },
     {
@@ -54,10 +57,11 @@ const Integrations = () => {
       name: "Google Analytics",
       description: "Analysez le trafic et les conversions de vos événements",
       icon: BarChart3,
-      color: "text-green-600",
-      bgColor: "bg-green-50",
+      color: "text-muted-foreground",
+      bgColor: "bg-muted/30",
       connected: false,
       category: "Analytics",
+      available: false,
       features: ["Suivi des conversions", "Rapports détaillés", "Audiences"]
     }
   ];
@@ -83,7 +87,7 @@ const Integrations = () => {
             {integrations
               .filter(integration => integration.category === category)
               .map((integration) => (
-                <Card key={integration.id} className="hover:shadow-lg transition-shadow">
+                <Card key={integration.id} className={`transition-shadow ${integration.available ? 'hover:shadow-lg' : 'opacity-60'}`}>
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-4">
@@ -93,6 +97,11 @@ const Integrations = () => {
                         <div>
                           <CardTitle className="flex items-center gap-2">
                             {integration.name}
+                            {!integration.available && (
+                              <Badge variant="secondary" className="bg-muted text-muted-foreground">
+                                Bientôt disponible
+                              </Badge>
+                            )}
                             {integration.connected && (
                               <Badge variant="secondary" className="bg-green-100 text-green-800">
                                 Connecté
@@ -104,7 +113,7 @@ const Integrations = () => {
                           </CardDescription>
                         </div>
                       </div>
-                      <Switch checked={integration.connected} />
+                      <Switch checked={integration.connected} disabled={!integration.available} />
                     </div>
                   </CardHeader>
                   
@@ -125,19 +134,19 @@ const Integrations = () => {
                       <div className="flex gap-2">
                         {integration.connected ? (
                           <>
-                            <Button variant="outline" size="sm">
+                            <Button variant="outline" size="sm" disabled={!integration.available}>
                               Configurer
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" disabled={!integration.available}>
                               Déconnecter
                             </Button>
                           </>
                         ) : (
                           <>
-                            <Button size="sm">
-                              Connecter
+                            <Button size="sm" disabled={!integration.available}>
+                              {integration.available ? 'Connecter' : 'Bientôt disponible'}
                             </Button>
-                            <Button variant="ghost" size="sm">
+                            <Button variant="ghost" size="sm" disabled={!integration.available}>
                               <ExternalLink className="w-4 h-4 mr-2" />
                               En savoir plus
                             </Button>
