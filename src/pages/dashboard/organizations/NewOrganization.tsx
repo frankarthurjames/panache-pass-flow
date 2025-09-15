@@ -9,15 +9,20 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { Building2, CreditCard, FileText, CheckCircle, ArrowLeft, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
+import { ImageUpload } from "@/components/ImageUpload";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const NewOrganization = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     // Step 1: Informations générales
     name: "",
     slug: "",
-    logoUrl: "",
+    logoUrls: [] as string[], // Changed from logoUrl to logoUrls array
     // Step 2: Informations légales
     siretNumber: "",
     billingEmail: "",
@@ -54,7 +59,7 @@ const NewOrganization = () => {
     }
   ];
 
-  const handleInputChange = (field: string, value: string | boolean) => {
+  const handleInputChange = (field: string, value: string | boolean | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -84,12 +89,58 @@ const NewOrganization = () => {
   };
 
   const handleSubmit = async () => {
+    if (!user) {
+      toast.error("Vous devez être connecté pour créer une organisation");
+      return;
+    }
+
+    setIsSubmitting(true);
+    
     try {
-      // Ici on créerait l'organisation dans la base de données
+      // Create the organization
+      const { data: organization, error: orgError } = await supabase
+        .from('organizations')
+        .insert({
+          name: formData.name,
+          slug: formData.slug,
+          logo_url: formData.logoUrls[0] || null, // Take the first uploaded image
+          siret_number: formData.siretNumber || null,
+          billing_email: formData.billingEmail,
+          billing_country: formData.billingCountry,
+          stripe_account_id: formData.stripeAccountId || null,
+          created_by_user_id: user.id
+        })
+        .select()
+        .single();
+
+      if (orgError) {
+        console.error('Error creating organization:', orgError);
+        toast.error("Erreur lors de la création de l'organisation");
+        return;
+      }
+
+      // Add the creator as owner in organization_members
+      const { error: memberError } = await supabase
+        .from('organization_members')
+        .insert({
+          organization_id: organization.id,
+          user_id: user.id,
+          role: 'owner'
+        });
+
+      if (memberError) {
+        console.error('Error adding organization member:', memberError);
+        toast.error("Erreur lors de l'ajout du membre");
+        return;
+      }
+
       toast.success("Organisation créée avec succès !");
-      navigate("/dashboard");
+      navigate(`/dashboard/org/${organization.id}`);
     } catch (error) {
-      toast.error("Erreur lors de la création de l'organisation");
+      console.error('Unexpected error:', error);
+      toast.error("Erreur inattendue lors de la création");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -121,16 +172,12 @@ const NewOrganization = () => {
               </p>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="logoUrl">Logo (URL)</Label>
-              <Input
-                id="logoUrl"
-                type="url"
-                value={formData.logoUrl}
-                onChange={(e) => handleInputChange("logoUrl", e.target.value)}
-                placeholder="https://www.exemple.com/logo.png"
-              />
-            </div>
+            <ImageUpload
+              value={formData.logoUrls}
+              onChange={(images) => handleInputChange("logoUrls", images)}
+              maxImages={1}
+              label="Logo de l'organisation"
+            />
           </div>
         );
 
@@ -214,6 +261,16 @@ const NewOrganization = () => {
             </div>
             
             <div className="space-y-4">
+              {formData.logoUrls.length > 0 && (
+                <div className="flex justify-between items-center py-2 border-b">
+                  <span className="font-medium">Logo :</span>
+                  <img 
+                    src={formData.logoUrls[0]} 
+                    alt="Logo" 
+                    className="w-12 h-12 rounded object-cover"
+                  />
+                </div>
+              )}
               <div className="flex justify-between py-2 border-b">
                 <span className="font-medium">Nom :</span>
                 <span>{formData.name}</span>
@@ -345,8 +402,8 @@ const NewOrganization = () => {
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         ) : (
-          <Button onClick={handleSubmit}>
-            Créer l'organisation
+          <Button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting ? "Création en cours..." : "Créer l'organisation"}
             <CheckCircle className="w-4 h-4 ml-2" />
           </Button>
         )}
