@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ImageUpload } from "@/components/ImageUpload";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ const CreateEvent = () => {
     title: "",
     description: "",
     category: "",
-    coverImageUrl: "",
+    images: [] as string[], // Multiple images instead of single coverImageUrl
     // Step 2: Date et lieu
     startsAt: null as Date | null,
     endsAt: null as Date | null,
@@ -203,16 +204,12 @@ const CreateEvent = () => {
               />
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="coverImageUrl">Image de couverture (URL)</Label>
-              <Input
-                id="coverImageUrl"
-                type="url"
-                value={formData.coverImageUrl}
-                onChange={(e) => handleInputChange("coverImageUrl", e.target.value)}
-                placeholder="https://exemple.com/image.jpg"
-              />
-            </div>
+            <ImageUpload
+              value={formData.images}
+              onChange={(images) => handleInputChange("images", images)}
+              maxImages={5}
+              label="Images de l'événement"
+            />
           </div>
         );
 
