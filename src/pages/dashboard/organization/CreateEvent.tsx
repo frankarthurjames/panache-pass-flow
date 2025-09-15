@@ -31,11 +31,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { ImageUpload } from "@/components/ImageUpload";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const CreateEvent = () => {
   const navigate = useNavigate();
   const { orgId } = useParams();
+  const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     // Step 1: Informations générales
     title: "",
@@ -144,21 +148,91 @@ const CreateEvent = () => {
       case 1:
         return formData.title.trim() !== "" && formData.category !== "";
       case 2:
-        return formData.startsAt && formData.venue.trim() !== "" && formData.city.trim() !== "";
+        return formData.startsAt && 
+               formData.venue.trim() !== "" && 
+               formData.city.trim() !== "" &&
+               (!formData.endsAt || formData.endsAt >= formData.startsAt); // End date must be after start date
       case 3:
-        return formData.ticketTypes.every(t => t.name.trim() !== "" && t.quantity.trim() !== "");
+        return formData.ticketTypes.every(t => 
+          t.name.trim() !== "" && 
+          t.quantity.trim() !== "" && 
+          parseInt(t.quantity) > 0 && // Quantity must be positive
+          (!t.priceCents || parseInt(t.priceCents) >= 0) // Price must be positive if set
+        );
       default:
         return true;
     }
   };
 
   const handleSubmit = async () => {
+    if (!user || !orgId) {
+      toast.error("Informations manquantes pour créer l'événement");
+      return;
+    }
+
+    if (!formData.startsAt) {
+      toast.error("La date de début est obligatoire");
+      return;
+    }
+
+    setIsSubmitting(true);
+    
     try {
-      // Ici on créerait l'événement dans la base de données
+      // Create the event
+      const eventData = {
+        title: formData.title,
+        description: formData.description || null,
+        starts_at: formData.startsAt.toISOString(),
+        ends_at: formData.endsAt ? formData.endsAt.toISOString() : formData.startsAt.toISOString(),
+        venue: formData.venue,
+        city: formData.city,
+        capacity: formData.capacity ? parseInt(formData.capacity) : null,
+        organization_id: orgId,
+        cover_image_url: formData.images.length > 0 ? formData.images[0] : null,
+        status: formData.status
+      };
+
+      const { data: event, error: eventError } = await supabase
+        .from('events')
+        .insert(eventData)
+        .select()
+        .single();
+
+      if (eventError) {
+        console.error('Error creating event:', eventError);
+        toast.error("Erreur lors de la création de l'événement");
+        return;
+      }
+
+      // Create ticket types
+      if (formData.ticketTypes.length > 0) {
+        const ticketTypesData = formData.ticketTypes.map(ticket => ({
+          event_id: event.id,
+          name: ticket.name,
+          price_cents: ticket.priceCents ? parseInt(ticket.priceCents) : 0,
+          quantity: parseInt(ticket.quantity),
+          max_per_order: ticket.maxPerOrder,
+          currency: ticket.currency
+        }));
+
+        const { error: ticketError } = await supabase
+          .from('ticket_types')
+          .insert(ticketTypesData);
+
+        if (ticketError) {
+          console.error('Error creating ticket types:', ticketError);
+          toast.error("Erreur lors de la création des types de billets");
+          return;
+        }
+      }
+
       toast.success("Événement créé avec succès !");
       navigate(`/dashboard/org/${orgId}/events`);
     } catch (error) {
-      toast.error("Erreur lors de la création de l'événement");
+      console.error('Unexpected error:', error);
+      toast.error("Erreur inattendue lors de la création");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -601,8 +675,13 @@ const CreateEvent = () => {
             <ArrowRight className="w-4 h-4 ml-2" />
           </Button>
         ) : (
-          <Button onClick={handleSubmit}>
-            {formData.status === "published" ? "Publier l'événement" : "Sauvegarder en brouillon"}
+          <Button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting 
+              ? "Création en cours..." 
+              : formData.status === "published" 
+                ? "Publier l'événement" 
+                : "Sauvegarder en brouillon"
+            }
             <CheckCircle className="w-4 h-4 ml-2" />
           </Button>
         )}

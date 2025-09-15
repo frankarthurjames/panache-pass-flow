@@ -60,7 +60,20 @@ const NewOrganization = () => {
   ];
 
   const handleInputChange = (field: string, value: string | boolean | string[]) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData(prev => ({ 
+      ...prev, 
+      [field]: value,
+      // Auto-generate slug when name changes
+      ...(field === 'name' && typeof value === 'string' ? {
+        slug: value
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+          .replace(/\s+/g, '-') // Replace spaces with hyphens
+          .replace(/-+/g, '-') // Remove multiple consecutive hyphens
+          .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
+      } : {})
+    }));
   };
 
   const nextStep = () => {
@@ -80,7 +93,8 @@ const NewOrganization = () => {
       case 1:
         return formData.name.trim() !== "" && formData.slug.trim() !== "";
       case 2:
-        return formData.billingEmail.trim() !== "";
+        return formData.billingEmail.trim() !== "" && 
+               /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.billingEmail); // Email validation
       case 3:
         return true; // Stripe est optionnel
       default:
