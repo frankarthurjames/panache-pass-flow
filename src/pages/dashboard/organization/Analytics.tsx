@@ -14,9 +14,93 @@ import {
   Clock
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 const Analytics = () => {
   const { orgId, eventId } = useParams();
+
+  // Fonction pour exporter le rapport
+  const handleExportReport = async () => {
+    try {
+      // Récupérer les données de l'événement et des statistiques
+      const reportData = {
+        eventInfo: eventData,
+        statistics: registrationStats,
+        ticketPerformance: ticketTypeStats,
+        dailyData: dailyRegistrations,
+        recentRegistrations: recentRegistrations,
+        exportDate: new Date().toLocaleDateString('fr-FR'),
+        exportTime: new Date().toLocaleTimeString('fr-FR')
+      };
+
+      // Créer le contenu du rapport CSV
+      const csvContent = [
+        ['RAPPORT ANALYTIQUE - ' + eventData.title],
+        ['Généré le:', reportData.exportDate + ' à ' + reportData.exportTime],
+        [''],
+        
+        // Informations générales
+        ['=== INFORMATIONS GÉNÉRALES ==='],
+        ['Titre événement:', eventData.title],
+        ['Date événement:', eventData.date],
+        ['Statut:', eventData.status],
+        ['Capacité:', eventData.capacity.toString()],
+        [''],
+        
+        // Statistiques principales
+        ['=== STATISTIQUES PRINCIPALES ==='],
+        ...registrationStats.map(stat => [stat.title + ':', stat.value, stat.change]),
+        [''],
+        
+        // Performance des billets
+        ['=== PERFORMANCE PAR TYPE DE BILLET ==='],
+        ['Type', 'Vendus', 'Total', 'Taux', 'Revenus'],
+        ...ticketTypeStats.map(ticket => [
+          ticket.name,
+          ticket.sold.toString(),
+          ticket.total.toString(),
+          Math.round((ticket.sold / ticket.total) * 100) + '%',
+          ticket.revenue + '€'
+        ]),
+        [''],
+        
+        // Inscriptions quotidiennes
+        ['=== INSCRIPTIONS PAR JOUR ==='],
+        ['Jour', 'Nombre d\'inscriptions'],
+        ...dailyRegistrations.map(day => [day.date, day.count.toString()]),
+        [''],
+        
+        // Inscriptions récentes
+        ['=== INSCRIPTIONS RÉCENTES ==='],
+        ['Nom', 'Email', 'Type de billet', 'Date', 'Statut'],
+        ...recentRegistrations.map(reg => [
+          reg.name,
+          reg.email,
+          reg.ticketType,
+          reg.registrationDate,
+          reg.status
+        ])
+      ];
+
+      // Convertir en CSV
+      const csvString = csvContent
+        .map(row => Array.isArray(row) ? row.map(cell => `"${cell}"`).join(',') : `"${row}"`)
+        .join('\n');
+
+      // Créer et télécharger le fichier
+      const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `rapport-analytics-${eventData.title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${new Date().toISOString().slice(0, 10)}.csv`;
+      link.click();
+
+      toast.success("Rapport exporté avec succès!");
+    } catch (error) {
+      console.error('Error exporting report:', error);
+      toast.error("Erreur lors de l'export du rapport");
+    }
+  };
 
   // Mock data - sera remplacé par des données réelles
   const eventData = {
@@ -136,7 +220,7 @@ const Analytics = () => {
             </span>
           </div>
         </div>
-        <Button variant="outline">
+        <Button variant="outline" onClick={handleExportReport}>
           <Download className="w-4 h-4 mr-2" />
           Exporter le rapport
         </Button>
