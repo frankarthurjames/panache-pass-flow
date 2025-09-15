@@ -141,13 +141,13 @@ const OrganizationDashboard = () => {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div className="flex items-center gap-4">
           <Avatar className="w-16 h-16">
-            <AvatarImage src={organization.logo || ""} />
+            <AvatarImage src={organization?.logo_url || ""} />
             <AvatarFallback className="text-xl font-semibold">
-              {organization.name.charAt(0)}
+              {organization?.name?.charAt(0) || 'O'}
             </AvatarFallback>
           </Avatar>
           <div>
-            <h1 className="text-3xl font-bold mb-2">{organization.name}</h1>
+            <h1 className="text-3xl font-bold mb-2">{organization?.name || 'Organisation'}</h1>
             <p className="text-muted-foreground">
               Tableau de bord de votre organisation
             </p>

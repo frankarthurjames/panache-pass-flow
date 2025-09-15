@@ -22,12 +22,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
-// Mock data - sera remplacé par des données réelles
-const organizations = [
-  { id: "1", name: "SportClub Lyon", logo: null },
-  { id: "2", name: "Tennis Academy", logo: null },
-];
+// Organisations dynamiques
+// ... keep existing code (menus)
+
 
 const mainMenuItems = [
   { title: "Vue d'ensemble", url: "/dashboard", icon: LayoutDashboard, exact: true },
@@ -49,6 +49,27 @@ export function DashboardSidebar() {
   const { orgId } = useParams();
   const navigate = useNavigate();
   const [selectedOrg, setSelectedOrg] = useState(orgId || "");
+  const { user } = useAuth();
+  const [organizations, setOrganizations] = useState<any[]>([]);
+
+  // Charger les organisations de l'utilisateur
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      if (!user) return;
+      const { data, error } = await supabase
+        .from('organization_members')
+        .select(`organizations (id, name, logo_url)`);
+
+      if (!error && data) {
+        const orgs = data.map((m: any) => m.organizations).filter(Boolean);
+        setOrganizations(orgs);
+        if (!selectedOrg && orgs[0]) {
+          setSelectedOrg(orgs[0].id);
+        }
+      }
+    };
+    fetchOrganizations();
+  }, [user]);
 
   // Synchroniser selectedOrg avec l'URL
   useEffect(() => {
@@ -78,12 +99,12 @@ export function DashboardSidebar() {
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="Sélectionner une organisation" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="z-50 bg-popover">
                 {organizations.map((org) => (
                   <SelectItem key={org.id} value={org.id}>
                     <div className="flex items-center gap-2">
                       <Avatar className="w-5 h-5">
-                        <AvatarImage src={org.logo || ""} />
+                        <AvatarImage src={org.logo_url || ""} />
                         <AvatarFallback className="text-xs">
                           {org.name.charAt(0)}
                         </AvatarFallback>
