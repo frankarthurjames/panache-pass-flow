@@ -54,6 +54,7 @@ const App = () => (
               <Route path="org/:orgId" element={<OrganizationDashboard />} />
               <Route path="org/:orgId/events" element={<OrgEvents />} />
               <Route path="org/:orgId/events/new" element={<CreateOrgEvent />} />
+              <Route path="org/:orgId/events/:eventId/analytics" element={<Analytics />} />
               <Route path="org/:orgId/participants" element={<Participants />} />
               <Route path="org/:orgId/analytics" element={<Analytics />} />
               <Route path="org/:orgId/integrations" element={<Integrations />} />

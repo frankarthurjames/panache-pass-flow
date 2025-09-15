@@ -1,276 +1,295 @@
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { useParams } from "react-router-dom";
+import { Progress } from "@/components/ui/progress";
 import { 
-  TrendingUp, 
+  ArrowLeft, 
   Users, 
+  TrendingUp, 
   Calendar, 
-  CreditCard, 
-  Target,
-  ArrowUp,
-  ArrowDown
+  CreditCard,
+  Download,
+  Eye,
+  UserCheck,
+  Clock
 } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Link, useParams } from "react-router-dom";
 
 const Analytics = () => {
-  const { orgId } = useParams();
+  const { orgId, eventId } = useParams();
 
   // Mock data - sera remplacé par des données réelles
-  const stats = [
+  const eventData = {
+    title: "Tournoi de Tennis Open 2025",
+    date: "25 Jan 2025",
+    status: "Publié",
+    totalRegistrations: 45,
+    capacity: 60,
+    revenue: 1125,
+    viewsCount: 324,
+    conversionRate: 13.9
+  };
+
+  const registrationStats = [
     {
-      title: "Revenus total",
-      value: "12,450€",
-      change: "+23%",
-      changeType: "increase",
-      period: "vs mois dernier",
-      icon: CreditCard,
-    },
-    {
-      title: "Participants total",
-      value: "247",
-      change: "+18%", 
-      changeType: "increase",
-      period: "vs mois dernier",
+      title: "Total des inscriptions",
+      value: "45",
+      change: "+12 cette semaine",
       icon: Users,
+      color: "text-blue-600"
     },
     {
-      title: "Événements organisés",
-      value: "12",
-      change: "0%",
-      changeType: "neutral",
-      period: "vs mois dernier", 
-      icon: Calendar,
+      title: "Revenus générés",
+      value: "1,125€",
+      change: "+360€ cette semaine",
+      icon: CreditCard,
+      color: "text-green-600"
     },
     {
-      title: "Taux de remplissage",
-      value: "78%",
-      change: "-5%",
-      changeType: "decrease", 
-      period: "vs mois dernier",
-      icon: Target,
-    },
-  ];
-
-  const topEvents = [
-    {
-      name: "Tournoi Tennis Open 2025",
-      participants: 45,
-      capacity: 60,
-      revenue: "1,125€",
-      fillRate: "75%"
+      title: "Vues de la page",
+      value: "324",
+      change: "+89 cette semaine",
+      icon: Eye,
+      color: "text-purple-600"
     },
     {
-      name: "Course à Pied Solidaire", 
-      participants: 89,
-      capacity: 100,
-      revenue: "1,335€",
-      fillRate: "89%"
-    },
-    {
-      name: "Championnat Badminton Local",
-      participants: 32,
-      capacity: 40, 
-      revenue: "960€",
-      fillRate: "80%"
+      title: "Taux de conversion",
+      value: "13.9%",
+      change: "+2.1% cette semaine",
+      icon: TrendingUp,
+      color: "text-orange-600"
     }
   ];
 
-  const monthlyData = [
-    { month: "Juillet", events: 3, participants: 67, revenue: "1,980€" },
-    { month: "Août", events: 2, participants: 45, revenue: "1,350€" },
-    { month: "Septembre", events: 4, participants: 89, revenue: "2,670€" },
-    { month: "Octobre", events: 3, participants: 56, revenue: "1,680€" },
-    { month: "Novembre", events: 0, participants: 0, revenue: "0€" },
-    { month: "Décembre", events: 1, participants: 23, revenue: "690€" }
+  const ticketTypeStats = [
+    {
+      name: "Standard",
+      sold: 30,
+      total: 40,
+      price: 25,
+      revenue: 750
+    },
+    {
+      name: "VIP",
+      sold: 15,
+      total: 20,
+      price: 50,
+      revenue: 750
+    }
   ];
 
-  const getChangeIcon = (changeType: string) => {
-    switch (changeType) {
-      case "increase":
-        return <ArrowUp className="w-4 h-4 text-green-600" />;
-      case "decrease":
-        return <ArrowDown className="w-4 h-4 text-red-600" />;
-      default:
-        return null;
-    }
-  };
+  const dailyRegistrations = [
+    { date: "Lun", count: 3 },
+    { date: "Mar", count: 7 },
+    { date: "Mer", count: 5 },
+    { date: "Jeu", count: 12 },
+    { date: "Ven", count: 8 },
+    { date: "Sam", count: 6 },
+    { date: "Dim", count: 4 }
+  ];
 
-  const getChangeColor = (changeType: string) => {
-    switch (changeType) {
-      case "increase":
-        return "text-green-600";
-      case "decrease":
-        return "text-red-600";
-      default:
-        return "text-muted-foreground";
+  const recentRegistrations = [
+    {
+      id: 1,
+      name: "Marie Dupont",
+      email: "marie.dupont@email.com",
+      ticketType: "Standard",
+      registrationDate: "Il y a 2h",
+      status: "Confirmé"
+    },
+    {
+      id: 2,
+      name: "Jean Martin",
+      email: "jean.martin@email.com", 
+      ticketType: "VIP",
+      registrationDate: "Il y a 5h",
+      status: "Confirmé"
+    },
+    {
+      id: 3,
+      name: "Sophie Lemoine",
+      email: "sophie.lemoine@email.com",
+      ticketType: "Standard", 
+      registrationDate: "Il y a 1j",
+      status: "En attente"
     }
-  };
+  ];
 
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Statistiques</h1>
-          <p className="text-muted-foreground">
-            Analysez les performances de vos événements
-          </p>
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="sm" asChild>
+          <Link to={`/dashboard/org/${orgId}/events`}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Retour aux événements
+          </Link>
+        </Button>
+        <div className="flex-1">
+          <h1 className="text-3xl font-bold mb-2">Analyse de l'événement</h1>
+          <div className="flex items-center gap-4">
+            <p className="text-muted-foreground">{eventData.title}</p>
+            <Badge variant="secondary">{eventData.status}</Badge>
+            <span className="text-muted-foreground flex items-center gap-1">
+              <Calendar className="w-4 h-4" />
+              {eventData.date}
+            </span>
+          </div>
         </div>
-        <Select defaultValue="last-6-months">
-          <SelectTrigger className="w-[200px]">
-            <SelectValue placeholder="Période" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="last-30-days">30 derniers jours</SelectItem>
-            <SelectItem value="last-3-months">3 derniers mois</SelectItem>
-            <SelectItem value="last-6-months">6 derniers mois</SelectItem>
-            <SelectItem value="last-year">Dernière année</SelectItem>
-          </SelectContent>
-        </Select>
+        <Button variant="outline">
+          <Download className="w-4 h-4 mr-2" />
+          Exporter le rapport
+        </Button>
       </div>
 
-      {/* Key Metrics */}
+      {/* Overview Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {stats.map((stat) => (
+        {registrationStats.map((stat) => (
           <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold mb-1">{stat.value}</div>
-              <div className="flex items-center gap-1">
-                {getChangeIcon(stat.changeType)}
-                <span className={`text-xs font-medium ${getChangeColor(stat.changeType)}`}>
-                  {stat.change}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {stat.period}
-                </span>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-1">
+                    {stat.title}
+                  </p>
+                  <div className="text-2xl font-bold mb-1">{stat.value}</div>
+                  <p className="text-xs text-muted-foreground">{stat.change}</p>
+                </div>
+                <stat.icon className={`h-8 w-8 ${stat.color}`} />
               </div>
             </CardContent>
           </Card>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Top Events */}
+      {/* Capacity Progress */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Taux de remplissage</CardTitle>
+          <CardDescription>
+            Nombre d'inscriptions par rapport à la capacité maximale
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">
+                {eventData.totalRegistrations} / {eventData.capacity} participants
+              </span>
+              <span className="text-sm text-muted-foreground">
+                {Math.round((eventData.totalRegistrations / eventData.capacity) * 100)}%
+              </span>
+            </div>
+            <Progress 
+              value={(eventData.totalRegistrations / eventData.capacity) * 100} 
+              className="h-3"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Ticket Types & Daily Registrations */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Ticket Types Performance */}
         <Card>
           <CardHeader>
-            <CardTitle>Événements les plus performants</CardTitle>
+            <CardTitle>Performance par type de billet</CardTitle>
             <CardDescription>
-              Classement par taux de remplissage des 6 derniers mois
+              Répartition des ventes par catégorie de billet
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {topEvents.map((event, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                <div className="space-y-1">
-                  <div className="font-medium">{event.name}</div>
-                  <div className="text-sm text-muted-foreground">
-                    {event.participants}/{event.capacity} participants
+          <CardContent>
+            <div className="space-y-4">
+              {ticketTypeStats.map((ticket) => (
+                <div key={ticket.name} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{ticket.name}</span>
+                    <div className="text-right">
+                      <div className="text-sm font-semibold">
+                        {ticket.sold}/{ticket.total} vendus
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {ticket.revenue}€ générés
+                      </div>
+                    </div>
                   </div>
+                  <Progress 
+                    value={(ticket.sold / ticket.total) * 100} 
+                    className="h-2"
+                  />
                 </div>
-                <div className="text-right space-y-1">
-                  <div className="font-semibold">{event.revenue}</div>
-                  <Badge variant={
-                    parseInt(event.fillRate) > 80 ? "default" : 
-                    parseInt(event.fillRate) > 60 ? "secondary" : "outline"
-                  }>
-                    {event.fillRate}
-                  </Badge>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </CardContent>
         </Card>
 
-        {/* Monthly Performance */}
+        {/* Daily Registrations Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Performance mensuelle</CardTitle>
+            <CardTitle>Inscriptions cette semaine</CardTitle>
             <CardDescription>
-              Évolution de vos événements sur les 6 derniers mois
+              Nombre d'inscriptions par jour
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {monthlyData.map((data, index) => (
-              <div key={index} className="flex items-center justify-between p-4 bg-muted/30 rounded-lg">
-                <div className="font-medium">{data.month}</div>
-                <div className="flex items-center gap-6 text-sm">
-                  <div className="text-center">
-                    <div className="font-semibold">{data.events}</div>
-                    <div className="text-muted-foreground">événements</div>
+          <CardContent>
+            <div className="space-y-4">
+              {dailyRegistrations.map((day) => (
+                <div key={day.date} className="flex items-center justify-between">
+                  <span className="text-sm font-medium w-12">{day.date}</span>
+                  <div className="flex-1 mx-4">
+                    <div className="bg-muted h-6 rounded-sm relative overflow-hidden">
+                      <div 
+                        className="bg-primary h-full rounded-sm transition-all duration-300"
+                        style={{ width: `${Math.min((day.count / 15) * 100, 100)}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="text-center">
-                    <div className="font-semibold">{data.participants}</div>
-                    <div className="text-muted-foreground">participants</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="font-semibold">{data.revenue}</div>
-                    <div className="text-muted-foreground">revenus</div>
-                  </div>
+                  <span className="text-sm text-muted-foreground w-8 text-right">
+                    {day.count}
+                  </span>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Insights */}
+      {/* Recent Registrations */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="w-5 h-5" />
-            Insights et recommandations
-          </CardTitle>
+          <CardTitle>Inscriptions récentes</CardTitle>
+          <CardDescription>
+            Les derniers participants inscrits à votre événement
+          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-green-600 rounded-full mt-2"></div>
-              <div>
-                <h4 className="font-medium text-green-900 mb-1">Excellente performance</h4>
-                <p className="text-sm text-green-700">
-                  Vos événements de course à pied ont un taux de remplissage de 89% en moyenne, 
-                  considérez organiser plus d'événements dans cette catégorie.
-                </p>
+        <CardContent>
+          <div className="space-y-4">
+            {recentRegistrations.map((registration) => (
+              <div key={registration.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div className="flex items-center space-x-4">
+                  <div className="w-10 h-10 bg-muted rounded-full flex items-center justify-center">
+                    <UserCheck className="w-5 h-5 text-muted-foreground" />
+                  </div>
+                  <div>
+                    <p className="font-medium">{registration.name}</p>
+                    <p className="text-sm text-muted-foreground">{registration.email}</p>
+                  </div>
+                </div>
+                <div className="text-right space-y-1">
+                  <Badge variant="outline">{registration.ticketType}</Badge>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Clock className="w-3 h-3" />
+                    {registration.registrationDate}
+                  </div>
+                  <Badge 
+                    variant={registration.status === "Confirmé" ? "default" : "secondary"}
+                    className="text-xs"
+                  >
+                    {registration.status}
+                  </Badge>
+                </div>
               </div>
-            </div>
-          </div>
-          
-          <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-blue-600 rounded-full mt-2"></div>
-              <div>
-                <h4 className="font-medium text-blue-900 mb-1">Opportunité d'amélioration</h4>
-                <p className="text-sm text-blue-700">
-                  Le mois de novembre n'a pas eu d'événements. Planifiez vos événements 
-                  à l'avance pour maintenir un rythme régulier.
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <div className="flex items-start gap-3">
-              <div className="w-2 h-2 bg-yellow-600 rounded-full mt-2"></div>
-              <div>
-                <h4 className="font-medium text-yellow-900 mb-1">Conseil marketing</h4>
-                <p className="text-sm text-yellow-700">
-                  Vos revenus augmentent mais le taux de remplissage baisse légèrement. 
-                  Concentrez-vous sur la promotion pour maximiser la participation.
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
         </CardContent>
       </Card>

@@ -2,8 +2,11 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Plus, Search, Filter, Calendar, Users, TrendingUp, Eye, Edit, MoreHorizontal } from "lucide-react";
+import { Plus, Search, Filter, Calendar, Users, TrendingUp, Eye, Edit, MoreHorizontal, Copy, BarChart, Download, Trash2 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
+import { toast } from "sonner";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,9 +20,168 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Events = () => {
   const { orgId } = useParams();
+  const [deleteEventId, setDeleteEventId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Handlers pour les actions
+  const handleDuplicateEvent = async (eventId: string) => {
+    try {
+      // Récupérer l'événement à dupliquer
+      const { data: originalEvent, error: fetchError } = await supabase
+        .from('events')
+        .select('*')
+        .eq('id', eventId)
+        .single();
+
+      if (fetchError) {
+        toast.error("Erreur lors de la récupération de l'événement");
+        return;
+      }
+
+      // Créer une copie avec un nouveau titre
+      const duplicatedEvent = {
+        title: `${originalEvent.title} (Copie)`,
+        description: originalEvent.description,
+        starts_at: originalEvent.starts_at,
+        ends_at: originalEvent.ends_at,
+        venue: originalEvent.venue,
+        city: originalEvent.city,
+        capacity: originalEvent.capacity,
+        organization_id: originalEvent.organization_id,
+        cover_image_url: originalEvent.cover_image_url,
+        status: 'draft' as const,
+      };
+
+      const { error: createError } = await supabase
+        .from('events')
+        .insert(duplicatedEvent);
+
+      if (createError) {
+        toast.error("Erreur lors de la duplication");
+        return;
+      }
+
+      toast.success("Événement dupliqué avec succès!");
+      // Ici on pourrait recharger la liste des événements
+    } catch (error) {
+      toast.error("Erreur lors de la duplication");
+    }
+  };
+
+  const handleShowStats = (eventId: string) => {
+    // Rediriger vers la page de statistiques
+    window.open(`/dashboard/org/${orgId}/events/${eventId}/analytics`, '_blank');
+  };
+
+  const handleExportParticipants = async (eventId: string) => {
+    try {
+      // Récupérer les participants de l'événement
+      const { data: registrations, error } = await supabase
+        .from('registrations')
+        .select(`
+          *,
+          users:user_id (
+            display_name,
+            email
+          ),
+          ticket_types:ticket_type_id (
+            name,
+            price_cents
+          )
+        `)
+        .eq('event_id', eventId);
+
+      if (error) {
+        toast.error("Erreur lors de la récupération des participants");
+        return;
+      }
+
+      // Créer le CSV
+      const csvHeaders = ['Nom', 'Email', 'Type de billet', 'Prix', 'Status', 'Date d\'inscription'];
+      const csvRows = registrations.map(reg => [
+        reg.users?.display_name || 'N/A',
+        reg.users?.email || 'N/A',
+        reg.ticket_types?.name || 'N/A',
+        reg.ticket_types?.price_cents ? `${(reg.ticket_types.price_cents / 100).toFixed(2)}€` : '0€',
+        reg.status,
+        new Date(reg.created_at).toLocaleDateString('fr-FR')
+      ]);
+
+      const csvContent = [csvHeaders, ...csvRows]
+        .map(row => row.map(cell => `"${cell}"`).join(','))
+        .join('\n');
+
+      // Télécharger le fichier
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `participants-event-${eventId}.csv`;
+      link.click();
+
+      toast.success("Export terminé!");
+    } catch (error) {
+      toast.error("Erreur lors de l'export");
+    }
+  };
+
+  const handleDeleteEvent = async (eventId: string) => {
+    setIsDeleting(true);
+    try {
+      // D'abord supprimer les registrations liées
+      const { error: registrationsError } = await supabase
+        .from('registrations')
+        .delete()
+        .eq('event_id', eventId);
+
+      if (registrationsError) {
+        toast.error("Erreur lors de la suppression des inscriptions");
+        return;
+      }
+
+      // Supprimer les ticket types
+      const { error: ticketTypesError } = await supabase
+        .from('ticket_types')
+        .delete()
+        .eq('event_id', eventId);
+
+      if (ticketTypesError) {
+        toast.error("Erreur lors de la suppression des types de billets");
+        return;
+      }
+
+      // Enfin supprimer l'événement
+      const { error: eventError } = await supabase
+        .from('events')
+        .delete()
+        .eq('id', eventId);
+
+      if (eventError) {
+        toast.error("Erreur lors de la suppression de l'événement");
+        return;
+      }
+
+      toast.success("Événement supprimé avec succès!");
+      setDeleteEventId(null);
+      // Ici on pourrait recharger la liste des événements
+    } catch (error) {
+      toast.error("Erreur lors de la suppression");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Mock data - sera remplacé par des données réelles
   const events = [
@@ -211,10 +373,23 @@ const Events = () => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                      <DropdownMenuItem>Dupliquer</DropdownMenuItem>
-                      <DropdownMenuItem>Statistiques détaillées</DropdownMenuItem>
-                      <DropdownMenuItem>Exporter les participants</DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive">
+                      <DropdownMenuItem onClick={() => handleDuplicateEvent(event.id.toString())}>
+                        <Copy className="w-4 h-4 mr-2" />
+                        Dupliquer
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleShowStats(event.id.toString())}>
+                        <BarChart className="w-4 h-4 mr-2" />
+                        Statistiques détaillées
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleExportParticipants(event.id.toString())}>
+                        <Download className="w-4 h-4 mr-2" />
+                        Exporter les participants
+                      </DropdownMenuItem>
+                      <DropdownMenuItem 
+                        className="text-destructive" 
+                        onClick={() => setDeleteEventId(event.id.toString())}
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
                         Supprimer
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -241,6 +416,29 @@ const Events = () => {
           </Button>
         </Card>
       )}
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteEventId} onOpenChange={() => setDeleteEventId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Supprimer l'événement</AlertDialogTitle>
+            <AlertDialogDescription>
+              Êtes-vous sûr de vouloir supprimer cet événement ? Cette action est irréversible.
+              Tous les participants inscrits et les données associées seront supprimées.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Annuler</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteEventId && handleDeleteEvent(deleteEventId)}
+              disabled={isDeleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isDeleting ? "Suppression..." : "Supprimer"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
