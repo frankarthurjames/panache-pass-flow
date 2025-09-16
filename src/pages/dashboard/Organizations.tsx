@@ -36,9 +36,10 @@ const Organizations = () => {
         if (membersError) throw membersError;
 
         if (orgMembers) {
+          const validMembers = orgMembers.filter((m: any) => m.organizations);
           // Pour chaque organisation, récupérer les statistiques
           const orgsWithStats = await Promise.all(
-            orgMembers.map(async (member: any) => {
+            validMembers.map(async (member: any) => {
               const org = member.organizations;
               
               // Compter les événements

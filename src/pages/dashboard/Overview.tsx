@@ -41,8 +41,9 @@ const Overview = () => {
         let totalRevenue = 0;
 
         if (orgMembers) {
+          const validMembers = orgMembers.filter((m: any) => m.organizations);
           const orgsWithStats = await Promise.all(
-            orgMembers.map(async (member: any) => {
+            validMembers.map(async (member: any) => {
               const org = member.organizations;
               
               // Compter les événements
@@ -92,7 +93,7 @@ const Overview = () => {
           setGlobalStats([
             {
               title: "Organisations actives",
-              value: orgMembers.length.toString(),
+              value: validMembers.length.toString(),
               change: "+1 ce mois",
               icon: Building2,
             },
