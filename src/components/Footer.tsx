@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { Calendar, Mail, Phone, MapPin } from "lucide-react";
+import panacheLogo from "@/assets/panache-logo.png";
 
 export const Footer = () => {
   return (
@@ -9,8 +10,8 @@ export const Footer = () => {
           {/* Brand */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-muted border rounded-lg flex items-center justify-center">
-                <Calendar className="w-5 h-5 text-muted-foreground" />
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+                <img src={panacheLogo} alt="Panache" className="w-full h-full object-contain" />
               </div>
               <span className="text-xl font-bold text-foreground">
                 Panache

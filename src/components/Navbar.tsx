@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Calendar, User, LogOut } from "lucide-react";
+import panacheLogo from "@/assets/panache-logo.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,8 +25,8 @@ export const Navbar = () => {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-muted border rounded-lg flex items-center justify-center">
-              <Calendar className="w-5 h-5 text-muted-foreground" />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
+              <img src={panacheLogo} alt="Panache" className="w-full h-full object-contain" />
             </div>
             <span className="text-xl font-bold text-foreground">
               Panache
