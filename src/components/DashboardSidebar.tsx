@@ -81,6 +81,10 @@ export function DashboardSidebar() {
   const currentOrg = organizations.find(org => org.id === selectedOrg);
 
   const handleOrgChange = (newOrgId: string) => {
+    if (newOrgId === "new") {
+      navigate("/dashboard/organizations/new");
+      return;
+    }
     setSelectedOrg(newOrgId);
     navigate(`/dashboard/org/${newOrgId}`);
   };
@@ -97,22 +101,31 @@ export function DashboardSidebar() {
           <div className="px-2 py-4">
             <Select value={selectedOrg} onValueChange={handleOrgChange}>
               <SelectTrigger className="w-full">
-                <SelectValue placeholder="Sélectionner une organisation" />
+                <SelectValue placeholder={organizations.length ? "Sélectionner une organisation" : "Nouvelle organisation"} />
               </SelectTrigger>
               <SelectContent className="z-50 bg-popover">
-                {organizations.map((org) => (
-                  <SelectItem key={org.id} value={org.id}>
+                {organizations.length === 0 ? (
+                  <SelectItem value="new">
                     <div className="flex items-center gap-2">
-                      <Avatar className="w-5 h-5">
-                        <AvatarImage src={org.logo_url || ""} />
-                        <AvatarFallback className="text-xs">
-                          {org.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span>{org.name}</span>
+                      <Plus className="w-4 h-4" />
+                      <span>Nouvelle organisation</span>
                     </div>
                   </SelectItem>
-                ))}
+                ) : (
+                  organizations.map((org) => (
+                    <SelectItem key={org.id} value={org.id}>
+                      <div className="flex items-center gap-2">
+                        <Avatar className="w-5 h-5">
+                          <AvatarImage src={org.logo_url || ""} />
+                          <AvatarFallback className="text-xs">
+                            {org.name.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{org.name}</span>
+                      </div>
+                    </SelectItem>
+                  ))
+                )}
               </SelectContent>
             </Select>
           </div>
