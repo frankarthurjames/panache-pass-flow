@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import { Calendar, MapPin, Users } from "lucide-react";
+import { EventLikeButton } from "@/components/EventLikeButton";
 
 interface EventCardProps {
-  id?: number;
+  id?: string;
   title: string;
   date: string;
   price: string;
@@ -11,7 +12,7 @@ interface EventCardProps {
   image?: string;
 }
 
-export const EventCard = ({ id = 1, title, date, price, location, participants, image }: EventCardProps) => {
+export const EventCard = ({ id = "1", title, date, price, location, participants, image }: EventCardProps) => {
   return (
     <Link to={`/events/${id}`} className="block">
       <div className="group cursor-pointer overflow-hidden rounded-2xl">
@@ -42,9 +43,16 @@ export const EventCard = ({ id = 1, title, date, price, location, participants, 
         
         {/* Content Section */}
         <div className="space-y-3">
-          <h3 className="font-bold text-xl group-hover:text-primary transition-colors leading-tight">
-            {title}
-          </h3>
+          <div className="flex items-start justify-between">
+            <h3 className="font-bold text-xl group-hover:text-primary transition-colors leading-tight flex-1">
+              {title}
+            </h3>
+            {id && (
+              <div onClick={(e) => e.preventDefault()}>
+                <EventLikeButton eventId={id} />
+              </div>
+            )}
+          </div>
           
           <div className="space-y-2">
             <div className="flex items-center text-muted-foreground">

@@ -66,6 +66,9 @@ const PaymentSuccess = () => {
 
   const createRegistrations = async (order: any) => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not authenticated");
+
       // Créer les inscriptions pour chaque billet
       const registrations = [];
       for (const item of order.order_items) {
@@ -80,9 +83,10 @@ const PaymentSuccess = () => {
         }
       }
 
-      const { error: regError } = await supabase
+      const { data: createdRegistrations, error: regError } = await supabase
         .from('registrations')
-        .insert(registrations);
+        .insert(registrations)
+        .select();
 
       if (regError) throw regError;
 
@@ -107,7 +111,42 @@ const PaymentSuccess = () => {
 
       if (paymentError) throw paymentError;
 
-      toast.success("Inscription confirmée !");
+      // Générer et envoyer les tickets par email pour chaque registration
+      for (const registration of createdRegistrations) {
+        try {
+          console.log('Generating ticket for registration:', registration.id);
+          
+          // Générer le PDF du ticket
+          const pdfResponse = await supabase.functions.invoke('generate-ticket-pdf', {
+            body: { registrationId: registration.id }
+          });
+
+          if (pdfResponse.data?.success && pdfResponse.data?.pdfUrl) {
+            console.log('PDF generated, sending email...');
+            
+            // Envoyer l'email avec le ticket
+            const emailResponse = await supabase.functions.invoke('send-ticket-email', {
+              body: { 
+                registrationId: registration.id,
+                pdfUrl: pdfResponse.data.pdfUrl
+              }
+            });
+
+            if (emailResponse.data?.success) {
+              console.log('Ticket email sent for registration:', registration.id);
+            } else {
+              console.error('Failed to send ticket email:', emailResponse.error);
+            }
+          } else {
+            console.error('Failed to generate PDF:', pdfResponse.error);
+          }
+        } catch (ticketError) {
+          console.error('Error generating/sending ticket for registration', registration.id, ticketError);
+          // Continue même si la génération du ticket échoue pour une registration
+        }
+      }
+
+      toast.success("Inscription confirmée ! Vos billets vous ont été envoyés par email.");
     } catch (error) {
       console.error('Error creating registrations:', error);
       toast.error("Erreur lors de la confirmation de l'inscription");
@@ -233,7 +272,7 @@ const PaymentSuccess = () => {
 
             <div className="text-center pt-4">
               <p className="text-sm text-muted-foreground">
-                Un email de confirmation a été envoyé à votre adresse.
+                Vos billets PDF vous ont été envoyés par email. Vérifiez votre boîte de réception.
               </p>
               <Button variant="ghost" asChild className="mt-2">
                 <Link to="/dashboard">Accéder à mon tableau de bord</Link>
