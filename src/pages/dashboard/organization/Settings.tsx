@@ -103,11 +103,15 @@ const Settings = () => {
     const refresh = urlParams.get('refresh');
 
     if (success === 'true') {
-      toast.success("Configuration Stripe terminée avec succès !");
-      // Attendre un peu puis vérifier le statut
-      setTimeout(() => {
-        checkStripeStatus();
-      }, 2000);
+      toast.success("Configuration Stripe terminée avec succès ! Vérification en cours...");
+      // Vérifier le statut plusieurs fois pour s'assurer que Stripe a bien mis à jour
+      const checkMultipleTimes = async () => {
+        for (let i = 0; i < 3; i++) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          await checkStripeStatus();
+        }
+      };
+      checkMultipleTimes();
       // Nettoyer l'URL
       window.history.replaceState({}, '', window.location.pathname);
     } else if (refresh === 'true') {
