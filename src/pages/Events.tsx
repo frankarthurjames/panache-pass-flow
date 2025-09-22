@@ -16,6 +16,7 @@ interface Filters {
   priceMin?: string;
   priceMax?: string;
   date?: string;
+  keyword?: string;
 }
 
 const Events = () => {
@@ -85,7 +86,7 @@ const Events = () => {
             location: event.city || 'Lieu à confirmer',
             venue: event.venue,
             participants: `${participantsCount}/${event.capacity || '∞'}`,
-            image: event.images && event.images.length > 0 ? event.images[0] : 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=400&fit=crop',
+            image: event.images && Array.isArray(event.images) && event.images.length > 0 ? event.images[0] : 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=400&fit=crop',
             description: event.description,
             starts_at: event.starts_at,
             ends_at: event.ends_at,

@@ -87,7 +87,7 @@ const Index = () => {
               price: minPrice > 0 ? `${(minPrice / 100).toFixed(0)}€` : 'Gratuit',
               location: event.city || 'Lieu à confirmer',
               participants: `${participantsCount}/${event.capacity || '∞'}`,
-              image: event.images && event.images.length > 0 ? event.images[0] : 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=400&fit=crop'
+              image: event.images && Array.isArray(event.images) && event.images.length > 0 ? event.images[0] : 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=400&fit=crop'
             };
           }) || [];
 
