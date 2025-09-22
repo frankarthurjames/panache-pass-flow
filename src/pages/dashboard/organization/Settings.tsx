@@ -96,6 +96,28 @@ const Settings = () => {
     loadOrganizationData();
   }, [orgId]);
 
+  // Gérer le retour de Stripe Connect
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const success = urlParams.get('success');
+    const refresh = urlParams.get('refresh');
+
+    if (success === 'true') {
+      toast.success("Configuration Stripe terminée avec succès !");
+      // Attendre un peu puis vérifier le statut
+      setTimeout(() => {
+        checkStripeStatus();
+      }, 2000);
+      // Nettoyer l'URL
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (refresh === 'true') {
+      // Rafraîchir le statut
+      checkStripeStatus();
+      // Nettoyer l'URL
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+  }, []);
+
   const checkStripeStatus = async () => {
     if (!user || !orgId) return;
     
@@ -447,7 +469,7 @@ const Settings = () => {
                     </p>
                   )}
                   
-                  <div className="flex flex-col gap-2">
+                   <div className="flex flex-col gap-2">
                     <Button 
                       variant="outline" 
                       size="sm"
@@ -455,6 +477,14 @@ const Settings = () => {
                     >
                       <ExternalLink className="w-4 h-4 mr-2" />
                       Dashboard Stripe
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={checkStripeStatus}
+                      disabled={loadingStripe}
+                    >
+                      Actualiser le statut
                     </Button>
                     {!stripeStatus.charges_enabled && (
                       <Button 
