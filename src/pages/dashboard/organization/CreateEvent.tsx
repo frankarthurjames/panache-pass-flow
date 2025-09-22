@@ -188,7 +188,7 @@ const CreateEvent = () => {
         city: formData.city,
         capacity: formData.capacity ? parseInt(formData.capacity) : null,
         organization_id: orgId,
-        cover_image_url: formData.images.length > 0 ? formData.images[0] : null,
+        images: formData.images,
         status: formData.status
       };
 
