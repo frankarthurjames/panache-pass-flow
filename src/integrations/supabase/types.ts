@@ -45,11 +45,11 @@ export type Database = {
         Row: {
           capacity: number | null
           city: string | null
-          cover_image_url: string | null
           created_at: string | null
           description: string | null
           ends_at: string
           id: string
+          images: Json | null
           organization_id: string | null
           starts_at: string
           status: Database["public"]["Enums"]["event_status"] | null
@@ -60,11 +60,11 @@ export type Database = {
         Insert: {
           capacity?: number | null
           city?: string | null
-          cover_image_url?: string | null
           created_at?: string | null
           description?: string | null
           ends_at: string
           id?: string
+          images?: Json | null
           organization_id?: string | null
           starts_at: string
           status?: Database["public"]["Enums"]["event_status"] | null
@@ -75,11 +75,11 @@ export type Database = {
         Update: {
           capacity?: number | null
           city?: string | null
-          cover_image_url?: string | null
           created_at?: string | null
           description?: string | null
           ends_at?: string
           id?: string
+          images?: Json | null
           organization_id?: string | null
           starts_at?: string
           status?: Database["public"]["Enums"]["event_status"] | null

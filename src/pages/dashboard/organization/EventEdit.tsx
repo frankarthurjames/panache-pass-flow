@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ImageUpload } from "@/components/ImageUpload";
 import { 
   ArrowLeft, 
   Save, 
@@ -141,11 +142,64 @@ const EventEdit = () => {
     fetchEventData();
   }, [eventId, orgId, navigate]);
 
+  const uploadEventImages = async (images: string[]): Promise<string[]> => {
+    if (!images || images.length === 0) return [];
+    
+    try {
+      const bucket = 'event-images';
+      const uploadedUrls: string[] = [];
+      
+      for (let i = 0; i < images.length; i++) {
+        const image = images[i];
+        
+        // Skip if already uploaded (URL format)
+        if (image.startsWith('http')) {
+          uploadedUrls.push(image);
+          continue;
+        }
+        
+        // Upload new image
+        const fileName = `${eventId}-image-${i}-${Date.now()}.jpg`;
+        
+        // Convert base64 to blob if needed
+        let fileToUpload: string | Blob = image;
+        if (typeof image === 'string' && image.startsWith('data:')) {
+          const response = await fetch(image);
+          fileToUpload = await response.blob();
+        }
+        
+        const { data, error } = await supabase.storage
+          .from(bucket)
+          .upload(fileName, fileToUpload);
+        
+        if (error) throw error;
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from(bucket)
+          .getPublicUrl(fileName);
+        
+        uploadedUrls.push(publicUrl);
+      }
+      
+      return uploadedUrls;
+    } catch (error) {
+      console.error('Error uploading images:', error);
+      toast.error("Erreur lors de l'upload des images");
+      return [];
+    }
+  };
+
   const handleSave = async () => {
     if (!event || !eventId) return;
     
     setSaving(true);
     try {
+      // Upload images if there are any
+      let finalImages = event.images || [];
+      if (Array.isArray(event.images)) {
+        finalImages = await uploadEventImages(event.images);
+      }
+
       const { error } = await supabase
         .from('events')
         .update({
@@ -156,6 +210,7 @@ const EventEdit = () => {
           capacity: event.capacity,
           starts_at: event.starts_at,
           ends_at: event.ends_at,
+          images: finalImages,
         })
         .eq('id', eventId);
 
@@ -285,6 +340,16 @@ const EventEdit = () => {
                   rows={4}
                   value={event.description || ''}
                   onChange={(e) => setEvent({ ...event, description: e.target.value })}
+                />
+              </div>
+
+              <div>
+                <Label>Images de l'événement</Label>
+                <ImageUpload
+                  value={Array.isArray(event.images) ? event.images : []}
+                  onChange={(images) => setEvent({ ...event, images })}
+                  maxImages={6}
+                  label="Ajoutez jusqu'à 6 images pour votre événement"
                 />
               </div>
 

@@ -61,7 +61,7 @@ const Events = () => {
         city: originalEvent.city,
         capacity: originalEvent.capacity,
         organization_id: originalEvent.organization_id,
-        cover_image_url: originalEvent.cover_image_url,
+        images: originalEvent.images,
         status: 'draft' as const,
       };
 
