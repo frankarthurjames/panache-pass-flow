@@ -25,6 +25,7 @@ import CreateOrgEvent from "./pages/dashboard/organization/CreateEvent";
 import Analytics from "./pages/dashboard/organization/Analytics";
 import Settings from "./pages/dashboard/organization/Settings";
 import EventEdit from "./pages/dashboard/organization/EventEdit";
+import PaymentSuccess from "./pages/PaymentSuccess";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ const App = () => (
             <Route path="/profile" element={<Profile />} />
             <Route path="/dashboard/events/new" element={<CreateEvent />} />
             <Route path="/faq" element={<FAQ />} />
+            <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/legal/terms" element={<Terms />} />
             <Route path="/legal/privacy" element={<Privacy />} />
             

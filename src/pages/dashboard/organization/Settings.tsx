@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,23 +20,31 @@ import {
   ExternalLink
 } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 const Settings = () => {
   const { orgId } = useParams();
+  const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [loadingStripe, setLoadingStripe] = useState(false);
+  const [stripeStatus, setStripeStatus] = useState({
+    connected: false,
+    details_submitted: false,
+    charges_enabled: false,
+    business_profile: null
+  });
 
-  // Mock data - sera remplacé par des données réelles
   const [orgData, setOrgData] = useState({
-    name: "SportClub Lyon",
-    description: "Club de tennis associatif lyonnais organisant des tournois et stages pour tous niveaux.",
-    website: "https://sportclub-lyon.fr",
-    email: "contact@sportclub-lyon.fr",
-    phone: "04 78 12 34 56",
-    address: "123 Avenue des Sports\n69000 Lyon\nFrance",
-    siretNumber: "12345678901234",
-    billingEmail: "facturation@sportclub-lyon.fr",
+    name: "",
+    description: "",
+    website: "",
+    email: "",
+    phone: "",
+    address: "",
+    siretNumber: "",
+    billingEmail: "",
     logo: null,
-    stripeConnected: true,
     notifications: {
       newRegistration: true,
       paymentReceived: true,
@@ -44,6 +52,66 @@ const Settings = () => {
       weeklyReport: true
     }
   });
+
+  // Charger les données de l'organisation
+  useEffect(() => {
+    if (!orgId) return;
+    
+    const loadOrganizationData = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('organizations')
+          .select('*')
+          .eq('id', orgId)
+          .single();
+
+        if (error) throw error;
+
+        setOrgData({
+          name: data.name || "",
+          description: "", // Ce champ n'existe pas dans la DB
+          website: "", // Ce champ n'existe pas dans la DB
+          email: data.billing_email || "",
+          phone: "", // Ce champ n'existe pas dans la DB
+          address: "", // Ce champ n'existe pas dans la DB
+          siretNumber: data.siret_number || "",
+          billingEmail: data.billing_email || "",
+          logo: data.logo_url,
+          notifications: {
+            newRegistration: true,
+            paymentReceived: true,
+            eventReminder: false,
+            weeklyReport: true
+          }
+        });
+
+        // Vérifier le statut Stripe
+        await checkStripeStatus();
+      } catch (error) {
+        console.error('Error loading organization:', error);
+        toast.error("Erreur lors du chargement des données");
+      }
+    };
+
+    loadOrganizationData();
+  }, [orgId]);
+
+  const checkStripeStatus = async () => {
+    if (!user || !orgId) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('check-connect-status', {
+        body: { organizationId: orgId }
+      });
+
+      if (error) throw error;
+
+      setStripeStatus(data);
+    } catch (error) {
+      console.error('Error checking Stripe status:', error);
+      setStripeStatus({ connected: false, details_submitted: false, charges_enabled: false, business_profile: null });
+    }
+  };
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setOrgData(prev => ({ ...prev, [field]: value }));
@@ -57,14 +125,75 @@ const Settings = () => {
   };
 
   const handleSave = async () => {
+    if (!orgId) return;
+    
     setIsLoading(true);
     try {
-      // Ici on sauvegarderait les données dans la base
+      const { error } = await supabase
+        .from('organizations')
+        .update({
+          name: orgData.name,
+          siret_number: orgData.siretNumber,
+          billing_email: orgData.billingEmail,
+          logo_url: orgData.logo
+        })
+        .eq('id', orgId);
+
+      if (error) throw error;
+      
       toast.success("Paramètres sauvegardés avec succès !");
     } catch (error) {
+      console.error('Error saving organization:', error);
       toast.error("Erreur lors de la sauvegarde");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleConnectStripe = async () => {
+    if (!user || !orgId) return;
+    
+    setLoadingStripe(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('create-connect-account', {
+        body: {
+          organizationId: orgId,
+          organizationName: orgData.name,
+          organizationEmail: orgData.billingEmail || user.email
+        }
+      });
+
+      if (error) throw error;
+
+      // Rediriger vers l'onboarding Stripe
+      window.open(data.onboardingUrl, '_blank');
+      toast.success("Redirection vers Stripe...");
+    } catch (error) {
+      console.error('Error connecting Stripe:', error);
+      toast.error("Erreur lors de la connexion à Stripe");
+    } finally {
+      setLoadingStripe(false);
+    }
+  };
+
+  const handleDisconnectStripe = async () => {
+    if (!user || !orgId) return;
+    
+    setLoadingStripe(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('disconnect-stripe', {
+        body: { organizationId: orgId }
+      });
+
+      if (error) throw error;
+
+      setStripeStatus({ connected: false, details_submitted: false, charges_enabled: false, business_profile: null });
+      toast.success("Compte Stripe déconnecté avec succès");
+    } catch (error) {
+      console.error('Error disconnecting Stripe:', error);
+      toast.error("Erreur lors de la déconnexion");
+    } finally {
+      setLoadingStripe(false);
     }
   };
 
@@ -294,35 +423,79 @@ const Settings = () => {
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <span>Status</span>
-                <Badge variant={orgData.stripeConnected ? "default" : "secondary"}>
-                  {orgData.stripeConnected ? "Connecté" : "Non connecté"}
+                <Badge variant={stripeStatus.connected && stripeStatus.charges_enabled ? "default" : "secondary"}>
+                  {stripeStatus.connected && stripeStatus.charges_enabled ? "Actif" : 
+                   stripeStatus.connected ? "En cours de configuration" : "Non connecté"}
                 </Badge>
               </div>
               
-              {orgData.stripeConnected ? (
+              {stripeStatus.connected ? (
                 <div className="space-y-3">
-                  <p className="text-sm text-muted-foreground">
-                    Votre compte Stripe est connecté et configuré.
-                  </p>
+                  {stripeStatus.charges_enabled ? (
+                    <p className="text-sm text-muted-foreground">
+                      Votre compte Stripe est connecté et peut recevoir des paiements.
+                    </p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      Configuration en cours. Veuillez finaliser votre onboarding Stripe.
+                    </p>
+                  )}
+                  
+                  {stripeStatus.business_profile?.name && (
+                    <p className="text-sm font-medium">
+                      {stripeStatus.business_profile.name}
+                    </p>
+                  )}
+                  
                   <div className="flex flex-col gap-2">
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => window.open('https://dashboard.stripe.com/', '_blank')}
+                    >
                       <ExternalLink className="w-4 h-4 mr-2" />
                       Dashboard Stripe
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-destructive">
-                      Déconnecter
+                    {!stripeStatus.charges_enabled && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handleConnectStripe}
+                        disabled={loadingStripe}
+                      >
+                        Finaliser la configuration
+                      </Button>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-destructive"
+                      onClick={handleDisconnectStripe}
+                      disabled={loadingStripe}
+                    >
+                      {loadingStripe ? "Déconnexion..." : "Déconnecter"}
                     </Button>
                   </div>
                 </div>
               ) : (
                 <div className="space-y-3">
                   <p className="text-sm text-muted-foreground">
-                    Connectez Stripe pour recevoir des paiements.
+                    Connectez Stripe pour recevoir des paiements pour vos événements.
                   </p>
-                  <Button size="sm" className="w-full">
+                  <Button 
+                    size="sm" 
+                    className="w-full"
+                    onClick={handleConnectStripe}
+                    disabled={loadingStripe || !orgData.name || !orgData.billingEmail}
+                  >
                     <CreditCard className="w-4 h-4 mr-2" />
-                    Connecter Stripe
+                    {loadingStripe ? "Connexion..." : "Connecter Stripe"}
                   </Button>
+                  {(!orgData.name || !orgData.billingEmail) && (
+                    <p className="text-xs text-muted-foreground">
+                      Veuillez d'abord renseigner le nom et l'email de facturation
+                    </p>
+                  )}
                 </div>
               )}
             </CardContent>
