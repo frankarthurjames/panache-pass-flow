@@ -28,8 +28,8 @@ serve(async (req) => {
     if (!user?.email) throw new Error("User not authenticated");
 
     // Récupérer les données de la requête
-    const { eventId, ticketTypes } = await req.json();
-    console.log("Payment request:", { eventId, ticketTypes });
+    const { eventId, lineItems } = await req.json();
+    console.log("Payment request:", { eventId, lineItems });
 
     // Récupérer les données de l'événement et de l'organisation
     const { data: eventData, error: eventError } = await supabaseClient
@@ -68,8 +68,8 @@ serve(async (req) => {
     }
 
     // Créer une commande dans la base de données
-    const totalCents = ticketTypes.reduce((sum: number, ticket: any) => 
-      sum + (ticket.price_cents * ticket.quantity), 0
+    const totalCents = lineItems.reduce((sum: number, item: any) => 
+      sum + (item.unit_price_cents * item.quantity), 0
     );
 
     const { data: orderData, error: orderError } = await supabaseClient
@@ -91,11 +91,11 @@ serve(async (req) => {
     console.log("Order created:", orderData.id);
 
     // Créer les items de commande
-    const orderItems = ticketTypes.map((ticket: any) => ({
+    const orderItems = lineItems.map((item: any) => ({
       order_id: orderData.id,
-      ticket_type_id: ticket.id,
-      qty: ticket.quantity,
-      unit_price_cents: ticket.price_cents
+      ticket_type_id: item.ticket_type_id,
+      qty: item.quantity,
+      unit_price_cents: item.unit_price_cents
     }));
 
     const { error: itemsError } = await supabaseClient
@@ -110,26 +110,40 @@ serve(async (req) => {
     // Calculer les frais de la marketplace (5%)
     const applicationFeeAmount = Math.round(totalCents * 0.05);
 
-    // Préparer les line items pour Stripe
-    const lineItems = ticketTypes.map((ticket: any) => ({
-      price_data: {
-        currency: 'eur',
-        product_data: {
-          name: `${eventData.title} - ${ticket.name}`,
-          description: `Billet pour ${eventData.title}`,
-        },
-        unit_amount: ticket.price_cents,
-      },
-      quantity: ticket.quantity,
-    }));
+    // Récupérer les détails des types de tickets pour Stripe
+    const { data: ticketTypesData, error: ticketTypesError } = await supabaseClient
+      .from('ticket_types')
+      .select('id, name, price_cents')
+      .in('id', lineItems.map((item: any) => item.ticket_type_id));
 
-    const origin = req.headers.get("origin") || "http://localhost:3000";
+    if (ticketTypesError) {
+      console.error("Error fetching ticket types:", ticketTypesError);
+      throw new Error("Failed to fetch ticket types");
+    }
+
+    // Préparer les line items pour Stripe
+    const stripeLineItems = lineItems.map((item: any) => {
+      const ticketType = ticketTypesData.find((t: any) => t.id === item.ticket_type_id);
+      return {
+        price_data: {
+          currency: 'eur',
+          product_data: {
+            name: `${eventData.title} - ${ticketType?.name || 'Ticket'}`,
+            description: `Billet pour ${eventData.title}`,
+          },
+          unit_amount: item.unit_price_cents,
+        },
+        quantity: item.quantity,
+      };
+    });
+
+    const origin = req.headers.get("origin") || "http://localhost:8080";
 
     // Créer la session de paiement Stripe avec Connect
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
-      line_items: lineItems,
+      line_items: stripeLineItems,
       mode: "payment",
       success_url: `${origin}/payment-success?session_id={CHECKOUT_SESSION_ID}&order_id=${orderData.id}`,
       cancel_url: `${origin}/events/${eventId}?payment=cancelled`,
@@ -158,7 +172,7 @@ serve(async (req) => {
     }
 
     return new Response(JSON.stringify({ 
-      sessionUrl: session.url,
+      url: session.url,
       sessionId: session.id,
       orderId: orderData.id
     }), {

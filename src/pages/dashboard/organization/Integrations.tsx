@@ -4,15 +4,50 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { useParams } from "react-router-dom";
 import { ExternalLink, CreditCard, Mail, Webhook, BarChart3 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Integrations = () => {
   const { orgId } = useParams();
+  const [stripeStatus, setStripeStatus] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Mock data - sera remplacé par des données réelles
+  // Récupérer le statut Stripe
+  useEffect(() => {
+    const checkStripeStatus = async () => {
+      if (!orgId) return;
+      
+      try {
+        const { data: orgData } = await supabase
+          .from('organizations')
+          .select('stripe_account_id')
+          .eq('id', orgId)
+          .single();
+
+        if (orgData?.stripe_account_id) {
+          const { data: stripeData, error: stripeError } = await supabase.functions.invoke('check-connect-status', {
+            body: { organizationId: orgId }
+          });
+          
+          if (!stripeError && stripeData) {
+            setStripeStatus(stripeData);
+          }
+        }
+      } catch (error) {
+        console.error('Error checking Stripe status:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkStripeStatus();
+  }, [orgId]);
+
   const organization = {
     id: orgId,
     name: "SportClub Lyon",
-    stripeConnected: false,
+    stripeConnected: stripeStatus?.connected && stripeStatus?.charges_enabled,
   };
 
   const integrations = [
@@ -68,6 +103,48 @@ const Integrations = () => {
 
   const categories = [...new Set(integrations.map(i => i.category))];
 
+  // Handlers pour Stripe
+  const handleConnectStripe = async () => {
+    if (!orgId) return;
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('create-connect-account', {
+        body: {
+          organizationId: orgId,
+          organizationName: "Organisation",
+          organizationEmail: "contact@example.com"
+        }
+      });
+
+      if (error) throw error;
+
+      // Rediriger vers l'onboarding Stripe
+      window.open(data.onboardingUrl, '_blank');
+      toast.success("Redirection vers Stripe...");
+    } catch (error) {
+      console.error('Error connecting Stripe:', error);
+      toast.error("Erreur lors de la connexion à Stripe");
+    }
+  };
+
+  const handleDisconnectStripe = async () => {
+    if (!orgId) return;
+    
+    try {
+      const { error } = await supabase.functions.invoke('disconnect-stripe', {
+        body: { organizationId: orgId }
+      });
+
+      if (error) throw error;
+
+      setStripeStatus({ connected: false, details_submitted: false, charges_enabled: false });
+      toast.success("Compte Stripe déconnecté avec succès");
+    } catch (error) {
+      console.error('Error disconnecting Stripe:', error);
+      toast.error("Erreur lors de la déconnexion");
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -102,7 +179,21 @@ const Integrations = () => {
                                 Bientôt disponible
                               </Badge>
                             )}
-                            {integration.connected && (
+                            {integration.id === 'stripe' ? (
+                              loading ? (
+                                <Badge variant="secondary" className="bg-gray-100 text-gray-600">
+                                  Vérification...
+                                </Badge>
+                              ) : integration.connected ? (
+                                <Badge variant="secondary" className="bg-green-100 text-green-800">
+                                  Stripe actif
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+                                  Non connecté
+                                </Badge>
+                              )
+                            ) : integration.connected && (
                               <Badge variant="secondary" className="bg-green-100 text-green-800">
                                 Connecté
                               </Badge>
@@ -132,25 +223,50 @@ const Integrations = () => {
                       </div>
                       
                       <div className="flex gap-2">
-                        {integration.connected ? (
-                          <>
-                            <Button variant="outline" size="sm" disabled={!integration.available}>
-                              Configurer
-                            </Button>
-                            <Button variant="ghost" size="sm" disabled={!integration.available}>
-                              Déconnecter
-                            </Button>
-                          </>
+                        {integration.id === 'stripe' ? (
+                          integration.connected ? (
+                            <>
+                              <Button variant="outline" size="sm" onClick={() => window.open('https://dashboard.stripe.com/', '_blank')}>
+                                <ExternalLink className="w-4 h-4 mr-2" />
+                                Dashboard Stripe
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={handleDisconnectStripe}>
+                                Déconnecter
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button size="sm" onClick={handleConnectStripe}>
+                                <CreditCard className="w-4 h-4 mr-2" />
+                                Connecter Stripe
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => window.open('https://stripe.com/fr', '_blank')}>
+                                <ExternalLink className="w-4 h-4 mr-2" />
+                                En savoir plus
+                              </Button>
+                            </>
+                          )
                         ) : (
-                          <>
-                            <Button size="sm" disabled={!integration.available}>
-                              {integration.available ? 'Connecter' : 'Bientôt disponible'}
-                            </Button>
-                            <Button variant="ghost" size="sm" disabled={!integration.available}>
-                              <ExternalLink className="w-4 h-4 mr-2" />
-                              En savoir plus
-                            </Button>
-                          </>
+                          integration.connected ? (
+                            <>
+                              <Button variant="outline" size="sm" disabled={!integration.available}>
+                                Configurer
+                              </Button>
+                              <Button variant="ghost" size="sm" disabled={!integration.available}>
+                                Déconnecter
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button size="sm" disabled={!integration.available}>
+                                {integration.available ? 'Connecter' : 'Bientôt disponible'}
+                              </Button>
+                              <Button variant="ghost" size="sm" disabled={!integration.available}>
+                                <ExternalLink className="w-4 h-4 mr-2" />
+                                En savoir plus
+                              </Button>
+                            </>
+                          )
                         )}
                       </div>
                     </div>
@@ -195,7 +311,7 @@ const Integrations = () => {
                   </ul>
                 </div>
               </div>
-              <Button className="w-full sm:w-auto">
+              <Button className="w-full sm:w-auto" onClick={handleConnectStripe}>
                 <CreditCard className="w-4 h-4 mr-2" />
                 Connecter Stripe maintenant
               </Button>

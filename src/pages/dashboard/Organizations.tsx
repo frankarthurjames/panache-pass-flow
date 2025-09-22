@@ -42,36 +42,99 @@ const Organizations = () => {
             validMembers.map(async (member: any) => {
               const org = member.organizations;
               
-              // Compter les événements
-              const { count: eventsCount } = await supabase
+              // Dates pour les comparaisons
+              const now = new Date();
+              const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+              const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+              const startOfWeek = new Date(now);
+              startOfWeek.setDate(now.getDate() - now.getDay());
+              startOfWeek.setHours(0, 0, 0, 0);
+              const startOfLastWeek = new Date(startOfWeek);
+              startOfLastWeek.setDate(startOfWeek.getDate() - 7);
+              
+              // Compter les événements totaux
+              const { count: totalEventsCount } = await supabase
                 .from('events')
                 .select('*', { count: 'exact', head: true })
                 .eq('organization_id', org.id);
 
-              // Compter les participants
-              const { count: participantsCount } = await supabase
+              // Compter les événements créés ce mois
+              const { count: eventsThisMonth } = await supabase
+                .from('events')
+                .select('*', { count: 'exact', head: true })
+                .eq('organization_id', org.id)
+                .gte('created_at', startOfMonth.toISOString());
+
+              // Compter les événements créés le mois dernier
+              const { count: eventsLastMonth } = await supabase
+                .from('events')
+                .select('*', { count: 'exact', head: true })
+                .eq('organization_id', org.id)
+                .gte('created_at', startOfLastMonth.toISOString())
+                .lt('created_at', startOfMonth.toISOString());
+
+              // Compter les participants totaux
+              const { count: totalParticipantsCount } = await supabase
                 .from('registrations')
                 .select('*, events!inner(*)')
                 .eq('events.organization_id', org.id);
 
-              // Calculer les revenus du mois
-              const startOfMonth = new Date();
-              startOfMonth.setDate(1);
-              const { data: payments } = await supabase
+              // Compter les participants cette semaine
+              const { count: participantsThisWeek } = await supabase
+                .from('registrations')
+                .select('*, events!inner(*)')
+                .eq('events.organization_id', org.id)
+                .gte('created_at', startOfWeek.toISOString());
+
+              // Compter les participants la semaine dernière
+              const { count: participantsLastWeek } = await supabase
+                .from('registrations')
+                .select('*, events!inner(*)')
+                .eq('events.organization_id', org.id)
+                .gte('created_at', startOfLastWeek.toISOString())
+                .lt('created_at', startOfWeek.toISOString());
+
+              // Calculer les revenus totaux
+              const { data: allPayments } = await supabase
+                .from('payments')
+                .select('amount_cents, orders!inner(*, events!inner(*))')
+                .eq('orders.events.organization_id', org.id);
+
+              // Calculer les revenus ce mois
+              const { data: paymentsThisMonth } = await supabase
                 .from('payments')
                 .select('amount_cents, orders!inner(*, events!inner(*))')
                 .eq('orders.events.organization_id', org.id)
                 .gte('created_at', startOfMonth.toISOString());
 
-              const monthlyRevenue = payments?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
+              // Calculer les revenus le mois dernier
+              const { data: paymentsLastMonth } = await supabase
+                .from('payments')
+                .select('amount_cents, orders!inner(*, events!inner(*))')
+                .eq('orders.events.organization_id', org.id)
+                .gte('created_at', startOfLastMonth.toISOString())
+                .lt('created_at', startOfMonth.toISOString());
+
+              const totalRevenue = allPayments?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
+              const monthlyRevenue = paymentsThisMonth?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
+              const lastMonthRevenue = paymentsLastMonth?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
+
+              // Calculer les variations
+              const eventsVariation = (eventsThisMonth || 0) - (eventsLastMonth || 0);
+              const participantsVariation = (participantsThisWeek || 0) - (participantsLastWeek || 0);
+              const revenueVariation = monthlyRevenue - lastMonthRevenue;
 
               return {
                 id: org.id,
                 name: org.name,
                 logo: org.logo_url,
-                eventsCount: eventsCount || 0,
-                totalParticipants: participantsCount || 0,
+                eventsCount: totalEventsCount || 0,
+                eventsVariation: eventsVariation,
+                totalParticipants: totalParticipantsCount || 0,
+                participantsVariation: participantsVariation,
+                totalRevenue: `${(totalRevenue / 100).toFixed(0)}€`,
                 monthlyRevenue: `${(monthlyRevenue / 100).toFixed(0)}€`,
+                revenueVariation: revenueVariation,
                 status: "Actif",
                 lastActivity: "Il y a 2h", // À implémenter plus tard
                 createdAt: new Date(org.created_at).toLocaleDateString('fr-FR', { 

@@ -39,6 +39,29 @@ const Events = () => {
   const [isDeleting, setIsDeleting] = useState(false);
   const [stripeStatus, setStripeStatus] = useState<any>(null);
   const [loadingStripe, setLoadingStripe] = useState(true);
+  
+  // États pour les filtres
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [filteredEvents, setFilteredEvents] = useState<any[]>([]);
+  
+  // États pour l'infinit scrolling
+  const [currentPage, setCurrentPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [allEvents, setAllEvents] = useState<any[]>([]);
+  const ITEMS_PER_PAGE = 10;
+
+  // Debounce pour la recherche
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Handlers pour les actions
   const handleDuplicateEvent = async (eventId: string) => {
@@ -79,7 +102,8 @@ const Events = () => {
       }
 
       toast.success("Événement dupliqué avec succès!");
-      // Ici on pourrait recharger la liste des événements
+      // Recharger la liste des événements
+      fetchEvents(1, true);
     } catch (error) {
       toast.error("Erreur lors de la duplication");
     }
@@ -179,7 +203,8 @@ const Events = () => {
 
       toast.success("Événement supprimé avec succès!");
       setDeleteEventId(null);
-      // Ici on pourrait recharger la liste des événements
+      // Recharger la liste des événements
+      fetchEvents(1, true);
     } catch (error) {
       toast.error("Erreur lors de la suppression");
     } finally {
@@ -218,71 +243,117 @@ const Events = () => {
     checkStripeStatus();
   }, [user, orgId]);
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      if (!orgId) return;
-      
-      try {
-        // Récupérer les événements de l'organisation
-        const { data: eventsList, error: eventsError } = await supabase
-          .from('events')
-          .select(`
-            id,
-            title,
-            starts_at,
-            status,
-            capacity,
-            created_at
-          `)
-          .eq('organization_id', orgId)
-          .order('created_at', { ascending: false });
+  // Fonction pour récupérer les événements avec pagination
+  const fetchEvents = async (page: number = 1, reset: boolean = false) => {
+    if (!orgId) return;
+    
+    try {
+      if (reset) {
+        setLoading(true);
+        setCurrentPage(1);
+        setAllEvents([]);
+        setFilteredEvents([]);
+      } else {
+        setIsLoadingMore(true);
+      }
 
-        if (eventsError) throw eventsError;
+      const from = (page - 1) * ITEMS_PER_PAGE;
+      const to = from + ITEMS_PER_PAGE - 1;
 
-        // Pour chaque événement, récupérer les statistiques
-        const eventsWithStats = await Promise.all(
-          eventsList.map(async (event: any) => {
-            // Compter les participants
-            const { count: participantsCount } = await supabase
-              .from('registrations')
-              .select('*', { count: 'exact', head: true })
-              .eq('event_id', event.id);
+      // Récupérer les événements de l'organisation avec pagination
+      const { data: eventsList, error: eventsError } = await supabase
+        .from('events')
+        .select(`
+          id,
+          title,
+          starts_at,
+          status,
+          capacity,
+          created_at,
+          description,
+          venue,
+          city
+        `)
+        .eq('organization_id', orgId)
+        .order('created_at', { ascending: false })
+        .range(from, to);
 
-            // Calculer les revenus
-            const { data: payments } = await supabase
-              .from('payments')
-              .select('amount_cents, orders!inner(*)')
-              .eq('orders.event_id', event.id);
+      if (eventsError) throw eventsError;
 
-            const revenue = payments?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
+      // Pour chaque événement, récupérer les statistiques
+      const eventsWithStats = await Promise.all(
+        eventsList.map(async (event: any) => {
+          // Compter les participants
+          const { count: participantsCount } = await supabase
+            .from('registrations')
+            .select('*', { count: 'exact', head: true })
+            .eq('event_id', event.id);
 
-            const statusMap: any = {
-              'published': { label: 'Publié', color: 'bg-green-500' },
-              'draft': { label: 'Brouillon', color: 'bg-yellow-500' },
-              'cancelled': { label: 'Annulé', color: 'bg-red-500' }
-            };
+          // Calculer les revenus
+          const { data: payments } = await supabase
+            .from('payments')
+            .select('amount_cents, orders!inner(*)')
+            .eq('orders.event_id', event.id);
 
-            return {
-              id: event.id,
-              title: event.title,
-              date: new Date(event.starts_at).toLocaleDateString('fr-FR', { 
-                day: 'numeric', 
-                month: 'short', 
-                year: 'numeric' 
-              }),
-              status: statusMap[event.status]?.label || 'En attente',
-              participants: `${participantsCount || 0}/${event.capacity || 0}`,
-              revenue: `${(revenue / 100).toFixed(0)}€`,
-              statusColor: statusMap[event.status]?.color || 'bg-blue-500',
-              category: "Sport" // À implémenter plus tard avec une vraie catégorie
-            };
-          })
-        );
+          const revenue = payments?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
 
-        setEvents(eventsWithStats);
+          const statusMap: any = {
+            'published': { label: 'Publié', color: 'bg-green-500' },
+            'draft': { label: 'Brouillon', color: 'bg-yellow-500' },
+            'cancelled': { label: 'Annulé', color: 'bg-red-500' }
+          };
 
-        // Calculer les stats
-        const totalEvents = eventsList.length;
+          // Déterminer la catégorie basée sur le titre ou la description
+          const getCategory = (title: string, description: string) => {
+            const text = (title + ' ' + description).toLowerCase();
+            if (text.includes('tennis')) return 'Tennis';
+            if (text.includes('football') || text.includes('soccer')) return 'Football';
+            if (text.includes('basketball') || text.includes('basket')) return 'Basketball';
+            if (text.includes('course') || text.includes('running') || text.includes('marathon')) return 'Course';
+            if (text.includes('badminton')) return 'Badminton';
+            if (text.includes('volleyball') || text.includes('volley')) return 'Volleyball';
+            if (text.includes('swimming') || text.includes('natation')) return 'Natation';
+            if (text.includes('golf')) return 'Golf';
+            if (text.includes('rugby')) return 'Rugby';
+            if (text.includes('handball')) return 'Handball';
+            return 'Sport';
+          };
+
+          return {
+            id: event.id,
+            title: event.title,
+            description: event.description,
+            venue: event.venue,
+            city: event.city,
+            date: new Date(event.starts_at).toLocaleDateString('fr-FR', { 
+              day: 'numeric', 
+              month: 'short', 
+              year: 'numeric' 
+            }),
+            status: statusMap[event.status]?.label || 'En attente',
+            statusValue: event.status,
+            participants: `${participantsCount || 0}/${event.capacity || 0}`,
+            revenue: `${(revenue / 100).toFixed(0)}€`,
+            statusColor: statusMap[event.status]?.color || 'bg-blue-500',
+            category: getCategory(event.title, event.description || '')
+          };
+        })
+      );
+
+      if (reset) {
+        setAllEvents(eventsWithStats);
+        setFilteredEvents(eventsWithStats);
+      } else {
+        setAllEvents(prev => [...prev, ...eventsWithStats]);
+        setFilteredEvents(prev => [...prev, ...eventsWithStats]);
+      }
+
+      // Vérifier s'il y a plus d'événements
+      setHasMore(eventsList.length === ITEMS_PER_PAGE);
+
+      // Calculer les stats globales (une seule fois)
+      if (reset) {
+        const totalEvents = eventsWithStats.length;
         const totalParticipants = eventsWithStats.reduce((sum, event) => {
           const participants = parseInt(event.participants.split('/')[0]);
           return sum + participants;
@@ -312,18 +383,92 @@ const Events = () => {
             icon: TrendingUp,
           },
         ]);
+      }
 
-      } catch (error) {
-        console.error('Error fetching events:', error);
+    } catch (error) {
+      console.error('Error fetching events:', error);
+      if (reset) {
         setEvents([]);
         setStats([]);
-      } finally {
+      }
+    } finally {
+      if (reset) {
         setLoading(false);
+      } else {
+        setIsLoadingMore(false);
+      }
+    }
+  };
+
+  // Charger les événements au montage
+  useEffect(() => {
+    fetchEvents(1, true);
+  }, [orgId]);
+
+
+  // Fonction de filtrage
+  const applyFilters = () => {
+    let filtered = [...allEvents];
+
+    // Filtre par recherche
+    if (debouncedSearchTerm) {
+      filtered = filtered.filter(event => 
+        event.title.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        event.description?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        event.venue?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+        event.city?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+      );
+    }
+
+    // Filtre par statut
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(event => event.statusValue === statusFilter);
+    }
+
+    // Filtre par catégorie
+    if (categoryFilter !== "all") {
+      filtered = filtered.filter(event => event.category === categoryFilter);
+    }
+
+    setFilteredEvents(filtered);
+  };
+
+  // Appliquer les filtres quand ils changent
+  useEffect(() => {
+    applyFilters();
+  }, [debouncedSearchTerm, statusFilter, categoryFilter, allEvents]);
+
+  // Fonction pour charger plus d'événements automatiquement
+  const loadMoreEvents = () => {
+    if (!isLoadingMore && hasMore) {
+      const nextPage = currentPage + 1;
+      setCurrentPage(nextPage);
+      fetchEvents(nextPage, false);
+    }
+  };
+
+  // Intersection Observer pour l'infinit scrolling
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !isLoadingMore) {
+          loadMoreEvents();
+        }
+      },
+      { threshold: 0.1, rootMargin: '100px' }
+    );
+
+    const loadMoreElement = document.getElementById('load-more-trigger');
+    if (loadMoreElement) {
+      observer.observe(loadMoreElement);
+    }
+
+    return () => {
+      if (loadMoreElement) {
+        observer.unobserve(loadMoreElement);
       }
     };
-
-    fetchEvents();
-  }, [orgId]);
+  }, [hasMore, isLoadingMore, currentPage, allEvents.length]);
 
   return (
     <div className="space-y-8">
@@ -384,9 +529,11 @@ const Events = () => {
           <Input
             placeholder="Rechercher un événement..."
             className="pl-10"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Select defaultValue="all">
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Statut" />
           </SelectTrigger>
@@ -394,28 +541,59 @@ const Events = () => {
             <SelectItem value="all">Tous les statuts</SelectItem>
             <SelectItem value="published">Publié</SelectItem>
             <SelectItem value="draft">Brouillon</SelectItem>
-            <SelectItem value="pending">En attente</SelectItem>
+            <SelectItem value="cancelled">Annulé</SelectItem>
           </SelectContent>
         </Select>
-        <Select defaultValue="all">
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Catégorie" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Toutes catégories</SelectItem>
-            <SelectItem value="tennis">Tennis</SelectItem>
-            <SelectItem value="course">Course</SelectItem>
-            <SelectItem value="badminton">Badminton</SelectItem>
-            <SelectItem value="football">Football</SelectItem>
+            <SelectItem value="Tennis">Tennis</SelectItem>
+            <SelectItem value="Course">Course</SelectItem>
+            <SelectItem value="Badminton">Badminton</SelectItem>
+            <SelectItem value="Football">Football</SelectItem>
+            <SelectItem value="Basketball">Basketball</SelectItem>
+            <SelectItem value="Volleyball">Volleyball</SelectItem>
+            <SelectItem value="Natation">Natation</SelectItem>
+            <SelectItem value="Golf">Golf</SelectItem>
+            <SelectItem value="Rugby">Rugby</SelectItem>
+            <SelectItem value="Handball">Handball</SelectItem>
+            <SelectItem value="Sport">Sport</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Events List */}
       <div className="space-y-4">
+        {/* Compteur d'événements */}
+        {!loading && (
+          <div className="flex justify-between items-center text-sm text-muted-foreground">
+            <p>
+              {filteredEvents.length} événement{filteredEvents.length > 1 ? 's' : ''} 
+              {debouncedSearchTerm || statusFilter !== 'all' || categoryFilter !== 'all' ? ' trouvé(s)' : ''}
+            </p>
+            {(debouncedSearchTerm || statusFilter !== 'all' || categoryFilter !== 'all') && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => {
+                  setSearchTerm('');
+                  setDebouncedSearchTerm('');
+                  setStatusFilter('all');
+                  setCategoryFilter('all');
+                }}
+              >
+                Effacer les filtres
+              </Button>
+            )}
+          </div>
+        )}
+        
         {loading ? (
           <div className="text-center py-8">Chargement...</div>
-        ) : events.map((event) => (
+        ) : filteredEvents.map((event) => (
           <Card key={event.id} className="hover:shadow-lg transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -430,11 +608,18 @@ const Events = () => {
                       <Badge variant="outline">{event.category}</Badge>
                     </div>
                     <div className="text-sm text-muted-foreground space-y-1">
-                      <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-6 flex-wrap">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
                           {event.date}
                         </span>
+                        {event.venue && (
+                          <span className="flex items-center gap-1">
+                            <span className="w-4 h-4">📍</span>
+                            {event.venue}
+                            {event.city && `, ${event.city}`}
+                          </span>
+                        )}
                         <span className="flex items-center gap-1">
                           <Users className="w-4 h-4" />
                           {event.participants}
@@ -444,6 +629,11 @@ const Events = () => {
                           {event.revenue}
                         </span>
                       </div>
+                      {event.description && (
+                        <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
+                          {event.description}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -492,9 +682,28 @@ const Events = () => {
             </CardContent>
           </Card>
         ))}
+        
+        {/* Infinit scrolling - Élément de déclenchement invisible pour chargement automatique */}
+        {hasMore && !loading && (
+          <div id="load-more-trigger" className="h-10 flex items-center justify-center">
+            {isLoadingMore && (
+              <div className="flex items-center gap-2 text-muted-foreground">
+                <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                <span>Chargement automatique...</span>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Indicateur de fin */}
+        {!hasMore && filteredEvents.length > 0 && (
+          <div className="text-center py-6 text-muted-foreground">
+            <p>Tous les événements ont été chargés</p>
+          </div>
+        )}
       </div>
       
-      {events.length === 0 && (
+      {filteredEvents.length === 0 && !loading && (
         <Card className="p-12 text-center">
           <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
           <h3 className="text-xl font-semibold mb-2">

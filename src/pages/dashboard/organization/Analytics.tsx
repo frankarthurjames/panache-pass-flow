@@ -12,7 +12,8 @@ import {
   Eye,
   UserCheck,
   Activity,
-  Clock
+  Clock,
+  BarChart
 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
@@ -27,17 +28,40 @@ const Analytics = () => {
   const [dailyRegistrations, setDailyRegistrations] = useState<any[]>([]);
   const [recentRegistrations, setRecentRegistrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [stripeStatus, setStripeStatus] = useState<any>(null);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
-      if (!orgId || !eventId) return;
+      if (!orgId) {
+        setLoading(false);
+        return;
+      }
+      
+      // Si pas d'eventId, récupérer le premier événement de l'organisation
+      let targetEventId = eventId;
+      if (!targetEventId) {
+        const { data: events, error: eventsError } = await supabase
+          .from('events')
+          .select('id')
+          .eq('organization_id', orgId)
+          .order('created_at', { ascending: false })
+          .limit(1);
+        
+        if (eventsError || !events || events.length === 0) {
+          console.error('No events found for organization');
+          setLoading(false);
+          return;
+        }
+        
+        targetEventId = events[0].id;
+      }
       
       try {
         // Récupérer les données de l'événement
         const { data: event, error: eventError } = await supabase
           .from('events')
           .select('*')
-          .eq('id', eventId)
+          .eq('id', targetEventId)
           .single();
 
         if (eventError) throw eventError;
@@ -46,13 +70,13 @@ const Analytics = () => {
         const { count: totalRegistrationsCount } = await supabase
           .from('registrations')
           .select('*', { count: 'exact', head: true })
-          .eq('event_id', eventId);
+          .eq('event_id', targetEventId);
 
         // Calculer les revenus
         const { data: payments } = await supabase
           .from('payments')
           .select('amount_cents, orders!inner(*)')
-          .eq('orders.event_id', eventId);
+          .eq('orders.event_id', targetEventId);
 
         const totalRevenue = payments?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
 
@@ -66,7 +90,7 @@ const Analytics = () => {
               status
             )
           `)
-          .eq('event_id', eventId);
+          .eq('event_id', targetEventId);
 
         const ticketStats = ticketTypes?.map(ticket => {
           const sold = ticket.registrations?.filter((r: any) => r.status === 'issued').length || 0;
@@ -107,16 +131,82 @@ const Analytics = () => {
           status: reg.status === 'issued' ? 'Confirmé' : 'En attente'
         })) || [];
 
-        // Générer des données quotidiennes simulées (à implémenter avec vraies données plus tard)
-        const dailyData = [
-          { date: "Lun", count: Math.floor(Math.random() * 10) + 5 },
-          { date: "Mar", count: Math.floor(Math.random() * 10) + 5 },
-          { date: "Mer", count: Math.floor(Math.random() * 10) + 5 },
-          { date: "Jeu", count: Math.floor(Math.random() * 10) + 5 },
-          { date: "Ven", count: Math.floor(Math.random() * 10) + 5 },
-          { date: "Sam", count: Math.floor(Math.random() * 10) + 5 },
-          { date: "Dim", count: Math.floor(Math.random() * 10) + 5 }
-        ];
+        // Générer des données quotidiennes réelles pour les 7 derniers jours
+        const now = new Date();
+        const dailyData = [];
+        const dayNames = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+        
+        for (let i = 6; i >= 0; i--) {
+          const date = new Date(now);
+          date.setDate(date.getDate() - i);
+          const startOfDay = new Date(date);
+          startOfDay.setHours(0, 0, 0, 0);
+          const endOfDay = new Date(date);
+          endOfDay.setHours(23, 59, 59, 999);
+          
+          const { count } = await supabase
+            .from('registrations')
+            .select('*', { count: 'exact', head: true })
+            .eq('event_id', eventId)
+            .gte('created_at', startOfDay.toISOString())
+            .lte('created_at', endOfDay.toISOString());
+          
+          dailyData.push({
+            date: dayNames[date.getDay()],
+            count: count || 0
+          });
+        }
+
+        // Calculer les variations pour les statistiques
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        const startOfLastWeek = new Date(startOfWeek);
+        startOfLastWeek.setDate(startOfWeek.getDate() - 7);
+        
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+        // Inscriptions cette semaine vs semaine dernière
+        const { count: registrationsThisWeek } = await supabase
+          .from('registrations')
+          .select('*', { count: 'exact', head: true })
+          .eq('event_id', eventId)
+          .gte('created_at', startOfWeek.toISOString());
+
+        const { count: registrationsLastWeek } = await supabase
+          .from('registrations')
+          .select('*', { count: 'exact', head: true })
+          .eq('event_id', eventId)
+          .gte('created_at', startOfLastWeek.toISOString())
+          .lt('created_at', startOfWeek.toISOString());
+
+        // Revenus ce mois vs mois dernier
+        const { data: paymentsThisMonth } = await supabase
+          .from('payments')
+          .select('amount_cents, orders!inner(*)')
+          .eq('orders.event_id', eventId)
+          .gte('created_at', startOfMonth.toISOString());
+
+        const { data: paymentsLastMonth } = await supabase
+          .from('payments')
+          .select('amount_cents, orders!inner(*)')
+          .eq('orders.event_id', eventId)
+          .gte('created_at', startOfLastMonth.toISOString())
+          .lt('created_at', startOfMonth.toISOString());
+
+        const revenueThisMonth = paymentsThisMonth?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
+        const revenueLastMonth = paymentsLastMonth?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
+
+        // Calculer les variations
+        const registrationsVariation = (registrationsThisWeek || 0) - (registrationsLastWeek || 0);
+        const revenueVariation = revenueThisMonth - revenueLastMonth;
+        const revenueVariationPercent = revenueLastMonth > 0 ? Math.round((revenueVariation / revenueLastMonth) * 100) : 0;
+
+        // Taux de remplissage actuel vs la semaine dernière
+        const currentFillRate = event.capacity > 0 ? Math.round(((totalRegistrationsCount || 0) / event.capacity) * 100) : 0;
+        const lastWeekFillRate = event.capacity > 0 ? Math.round(((registrationsLastWeek || 0) / event.capacity) * 100) : 0;
+        const fillRateVariation = currentFillRate - lastWeekFillRate;
 
         setEventData({
           title: event.title,
@@ -125,30 +215,30 @@ const Analytics = () => {
           totalRegistrations: totalRegistrationsCount || 0,
           capacity: event.capacity || 0,
           revenue: `${(totalRevenue / 100).toFixed(2)}€`,
-          views: Math.floor(Math.random() * 1000) + 500, // Simulé
-          conversionRate: "12.5%" // Simulé
+          views: Math.floor(Math.random() * 1000) + 500, // Simulé - à implémenter avec vraies données
+          conversionRate: "12.5%" // Simulé - à implémenter avec vraies données
         });
 
         setRegistrationStats([
           {
             title: "Total inscriptions",
             value: (totalRegistrationsCount || 0).toString(),
-            change: "+12 cette semaine",
+            change: `${registrationsVariation >= 0 ? '+' : ''}${registrationsVariation} cette semaine`,
             icon: Users,
             color: "text-blue-600"
           },
           {
             title: "Revenus générés",
             value: `${(totalRevenue / 100).toFixed(0)}€`,
-            change: "+8% ce mois",
-            icon: CreditCard,
+            change: `${revenueVariationPercent >= 0 ? '+' : ''}${revenueVariationPercent}% ce mois`,
+            icon: TrendingUp,
             color: "text-green-600"
           },
           {
             title: "Taux de remplissage",
-            value: `${Math.round(((totalRegistrationsCount || 0) / (event.capacity || 1)) * 100)}%`,
-            change: "+3% cette semaine",
-            icon: Activity,
+            value: `${currentFillRate}%`,
+            change: `${fillRateVariation >= 0 ? '+' : ''}${fillRateVariation}% cette semaine`,
+            icon: BarChart,
             color: "text-purple-600"
           },
           {
@@ -156,7 +246,7 @@ const Analytics = () => {
             value: (Math.floor(Math.random() * 1000) + 500).toString(),
             change: "+15% ce mois",
             icon: Eye,
-            color: "text-orange-600"
+            color: "text-indigo-600"
           }
         ]);
 
@@ -164,8 +254,31 @@ const Analytics = () => {
         setDailyRegistrations(dailyData);
         setRecentRegistrations(recentRegistrationsList);
 
+        // Récupérer le statut Stripe de l'organisation
+        const { data: orgData } = await supabase
+          .from('organizations')
+          .select('stripe_account_id')
+          .eq('id', orgId)
+          .single();
+
+        if (orgData?.stripe_account_id) {
+          // Vérifier le statut du compte Stripe
+          try {
+            const { data: stripeData, error: stripeError } = await supabase.functions.invoke('check-connect-status', {
+              body: { organizationId: orgId }
+            });
+            
+            if (!stripeError && stripeData) {
+              setStripeStatus(stripeData);
+            }
+          } catch (error) {
+            console.log('Stripe status check failed:', error);
+          }
+        }
+
       } catch (error) {
         console.error('Error fetching analytics:', error);
+        toast.error("Erreur lors du chargement des analytics");
       } finally {
         setLoading(false);
       }
@@ -252,34 +365,55 @@ const Analytics = () => {
   }
 
   if (!eventData) {
-    return <div className="text-center py-12">Événement non trouvé</div>;
+    return (
+      <div className="text-center py-12">
+        <h2 className="text-2xl font-bold mb-4">Aucun événement trouvé</h2>
+        <p className="text-muted-foreground mb-6">
+          Cette organisation n'a pas encore d'événements à analyser.
+        </p>
+        <Button asChild>
+          <Link to={`/dashboard/org/${orgId}/events/create`}>
+            Créer un événement
+          </Link>
+        </Button>
+      </div>
+    );
   }
 
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" asChild>
-          <Link to={`/dashboard/org/${orgId}/events`}>
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour aux événements
-          </Link>
-        </Button>
-        <div className="flex-1">
+      <div className="space-y-4">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" asChild>
+            <Link to={`/dashboard/org/${orgId}/events`}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Retour aux événements
+            </Link>
+          </Button>
+          <Button variant="outline" onClick={handleExportReport}>
+            <Download className="w-4 h-4 mr-2" />
+            Exporter le rapport
+          </Button>
+        </div>
+        
+        <div>
           <h1 className="text-3xl font-bold mb-2">Analyse de l'événement</h1>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-wrap">
             <p className="text-muted-foreground">{eventData.title}</p>
             <Badge variant="secondary">{eventData.status}</Badge>
             <span className="text-muted-foreground flex items-center gap-1">
               <Calendar className="w-4 h-4" />
               {eventData.date}
             </span>
+            {stripeStatus?.connected && stripeStatus?.charges_enabled && (
+              <Badge variant="default" className="bg-green-600">
+                <CreditCard className="w-3 h-3 mr-1" />
+                Stripe actif
+              </Badge>
+            )}
           </div>
         </div>
-        <Button variant="outline" onClick={handleExportReport}>
-          <Download className="w-4 h-4 mr-2" />
-          Exporter le rapport
-        </Button>
       </div>
 
       {/* Overview Stats */}
@@ -373,22 +507,27 @@ const Analytics = () => {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {dailyRegistrations.map((day) => (
-                <div key={day.date} className="flex items-center justify-between">
-                  <span className="text-sm font-medium w-12">{day.date}</span>
-                  <div className="flex-1 mx-4">
-                    <div className="bg-muted h-6 rounded-sm relative overflow-hidden">
-                      <div 
-                        className="bg-primary h-full rounded-sm transition-all duration-300"
-                        style={{ width: `${Math.min((day.count / 15) * 100, 100)}%` }}
-                      />
+              {dailyRegistrations.map((day) => {
+                const maxCount = Math.max(...dailyRegistrations.map(d => d.count), 1);
+                const percentage = (day.count / maxCount) * 100;
+                
+                return (
+                  <div key={day.date} className="flex items-center justify-between">
+                    <span className="text-sm font-medium w-12">{day.date}</span>
+                    <div className="flex-1 mx-4">
+                      <div className="bg-muted h-6 rounded-sm relative overflow-hidden">
+                        <div 
+                          className="bg-primary h-full rounded-sm transition-all duration-300"
+                          style={{ width: `${Math.min(percentage, 100)}%` }}
+                        />
+                      </div>
                     </div>
+                    <span className="text-sm text-muted-foreground w-8 text-right">
+                      {day.count}
+                    </span>
                   </div>
-                  <span className="text-sm text-muted-foreground w-8 text-right">
-                    {day.count}
-                  </span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>

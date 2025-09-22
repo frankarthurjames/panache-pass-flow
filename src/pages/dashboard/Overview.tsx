@@ -39,6 +39,22 @@ const Overview = () => {
         let totalEvents = 0;
         let totalParticipants = 0;
         let totalRevenue = 0;
+        let totalEventsThisMonth = 0;
+        let totalEventsLastMonth = 0;
+        let totalParticipantsThisWeek = 0;
+        let totalParticipantsLastWeek = 0;
+        let totalRevenueThisMonth = 0;
+        let totalRevenueLastMonth = 0;
+
+        // Dates pour les comparaisons
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        const startOfLastWeek = new Date(startOfWeek);
+        startOfLastWeek.setDate(startOfWeek.getDate() - 7);
 
         if (orgMembers) {
           const validMembers = orgMembers.filter((m: any) => m.organizations);
@@ -46,33 +62,82 @@ const Overview = () => {
             validMembers.map(async (member: any) => {
               const org = member.organizations;
               
-              // Compter les événements
+              // Compter les événements totaux
               const { count: eventsCount } = await supabase
                 .from('events')
                 .select('*', { count: 'exact', head: true })
                 .eq('organization_id', org.id);
 
-              // Compter les participants
+              // Compter les événements ce mois
+              const { count: eventsThisMonth } = await supabase
+                .from('events')
+                .select('*', { count: 'exact', head: true })
+                .eq('organization_id', org.id)
+                .gte('created_at', startOfMonth.toISOString());
+
+              // Compter les événements le mois dernier
+              const { count: eventsLastMonth } = await supabase
+                .from('events')
+                .select('*', { count: 'exact', head: true })
+                .eq('organization_id', org.id)
+                .gte('created_at', startOfLastMonth.toISOString())
+                .lt('created_at', startOfMonth.toISOString());
+
+              // Compter les participants totaux
               const { count: participantsCount } = await supabase
                 .from('registrations')
                 .select('*, events!inner(*)')
                 .eq('events.organization_id', org.id);
 
-              // Calculer les revenus du mois
-              const startOfMonth = new Date();
-              startOfMonth.setDate(1);
-              const { data: payments } = await supabase
+              // Compter les participants cette semaine
+              const { count: participantsThisWeek } = await supabase
+                .from('registrations')
+                .select('*, events!inner(*)')
+                .eq('events.organization_id', org.id)
+                .gte('created_at', startOfWeek.toISOString());
+
+              // Compter les participants la semaine dernière
+              const { count: participantsLastWeek } = await supabase
+                .from('registrations')
+                .select('*, events!inner(*)')
+                .eq('events.organization_id', org.id)
+                .gte('created_at', startOfLastWeek.toISOString())
+                .lt('created_at', startOfWeek.toISOString());
+
+              // Calculer les revenus totaux
+              const { data: allPayments } = await supabase
+                .from('payments')
+                .select('amount_cents, orders!inner(*, events!inner(*))')
+                .eq('orders.events.organization_id', org.id);
+
+              // Calculer les revenus ce mois
+              const { data: paymentsThisMonth } = await supabase
                 .from('payments')
                 .select('amount_cents, orders!inner(*, events!inner(*))')
                 .eq('orders.events.organization_id', org.id)
                 .gte('created_at', startOfMonth.toISOString());
 
-              const monthlyRevenue = payments?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
+              // Calculer les revenus le mois dernier
+              const { data: paymentsLastMonth } = await supabase
+                .from('payments')
+                .select('amount_cents, orders!inner(*, events!inner(*))')
+                .eq('orders.events.organization_id', org.id)
+                .gte('created_at', startOfLastMonth.toISOString())
+                .lt('created_at', startOfMonth.toISOString());
+
+              const monthlyRevenue = paymentsThisMonth?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
+              const totalOrgRevenue = allPayments?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
               
               // Ajouter aux totaux globaux
               totalEvents += eventsCount || 0;
+              totalEventsThisMonth += eventsThisMonth || 0;
+              totalEventsLastMonth += eventsLastMonth || 0;
               totalParticipants += participantsCount || 0;
-              totalRevenue += monthlyRevenue;
+              totalParticipantsThisWeek += participantsThisWeek || 0;
+              totalParticipantsLastWeek += participantsLastWeek || 0;
+              totalRevenue += totalOrgRevenue;
+              totalRevenueThisMonth += monthlyRevenue;
+              totalRevenueLastMonth += paymentsLastMonth?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
 
               return {
                 id: org.id,
@@ -89,30 +154,35 @@ const Overview = () => {
 
           setOrganizations(orgsWithStats);
 
-          // Mettre à jour les stats globales
+          // Calculer les variations
+          const eventsVariation = totalEventsThisMonth - totalEventsLastMonth;
+          const participantsVariation = totalParticipantsThisWeek - totalParticipantsLastWeek;
+          const revenueVariation = totalRevenueThisMonth - totalRevenueLastMonth;
+
+          // Mettre à jour les stats globales avec de vraies données
           setGlobalStats([
             {
               title: "Organisations actives",
               value: validMembers.length.toString(),
-              change: "+1 ce mois",
+              change: `+${validMembers.length} ce mois`,
               icon: Building2,
             },
             {
               title: "Événements total",
               value: totalEvents.toString(),
-              change: "+5 cette semaine",
+              change: `${eventsVariation >= 0 ? '+' : ''}${eventsVariation} ce mois`,
               icon: Calendar,
             },
             {
               title: "Participants total",
               value: totalParticipants.toString(),
-              change: "+32 ce mois",
+              change: `${participantsVariation >= 0 ? '+' : ''}${participantsVariation} cette semaine`,
               icon: Users,
             },
             {
               title: "Revenus total",
               value: `${(totalRevenue / 100).toFixed(0)}€`,
-              change: "+890€ ce mois",
+              change: `${revenueVariation >= 0 ? '+' : ''}${(revenueVariation / 100).toFixed(0)}€ ce mois`,
               icon: TrendingUp,
             },
           ]);

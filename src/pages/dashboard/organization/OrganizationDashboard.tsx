@@ -93,34 +93,92 @@ const OrganizationDashboard = () => {
 
         setUserEvents(eventsWithStats);
 
-        // Calculer les stats globales
+        // Calculer les stats globales avec comparaisons de périodes
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        const startOfLastWeek = new Date(startOfWeek);
+        startOfLastWeek.setDate(startOfWeek.getDate() - 7);
+
         const totalEvents = events.length;
+        
+        // Compter les événements créés ce mois
+        const eventsThisMonth = events.filter(event => 
+          new Date(event.created_at) >= startOfMonth
+        ).length;
+        
+        // Compter les événements créés le mois dernier
+        const eventsLastMonth = events.filter(event => {
+          const eventDate = new Date(event.created_at);
+          return eventDate >= startOfLastMonth && eventDate < startOfMonth;
+        }).length;
+
         const totalParticipants = eventsWithStats.reduce((sum, event) => {
           const participants = parseInt(event.participants.split('/')[0]);
           return sum + participants;
         }, 0);
+
+        // Compter les participants cette semaine
+        const participantsThisWeek = await supabase
+          .from('registrations')
+          .select('*, events!inner(*)')
+          .eq('events.organization_id', orgId)
+          .gte('created_at', startOfWeek.toISOString());
+        
+        const participantsLastWeek = await supabase
+          .from('registrations')
+          .select('*, events!inner(*)')
+          .eq('events.organization_id', orgId)
+          .gte('created_at', startOfLastWeek.toISOString())
+          .lt('created_at', startOfWeek.toISOString());
+
         const totalRevenue = eventsWithStats.reduce((sum, event) => {
           const revenue = parseInt(event.revenue.replace('€', ''));
           return sum + revenue;
         }, 0);
 
+        // Calculer les revenus ce mois
+        const paymentsThisMonth = await supabase
+          .from('payments')
+          .select('amount_cents, orders!inner(*, events!inner(*))')
+          .eq('orders.events.organization_id', orgId)
+          .gte('created_at', startOfMonth.toISOString());
+
+        const paymentsLastMonth = await supabase
+          .from('payments')
+          .select('amount_cents, orders!inner(*, events!inner(*))')
+          .eq('orders.events.organization_id', orgId)
+          .gte('created_at', startOfLastMonth.toISOString())
+          .lt('created_at', startOfMonth.toISOString());
+
+        const monthlyRevenue = paymentsThisMonth.data?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
+        const lastMonthRevenue = paymentsLastMonth.data?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
+
+        // Calculer les variations
+        const eventsVariation = eventsThisMonth - eventsLastMonth;
+        const participantsVariation = (participantsThisWeek.count || 0) - (participantsLastWeek.count || 0);
+        const revenueVariation = monthlyRevenue - lastMonthRevenue;
+
         setStats([
           {
             title: "Événements créés",
             value: totalEvents.toString(),
-            change: "+1 ce mois",
+            change: `${eventsVariation >= 0 ? '+' : ''}${eventsVariation} ce mois`,
             icon: Calendar,
           },
           {
             title: "Total participants",
             value: totalParticipants.toString(),
-            change: "+12 cette semaine",
+            change: `${participantsVariation >= 0 ? '+' : ''}${participantsVariation} cette semaine`,
             icon: Users,
           },
           {
             title: "Revenus générés",
             value: `${totalRevenue}€`,
-            change: "+280€ ce mois",
+            change: `${revenueVariation >= 0 ? '+' : ''}${(revenueVariation / 100).toFixed(0)}€ ce mois`,
             icon: TrendingUp,
           },
         ]);
