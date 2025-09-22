@@ -147,10 +147,26 @@ const Settings = () => {
   };
 
   const handleSave = async () => {
-    if (!orgId) return;
+    if (!orgId || !user) return;
     
     setIsLoading(true);
     try {
+      // First, check if user is owner of the organization
+      const { data: memberData, error: memberError } = await supabase
+        .from('organization_members')
+        .select('role')
+        .eq('organization_id', orgId)
+        .eq('user_id', user.id)
+        .eq('role', 'owner')
+        .single();
+
+      if (memberError || !memberData) {
+        console.error('User is not owner of organization:', memberError);
+        toast.error("Vous n'avez pas les droits pour modifier cette organisation");
+        return;
+      }
+
+      // Update the organization
       const { error } = await supabase
         .from('organizations')
         .update({
@@ -161,7 +177,10 @@ const Settings = () => {
         })
         .eq('id', orgId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating organization:', error);
+        throw error;
+      }
       
       toast.success("Paramètres sauvegardés avec succès !");
     } catch (error) {
