@@ -211,6 +211,7 @@ const EventEdit = () => {
           starts_at: event.starts_at,
           ends_at: event.ends_at,
           images: finalImages,
+          status: event.status,
         })
         .eq('id', eventId);
 
@@ -330,6 +331,27 @@ const EventEdit = () => {
                     value={event.capacity || ''}
                     onChange={(e) => setEvent({ ...event, capacity: parseInt(e.target.value) || null })}
                   />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="status">Statut de publication</Label>
+                  <Select 
+                    value={event.status || 'draft'} 
+                    onValueChange={(value) => setEvent({ ...event, status: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="draft">Brouillon</SelectItem>
+                      <SelectItem value="published">Publié</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {event.status === 'draft' ? 'Événement en brouillon, non visible publiquement' : 'Événement publié et visible par tous'}
+                  </p>
                 </div>
               </div>
 
