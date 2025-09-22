@@ -111,26 +111,41 @@ const NewOrganization = () => {
     setIsSubmitting(true);
     
     try {
-      // Create the organization
+      // Create the organization with only essential fields to avoid RLS issues
       const { data: organization, error: orgError } = await supabase
         .from('organizations')
         .insert({
           name: formData.name,
           slug: formData.slug,
-          logo_url: formData.logoUrls[0] || null, // Take the first uploaded image
-          siret_number: formData.siretNumber || null,
-          billing_email: formData.billingEmail,
-          billing_country: formData.billingCountry,
-          stripe_account_id: formData.stripeAccountId || null,
-          created_by_user_id: user.id
+          created_by_user_id: user.id,
+          billing_email: formData.billingEmail || null,
+          billing_country: formData.billingCountry || 'FR'
         })
         .select()
         .single();
 
       if (orgError) {
         console.error('Error creating organization:', orgError);
-        toast.error("Erreur lors de la création de l'organisation");
+        toast.error(`Erreur lors de la création de l'organisation: ${orgError.message}`);
         return;
+      }
+
+      // Update with optional fields in a separate query to avoid RLS issues
+      const updateFields: any = {};
+      if (formData.logoUrls[0]) updateFields.logo_url = formData.logoUrls[0];
+      if (formData.siretNumber) updateFields.siret_number = formData.siretNumber;
+      if (formData.stripeAccountId) updateFields.stripe_account_id = formData.stripeAccountId;
+
+      if (Object.keys(updateFields).length > 0) {
+        const { error: updateError } = await supabase
+          .from('organizations')
+          .update(updateFields)
+          .eq('id', organization.id);
+
+        if (updateError) {
+          console.warn('Warning: Could not update optional fields:', updateError);
+          // Don't fail the whole process, just log the warning
+        }
       }
 
       // Add the creator as owner in organization_members
