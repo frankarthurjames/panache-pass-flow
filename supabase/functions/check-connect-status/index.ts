@@ -31,7 +31,20 @@ serve(async (req) => {
     const { organizationId } = await req.json();
     console.log("Organization ID:", organizationId);
 
-    // Récupérer les données de l'organisation
+    // Vérifier que l'utilisateur a accès à cette organisation
+    const { data: memberData, error: memberError } = await supabaseClient
+      .from('organization_members')
+      .select('id')
+      .eq('organization_id', organizationId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (memberError || !memberData) {
+      console.error("User is not a member of this organization:", memberError);
+      throw new Error("Access denied");
+    }
+
+    // Récupérer les données de l'organisation (avec service role, pas de RLS)
     const { data: orgData, error: orgError } = await supabaseClient
       .from('organizations')
       .select('stripe_account_id')
