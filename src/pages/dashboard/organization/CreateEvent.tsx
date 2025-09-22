@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -40,6 +40,8 @@ const CreateEvent = () => {
   const { user } = useAuth();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [stripeStatus, setStripeStatus] = useState<any>(null);
+  const [loadingStripe, setLoadingStripe] = useState(true);
   const [formData, setFormData] = useState({
     // Step 1: Informations générales
     title: "",
@@ -98,6 +100,34 @@ const CreateEvent = () => {
     "Tennis", "Football", "Basketball", "Volleyball", "Badminton", 
     "Course à pied", "Cyclisme", "Natation", "Arts martiaux", "Fitness", "Autre"
   ];
+
+  // Vérifier le statut Stripe
+  useEffect(() => {
+    const checkStripeStatus = async () => {
+      if (!user || !orgId) return;
+      
+      setLoadingStripe(true);
+      try {
+        const response = await supabase.functions.invoke('check-connect-status', {
+          body: { organizationId: orgId }
+        });
+
+        if (response.error) {
+          console.error('Erreur lors de la vérification Stripe:', response.error);
+          setStripeStatus({ connected: false, charges_enabled: false });
+        } else {
+          setStripeStatus(response.data);
+        }
+      } catch (error) {
+        console.error('Erreur lors de la vérification Stripe:', error);
+        setStripeStatus({ connected: false, charges_enabled: false });
+      } finally {
+        setLoadingStripe(false);
+      }
+    };
+
+    checkStripeStatus();
+  }, [user, orgId]);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -576,6 +606,56 @@ const CreateEvent = () => {
         return null;
     }
   };
+
+  // Si Stripe n'est pas configuré, afficher un message d'erreur
+  if (loadingStripe) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center py-12">
+              <p>Vérification de la configuration Stripe...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!stripeStatus?.connected || !stripeStatus?.charges_enabled) {
+    return (
+      <div className="min-h-screen bg-background">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-4xl mx-auto">
+            <Card className="p-8 text-center">
+              <div className="space-y-4">
+                <h1 className="text-2xl font-bold text-destructive">
+                  Configuration Stripe requise
+                </h1>
+                <p className="text-muted-foreground">
+                  Vous devez configurer votre compte Stripe pour pouvoir créer des événements payants.
+                </p>
+                <div className="flex justify-center gap-4">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => navigate(`/dashboard/org/${orgId}/events`)}
+                  >
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Retour aux événements
+                  </Button>
+                  <Button 
+                    onClick={() => navigate(`/dashboard/org/${orgId}/settings`)}
+                  >
+                    Configurer Stripe
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">

@@ -7,6 +7,7 @@ import { Link, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,8 +34,11 @@ import {
 
 const Events = () => {
   const { orgId } = useParams();
+  const { user } = useAuth();
   const [deleteEventId, setDeleteEventId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [stripeStatus, setStripeStatus] = useState<any>(null);
+  const [loadingStripe, setLoadingStripe] = useState(true);
 
   // Handlers pour les actions
   const handleDuplicateEvent = async (eventId: string) => {
@@ -187,6 +191,33 @@ const Events = () => {
   const [stats, setStats] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Vérifier le statut Stripe
+  useEffect(() => {
+    const checkStripeStatus = async () => {
+      if (!user || !orgId) return;
+      
+      try {
+        const response = await supabase.functions.invoke('check-connect-status', {
+          body: { organizationId: orgId }
+        });
+
+        if (response.error) {
+          console.error('Erreur lors de la vérification Stripe:', response.error);
+          setStripeStatus({ connected: false, charges_enabled: false });
+        } else {
+          setStripeStatus(response.data);
+        }
+      } catch (error) {
+        console.error('Erreur lors de la vérification Stripe:', error);
+        setStripeStatus({ connected: false, charges_enabled: false });
+      } finally {
+        setLoadingStripe(false);
+      }
+    };
+
+    checkStripeStatus();
+  }, [user, orgId]);
+
   useEffect(() => {
     const fetchEvents = async () => {
       if (!orgId) return;
@@ -304,12 +335,26 @@ const Events = () => {
             Gérez tous vos événements depuis cette page
           </p>
         </div>
-        <Button size="lg" asChild>
-          <Link to={`/dashboard/org/${orgId}/events/new`}>
+        {loadingStripe ? (
+          <Button size="lg" disabled>
             <Plus className="w-5 h-5 mr-2" />
-            Créer un événement
-          </Link>
-        </Button>
+            Vérification...
+          </Button>
+        ) : stripeStatus?.connected && stripeStatus?.charges_enabled ? (
+          <Button size="lg" asChild>
+            <Link to={`/dashboard/org/${orgId}/events/new`}>
+              <Plus className="w-5 h-5 mr-2" />
+              Créer un événement
+            </Link>
+          </Button>
+        ) : (
+          <Button size="lg" asChild>
+            <Link to={`/dashboard/org/${orgId}/settings`}>
+              <Plus className="w-5 h-5 mr-2" />
+              Configurer Stripe d'abord
+            </Link>
+          </Button>
+        )}
       </div>
 
       {/* Stats */}
@@ -452,14 +497,29 @@ const Events = () => {
       {events.length === 0 && (
         <Card className="p-12 text-center">
           <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">Aucun événement créé</h3>
+          <h3 className="text-xl font-semibold mb-2">
+            {!stripeStatus?.connected || !stripeStatus?.charges_enabled 
+              ? "Configuration Stripe requise" 
+              : "Aucun événement créé"
+            }
+          </h3>
           <p className="text-muted-foreground mb-6">
-            Créez votre premier événement pour commencer à vendre des billets
+            {!stripeStatus?.connected || !stripeStatus?.charges_enabled 
+              ? "Vous devez configurer votre compte Stripe pour créer des événements payants"
+              : "Créez votre premier événement pour commencer à vendre des billets"
+            }
           </p>
           <Button asChild>
-            <Link to={`/dashboard/org/${orgId}/events/new`}>
+            <Link to={
+              !stripeStatus?.connected || !stripeStatus?.charges_enabled 
+                ? `/dashboard/org/${orgId}/settings`
+                : `/dashboard/org/${orgId}/events/new`
+            }>
               <Plus className="w-4 h-4 mr-2" />
-              Créer mon premier événement
+              {!stripeStatus?.connected || !stripeStatus?.charges_enabled 
+                ? "Configurer Stripe"
+                : "Créer mon premier événement"
+              }
             </Link>
           </Button>
         </Card>

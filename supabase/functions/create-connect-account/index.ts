@@ -54,7 +54,9 @@ serve(async (req) => {
     console.log("Stripe account created:", account.id);
 
     // Créer un lien d'onboarding
-    const origin = req.headers.get("origin") || "http://localhost:3000";
+    const rawOrigin = req.headers.get("origin") || "http://localhost:3000";
+    // S'assurer que l'URL utilise HTTPS en production
+    const origin = rawOrigin.replace(/^http:/, "https:");
     const accountLink = await stripe.accountLinks.create({
       account: account.id,
       refresh_url: `${origin}/dashboard/org/${organizationId}/settings?refresh=true`,
