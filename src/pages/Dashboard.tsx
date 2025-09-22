@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { Plus, Calendar, Users, TrendingUp, Eye, Edit, MoreHorizontal } from "lucide-react";
+import { Plus, Calendar, Users, TrendingUp, Eye, Edit, MoreHorizontal, Euro } from "lucide-react";
 import { Link } from "react-router-dom";
 import {
   DropdownMenu,
@@ -140,9 +140,18 @@ const Dashboard = () => {
                         </div>
                         <div className="text-sm text-muted-foreground space-y-1">
                           <div className="flex items-center gap-4">
-                            <span>📅 {event.date}</span>
-                            <span>👥 {event.participants}</span>
-                            <span>💰 {event.revenue}</span>
+                            <span className="flex items-center gap-1">
+                              <Calendar className="w-4 h-4" />
+                              {event.date}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Users className="w-4 h-4" />
+                              {event.participants}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Euro className="w-4 h-4" />
+                              {event.revenue}
+                            </span>
                           </div>
                         </div>
                       </div>

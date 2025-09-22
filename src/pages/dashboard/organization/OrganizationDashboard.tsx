@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar, Users, TrendingUp, Eye, Edit, MoreHorizontal } from "lucide-react";
+import { Plus, Calendar, Users, TrendingUp, Eye, Edit, MoreHorizontal, Euro } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useEffect, useState } from "react";
@@ -208,9 +208,18 @@ const OrganizationDashboard = () => {
                       </div>
                       <div className="text-sm text-muted-foreground space-y-1">
                         <div className="flex items-center gap-4">
-                          <span>📅 {event.date}</span>
-                          <span>👥 {event.participants}</span>
-                          <span>💰 {event.revenue}</span>
+                          <span className="flex items-center gap-1">
+                            <Calendar className="w-4 h-4" />
+                            {event.date}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Users className="w-4 h-4" />
+                            {event.participants}
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Euro className="w-4 h-4" />
+                            {event.revenue}
+                          </span>
                         </div>
                       </div>
                     </div>
