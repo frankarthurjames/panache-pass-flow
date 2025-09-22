@@ -22,6 +22,7 @@ import {
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { ImageUpload } from "@/components/ImageUpload";
 
 const Settings = () => {
   const { orgId } = useParams();
@@ -69,11 +70,11 @@ const Settings = () => {
 
         setOrgData({
           name: data.name || "",
-          description: "", // Ce champ n'existe pas dans la DB
-          website: "", // Ce champ n'existe pas dans la DB
+          description: data.description || "",
+          website: data.website || "",
           email: data.billing_email || "",
-          phone: "", // Ce champ n'existe pas dans la DB
-          address: "", // Ce champ n'existe pas dans la DB
+          phone: data.phone || "",
+          address: data.address || "",
           siretNumber: data.siret_number || "",
           billingEmail: data.billing_email || "",
           logo: data.logo_url,
@@ -171,6 +172,10 @@ const Settings = () => {
         .from('organizations')
         .update({
           name: orgData.name,
+          description: orgData.description,
+          website: orgData.website,
+          phone: orgData.phone,
+          address: orgData.address,
           siret_number: orgData.siretNumber,
           billing_email: orgData.billingEmail,
           logo_url: orgData.logo
@@ -298,19 +303,12 @@ const Settings = () => {
               
               <div className="space-y-2">
                 <Label htmlFor="logo">Logo de l'organisation</Label>
-                <div className="flex items-center gap-4">
-                  <div className="w-16 h-16 bg-muted rounded-lg flex items-center justify-center">
-                    {orgData.logo ? (
-                      <img src={orgData.logo} alt="Logo" className="w-full h-full object-cover rounded-lg" />
-                    ) : (
-                      <Building2 className="w-8 h-8 text-muted-foreground" />
-                    )}
-                  </div>
-                  <Button variant="outline" size="sm">
-                    <Upload className="w-4 h-4 mr-2" />
-                    Changer le logo
-                  </Button>
-                </div>
+                <ImageUpload
+                  value={orgData.logo ? [orgData.logo] : []}
+                  onChange={(images) => handleInputChange("logo", images[0] || null)}
+                  maxImages={1}
+                  label="Logo de l'organisation"
+                />
               </div>
             </CardContent>
           </Card>

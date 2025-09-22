@@ -276,43 +276,55 @@ export type Database = {
       }
       organizations: {
         Row: {
+          address: string | null
           billing_country: string | null
           billing_email: string | null
           created_at: string | null
           created_by_user_id: string | null
+          description: string | null
           id: string
           logo_url: string | null
           name: string
+          phone: string | null
           siret_number: string | null
           slug: string | null
           stripe_account_id: string | null
           updated_at: string | null
+          website: string | null
         }
         Insert: {
+          address?: string | null
           billing_country?: string | null
           billing_email?: string | null
           created_at?: string | null
           created_by_user_id?: string | null
+          description?: string | null
           id?: string
           logo_url?: string | null
           name: string
+          phone?: string | null
           siret_number?: string | null
           slug?: string | null
           stripe_account_id?: string | null
           updated_at?: string | null
+          website?: string | null
         }
         Update: {
+          address?: string | null
           billing_country?: string | null
           billing_email?: string | null
           created_at?: string | null
           created_by_user_id?: string | null
+          description?: string | null
           id?: string
           logo_url?: string | null
           name?: string
+          phone?: string | null
           siret_number?: string | null
           slug?: string | null
           stripe_account_id?: string | null
           updated_at?: string | null
+          website?: string | null
         }
         Relationships: [
           {
