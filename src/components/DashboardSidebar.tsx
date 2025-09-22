@@ -61,9 +61,16 @@ export function DashboardSidebar() {
 
       if (!error && data) {
         const orgs = data.map((m: any) => m.organizations).filter(Boolean);
-        setOrganizations(orgs);
-        if (!selectedOrg && orgs[0]) {
-          setSelectedOrg(orgs[0].id);
+        // Déduplicater les organisations par ID
+        const uniqueOrgs = orgs.reduce((acc: any[], org: any) => {
+          if (!acc.find(existingOrg => existingOrg.id === org.id)) {
+            acc.push(org);
+          }
+          return acc;
+        }, []);
+        setOrganizations(uniqueOrgs);
+        if (!selectedOrg && uniqueOrgs[0]) {
+          setSelectedOrg(uniqueOrgs[0].id);
         }
       }
     };
