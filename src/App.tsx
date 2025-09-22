@@ -22,9 +22,9 @@ import OrganizationDashboard from "./pages/dashboard/organization/OrganizationDa
 import Integrations from "./pages/dashboard/organization/Integrations";
 import OrgEvents from "./pages/dashboard/organization/Events";
 import CreateOrgEvent from "./pages/dashboard/organization/CreateEvent";
-import Participants from "./pages/dashboard/organization/Participants";
 import Analytics from "./pages/dashboard/organization/Analytics";
 import Settings from "./pages/dashboard/organization/Settings";
+import EventEdit from "./pages/dashboard/organization/EventEdit";
 
 const queryClient = new QueryClient();
 
@@ -54,8 +54,8 @@ const App = () => (
               <Route path="org/:orgId" element={<OrganizationDashboard />} />
               <Route path="org/:orgId/events" element={<OrgEvents />} />
               <Route path="org/:orgId/events/new" element={<CreateOrgEvent />} />
+              <Route path="org/:orgId/events/:eventId/edit" element={<EventEdit />} />
               <Route path="org/:orgId/events/:eventId/analytics" element={<Analytics />} />
-              <Route path="org/:orgId/participants" element={<Participants />} />
               <Route path="org/:orgId/analytics" element={<Analytics />} />
               <Route path="org/:orgId/integrations" element={<Integrations />} />
               <Route path="org/:orgId/settings" element={<Settings />} />

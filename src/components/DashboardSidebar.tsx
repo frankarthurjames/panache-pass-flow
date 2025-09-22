@@ -37,7 +37,6 @@ const mainMenuItems = [
 const orgMenuItems = [
   { title: "Tableau de bord", url: "/dashboard/org/:orgId", icon: LayoutDashboard },
   { title: "Événements", url: "/dashboard/org/:orgId/events", icon: Calendar },
-  { title: "Participants", url: "/dashboard/org/:orgId/participants", icon: Users },
   { title: "Statistiques", url: "/dashboard/org/:orgId/analytics", icon: BarChart3 },
   { title: "Intégrations", url: "/dashboard/org/:orgId/integrations", icon: CreditCard },
   { title: "Paramètres", url: "/dashboard/org/:orgId/settings", icon: Settings },
