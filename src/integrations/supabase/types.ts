@@ -41,6 +41,27 @@ export type Database = {
         }
         Relationships: []
       }
+      event_likes: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       events: {
         Row: {
           capacity: number | null
@@ -386,6 +407,8 @@ export type Database = {
           pdf_path: string | null
           qr_code: string | null
           status: Database["public"]["Enums"]["registration_status"] | null
+          ticket_pdf_url: string | null
+          ticket_qr_url: string | null
           ticket_type_id: string | null
           updated_at: string | null
           user_id: string | null
@@ -398,6 +421,8 @@ export type Database = {
           pdf_path?: string | null
           qr_code?: string | null
           status?: Database["public"]["Enums"]["registration_status"] | null
+          ticket_pdf_url?: string | null
+          ticket_qr_url?: string | null
           ticket_type_id?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -410,6 +435,8 @@ export type Database = {
           pdf_path?: string | null
           qr_code?: string | null
           status?: Database["public"]["Enums"]["registration_status"] | null
+          ticket_pdf_url?: string | null
+          ticket_qr_url?: string | null
           ticket_type_id?: string | null
           updated_at?: string | null
           user_id?: string | null
