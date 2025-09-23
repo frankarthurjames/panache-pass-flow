@@ -67,20 +67,29 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
-    // Créer une commande dans la base de données
+    // Calculer le sous-total
     const subtotalCents = lineItems.reduce((sum: number, item: any) =>
       sum + (item.unit_price_cents * item.quantity), 0
     );
 
+    // Calculer les frais de la plateforme (2% + 0,50€ par billet)
+    const totalTickets = lineItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
+    const platformFeePerTicket = 50; // 0,50€ en centimes
+    const platformFeePercentage = 0.02; // 2%
+    const platformFeeFixed = totalTickets * platformFeePerTicket;
+    const platformFeePercentageAmount = Math.round(subtotalCents * platformFeePercentage);
+    const applicationFeeAmount = platformFeeFixed + platformFeePercentageAmount;
+    
+    // Calculer le total final (sous-total + frais de plateforme)
+    const totalCents = subtotalCents + applicationFeeAmount;
+
+    // Créer une commande dans la base de données
     const { data: orderData, error: orderError } = await supabaseClient
       .from('orders')
       .insert({
         user_id: user.id,
         event_id: eventId,
-        subtotal_cents: subtotalCents,
-        platform_fee_cents: applicationFeeAmount,
         total_cents: totalCents,
-        currency: 'EUR',
         status: 'pending'
       })
       .select()
@@ -109,17 +118,6 @@ serve(async (req) => {
       console.error("Error creating order items:", itemsError);
       throw new Error("Failed to create order items");
     }
-
-    // Calculer les frais de la plateforme (2% + 0,50€ par billet)
-    const totalTickets = lineItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
-    const platformFeePerTicket = 50; // 0,50€ en centimes
-    const platformFeePercentage = 0.02; // 2%
-    const platformFeeFixed = totalTickets * platformFeePerTicket;
-    const platformFeePercentageAmount = Math.round(subtotalCents * platformFeePercentage);
-    const applicationFeeAmount = platformFeeFixed + platformFeePercentageAmount;
-    
-    // Calculer le total final (sous-total + frais de plateforme)
-    const totalCents = subtotalCents + applicationFeeAmount;
 
     // Récupérer les détails des types de tickets pour Stripe
     const { data: ticketTypesData, error: ticketTypesError } = await supabaseClient
