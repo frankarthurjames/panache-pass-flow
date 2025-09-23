@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { Calendar, Mail, Phone, MapPin } from "lucide-react";
-import panacheLogo from "@/assets/panache-logo.png";
-import panacheLogoText from "@/assets/panache-logo-text.png";
+import { Logo } from "@/components/Logo";
 
 export const Footer = () => {
   return (
@@ -10,9 +9,7 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <div className="flex items-center">
-              <img src={panacheLogoText} alt="Panache" className="h-6" />
-            </div>
+            <Logo size="sm" />
             <p className="text-sm text-muted-foreground">
               La plateforme de référence pour organiser et participer aux événements sportifs en France.
             </p>

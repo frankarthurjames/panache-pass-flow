@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Building2, LayoutDashboard, Settings, Users, Calendar, BarChart3, CreditCard, Plus, Home } from "lucide-react";
 import { NavLink, useParams, useNavigate } from "react-router-dom";
-import panacheLogo from "@/assets/panache-logo.png";
+import { Logo } from "@/components/Logo";
 import {
   Sidebar,
   SidebarContent,
@@ -104,24 +104,13 @@ export function DashboardSidebar() {
   return (
     <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible="icon">
       <SidebarContent className="px-2">
-        {/* Header avec logo et lien vers la landing page */}
+        {/* Header avec logo */}
         <div className="px-2 py-4 border-b border-border/50">
-          <NavLink 
-            to="/" 
-            className="flex items-center gap-3 hover:opacity-80 transition-opacity"
-          >
-            <img 
-              src={panacheLogo} 
-              alt="Panache" 
-              className={`${collapsed ? 'w-8 h-8' : 'w-8 h-8'} object-contain`}
-            />
-            {!collapsed && (
-              <div className="flex flex-col">
-                <span className="font-bold text-lg">Panache</span>
-                <span className="text-xs text-muted-foreground">Event Management</span>
-              </div>
-            )}
-          </NavLink>
+          <Logo 
+            size={collapsed ? "sm" : "md"} 
+            showText={!collapsed}
+            className="justify-center"
+          />
         </div>
         {/* Organisation Selector */}
         {!collapsed && (

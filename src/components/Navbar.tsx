@@ -2,8 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Calendar, User, LogOut } from "lucide-react";
-import panacheLogo from "@/assets/panache-logo.png";
-import panacheLogoText from "@/assets/panache-logo-text.png";
+import { Logo } from "@/components/Logo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,9 +24,7 @@ export const Navbar = () => {
     <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link to="/" className="flex items-center">
-            <img src={panacheLogoText} alt="Panache" className="h-8" />
-          </Link>
+          <Logo size="md" />
 
           <div className="hidden md:flex items-center space-x-8">
             <Link to="/events" className="text-foreground hover:text-primary transition-colors">

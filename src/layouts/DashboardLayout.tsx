@@ -1,8 +1,7 @@
 import { Outlet } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DashboardSidebar } from "@/components/DashboardSidebar";
-import { Calendar } from "lucide-react";
-import panacheLogoText from "@/assets/panache-logo-text.png";
+import { Logo } from "@/components/Logo";
 
 export default function DashboardLayout() {
   return (
@@ -12,9 +11,7 @@ export default function DashboardLayout() {
         <header className="h-16 flex items-center justify-between border-b bg-background px-4">
           <div className="flex items-center gap-3">
             <SidebarTrigger />
-            <div className="flex items-center">
-              <img src={panacheLogoText} alt="Panache" className="h-6" />
-            </div>
+            <Logo size="sm" />
           </div>
         </header>
 
