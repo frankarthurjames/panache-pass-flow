@@ -274,34 +274,34 @@ const Index = () => {
           <FeatureCard
             icon={<Zap className="h-8 w-8 text-primary" />}
             title="Création ultra-rapide"
-            description="Notre assistant IA vous aide à créer votre événement en quelques minutes. Templates pré-conçus pour tous types de sports."
+            description="Créez votre événement en quelques étapes grâce à notre formulaire guidé. Ajoutez vos billets, configurez les prix et publiez instantanément."
             features={[
-              "Assistant IA pour la création",
-              "Templates pour 20+ sports", 
-              "Import depuis Excel/CSV"
+              "Formulaire guidé étape par étape",
+              "Gestion des types de billets",
+              "Publication instantanée"
             ]}
           />
 
           <FeatureCard
             icon={<Shield className="h-8 w-8 text-primary" />}
-            title="Paiements ultra-sécurisés"
-            description="Intégration native avec Stripe. Acceptez tous les modes de paiement, gérez les remboursements automatiquement."
+            title="Paiements sécurisés"
+            description="Intégration complète avec Stripe. Acceptez les paiements par carte, recevez vos fonds directement et gérez vos transactions."
             features={[
-              "Certification PCI DSS",
-              "Paiements en plusieurs fois",
-              "Remboursements automatiques"
+              "Intégration Stripe native",
+              "Paiements par carte sécurisés",
+              "Réception directe des fonds"
             ]}
             imagePosition="left"
           />
 
           <FeatureCard
             icon={<BarChart3 className="h-8 w-8 text-primary" />}
-            title="Analytics en temps réel"
-            description="Suivez vos ventes, analysez vos performances et optimisez vos événements grâce à notre tableau de bord avancé."
+            title="Gestion simplifiée"
+            description="Suivez vos événements et participants depuis votre tableau de bord. Validez les billets avec notre système QR intégré."
             features={[
-              "Dashboard temps réel",
-              "Rapports détaillés", 
-              "Export des données"
+              "Tableau de bord complet",
+              "Validation QR des billets",
+              "Gestion des participants"
             ]}
           />
         </div>
