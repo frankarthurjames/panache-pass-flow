@@ -319,18 +319,31 @@ const EventDetail = () => {
       });
 
       // Appeler la fonction Supabase pour créer la session de paiement
-      const { data, error } = await supabase.functions.invoke('create-payment-session', {
-        body: {
-          eventId: event.id,
-          lineItems: lineItems
-        }
-      });
-
-      if (error) {
-        console.error('Error creating payment session:', error);
-        toast.error("Erreur lors de la création de la session de paiement");
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Session expirée, veuillez vous reconnecter");
         return;
       }
+
+      const response = await fetch(`https://wlxbydzshqijlfejqafp.supabase.co/functions/v1/create-payment-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          eventId: event.id,
+          lineItems: lineItems
+        })
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de la création de la session de paiement');
+      }
+
+      const data = result;
 
       if (data?.url) {
         // Rediriger vers Stripe Checkout

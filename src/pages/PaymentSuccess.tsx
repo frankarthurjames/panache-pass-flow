@@ -199,30 +199,262 @@ const PaymentSuccess = () => {
     }
   };
 
-  const handleDownloadReceipt = async () => {
-    if (!orderId) return;
+  const handleDownloadReceipt = () => {
+    if (!orderData) return;
     
     try {
       setDownloadingReceipt(true);
       
-      // Générer le PDF du reçu
-      const { data: pdfData, error: pdfError } = await supabase.functions.invoke('generate-receipt-pdf', {
-        body: { orderId: orderId }
-      });
-
-      if (pdfError || !pdfData?.pdfUrl) {
-        console.error("Error generating receipt PDF:", pdfError);
-        toast.error("Erreur lors de la génération du reçu");
-        return;
-      }
-
-      // Ouvrir le reçu dans un nouvel onglet pour impression
-      window.open(pdfData.pdfUrl, '_blank');
+      // Générer le HTML du reçu côté client
+      const event = orderData.events;
+      const orderDate = new Date(orderData.created_at);
+      const eventDate = new Date(event.starts_at);
       
-      toast.success("Reçu téléchargé avec succès !");
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Reçu - ${event.title}</title>
+          <style>
+            body {
+              font-family: 'Arial', sans-serif;
+              margin: 0;
+              padding: 20px;
+              background: white;
+              color: #333;
+            }
+            .header {
+              text-align: center;
+              border-bottom: 2px solid #3b82f6;
+              padding-bottom: 20px;
+              margin-bottom: 30px;
+            }
+            .logo {
+              font-size: 24px;
+              font-weight: bold;
+              color: #3b82f6;
+              margin-bottom: 10px;
+            }
+            .receipt-title {
+              font-size: 20px;
+              font-weight: bold;
+              margin-bottom: 10px;
+            }
+            .receipt-info {
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 30px;
+              flex-wrap: wrap;
+            }
+            .info-section {
+              flex: 1;
+              min-width: 200px;
+              margin: 10px;
+            }
+            .info-title {
+              font-weight: bold;
+              color: #3b82f6;
+              margin-bottom: 5px;
+            }
+            .event-details {
+              background: #f8fafc;
+              padding: 20px;
+              border-radius: 8px;
+              margin-bottom: 30px;
+            }
+            .event-title {
+              font-size: 18px;
+              font-weight: bold;
+              margin-bottom: 10px;
+            }
+            .event-info {
+              display: flex;
+              gap: 20px;
+              flex-wrap: wrap;
+            }
+            .event-info div {
+              flex: 1;
+              min-width: 150px;
+            }
+            .tickets-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-bottom: 30px;
+            }
+            .tickets-table th,
+            .tickets-table td {
+              padding: 12px;
+              text-align: left;
+              border-bottom: 1px solid #e2e8f0;
+            }
+            .tickets-table th {
+              background: #f8fafc;
+              font-weight: bold;
+              color: #3b82f6;
+            }
+            .tickets-table .text-right {
+              text-align: right;
+            }
+            .total-section {
+              border-top: 2px solid #3b82f6;
+              padding-top: 20px;
+              margin-top: 20px;
+            }
+            .total-line {
+              display: flex;
+              justify-content: space-between;
+              margin: 5px 0;
+            }
+            .total-final {
+              font-size: 18px;
+              font-weight: bold;
+              color: #3b82f6;
+              border-top: 1px solid #e2e8f0;
+              padding-top: 10px;
+              margin-top: 10px;
+            }
+            .footer {
+              text-align: center;
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 1px solid #e2e8f0;
+              color: #64748b;
+              font-size: 12px;
+            }
+            .status-badge {
+              display: inline-block;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 12px;
+              font-weight: bold;
+              text-transform: uppercase;
+            }
+            .status-paid {
+              background: #dcfce7;
+              color: #166534;
+            }
+            @media print {
+              body { margin: 0; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="logo">Panache</div>
+            <div class="receipt-title">Reçu de paiement</div>
+          </div>
+
+          <div class="receipt-info">
+            <div class="info-section">
+              <div class="info-title">Informations de commande</div>
+              <div>Commande #${orderData.id.slice(-8).toUpperCase()}</div>
+              <div>Date: ${orderDate.toLocaleDateString('fr-FR')}</div>
+              <div>Heure: ${orderDate.toLocaleTimeString('fr-FR')}</div>
+              <div>
+                <span class="status-badge status-paid">Payé</span>
+              </div>
+            </div>
+            <div class="info-section">
+              <div class="info-title">Client</div>
+              <div>${orderData.user_id || 'Client'}</div>
+            </div>
+          </div>
+
+          <div class="event-details">
+            <div class="event-title">${event.title}</div>
+            <div class="event-info">
+              <div>
+                <strong>Date:</strong><br>
+                ${eventDate.toLocaleDateString('fr-FR', {
+                  weekday: 'long',
+                  year: 'numeric',
+                  month: 'long',
+                  day: 'numeric'
+                })}
+              </div>
+              <div>
+                <strong>Heure:</strong><br>
+                ${eventDate.toLocaleTimeString('fr-FR', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </div>
+              <div>
+                <strong>Lieu:</strong><br>
+                ${event.venue || 'À confirmer'}<br>
+                ${event.city}
+              </div>
+            </div>
+          </div>
+
+          <table class="tickets-table">
+            <thead>
+              <tr>
+                <th>Type de billet</th>
+                <th class="text-right">Quantité</th>
+                <th class="text-right">Prix unitaire</th>
+                <th class="text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${orderData.order_items.map((item: any) => `
+                <tr>
+                  <td>${item.ticket_types.name}</td>
+                  <td class="text-right">${item.qty}</td>
+                  <td class="text-right">${(item.unit_price_cents / 100).toFixed(2)}€</td>
+                  <td class="text-right">${((item.unit_price_cents * item.qty) / 100).toFixed(2)}€</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+
+          <div class="total-section">
+            <div class="total-line">
+              <span>Sous-total:</span>
+              <span>${((orderData.subtotal_cents || orderData.total_cents) / 100).toFixed(2)}€</span>
+            </div>
+            ${orderData.platform_fee_cents ? `
+              <div class="total-line">
+                <span>Frais de plateforme (2% + 0,50€/billet):</span>
+                <span>${(orderData.platform_fee_cents / 100).toFixed(2)}€</span>
+              </div>
+            ` : ''}
+            <div class="total-line total-final">
+              <span>Total payé:</span>
+              <span>${(orderData.total_cents / 100).toFixed(2)}€</span>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p>Merci d'avoir choisi Panache pour vos événements sportifs !</p>
+            <p>Ce reçu confirme votre inscription à l'événement. Conservez-le précieusement.</p>
+            <p>Pour toute question, contactez l'organisateur ou notre support client.</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Créer une nouvelle fenêtre avec le reçu
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(htmlContent);
+        printWindow.document.close();
+        printWindow.focus();
+        
+        // Attendre que le contenu soit chargé puis imprimer
+        printWindow.onload = () => {
+          printWindow.print();
+        };
+        
+        toast.success("Reçu généré ! Utilisez Ctrl+P pour imprimer.");
+      } else {
+        toast.error("Impossible d'ouvrir la fenêtre d'impression");
+      }
     } catch (error) {
-      console.error('Error downloading receipt:', error);
-      toast.error("Erreur lors du téléchargement du reçu");
+      console.error('Error generating receipt:', error);
+      toast.error("Erreur lors de la génération du reçu");
     } finally {
       setDownloadingReceipt(false);
     }

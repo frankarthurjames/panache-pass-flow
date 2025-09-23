@@ -125,18 +125,38 @@ const EventCheckout = ({ eventId, eventTitle, eventDate, ticketTypes }: EventChe
           };
         });
 
-      const { data, error } = await supabase.functions.invoke('create-payment-session', {
-        body: {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("Session expirée, veuillez vous reconnecter");
+      }
+
+      const response = await fetch(`https://wlxbydzshqijlfejqafp.supabase.co/functions/v1/create-payment-session`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
           eventId,
-          ticketTypes: selectedTicketTypes
-        }
+          lineItems: selectedTicketTypes.map(ticket => ({
+            ticket_type_id: ticket.id,
+            quantity: ticket.quantity,
+            unit_price_cents: ticket.price_cents
+          }))
+        })
       });
 
-      if (error) throw error;
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de la création de la session de paiement');
+      }
+
+      const data = result;
 
       // Rediriger vers Stripe Checkout
-      if (data.sessionUrl) {
-        window.location.href = data.sessionUrl;
+      if (data.url) {
+        window.location.href = data.url;
       }
     } catch (error) {
       console.error('Error creating payment session:', error);
