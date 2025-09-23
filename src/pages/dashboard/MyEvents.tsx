@@ -547,14 +547,6 @@ const MyEvents = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold">
-                      {(group.totalPaid / 100).toFixed(2)}€
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Total payé
-                    </div>
-                  </div>
                 </div>
               </CardHeader>
 
