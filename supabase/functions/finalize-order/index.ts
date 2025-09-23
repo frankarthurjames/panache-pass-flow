@@ -186,6 +186,45 @@ serve(async (req) => {
       }
     }
 
+    // Try to get and send Stripe invoice if payment succeeded
+    try {
+      console.log("[FINALIZE-ORDER] Attempting to retrieve Stripe invoice for order", order.id);
+      const invoiceRes = await supabase.functions.invoke("get-stripe-invoice", {
+        body: { orderId: order.id },
+      });
+      
+      if (invoiceRes.data?.invoice) {
+        console.log("[FINALIZE-ORDER] Stripe invoice retrieved successfully", invoiceRes.data.invoice.id);
+        
+        // Send invoice by email if available
+        if (invoiceRes.data.invoice.hosted_invoice_url) {
+          try {
+            const invoiceEmailRes = await supabase.functions.invoke("send-invoice-email", {
+              body: { 
+                orderId: order.id,
+                invoiceUrl: invoiceRes.data.invoice.hosted_invoice_url,
+                invoiceId: invoiceRes.data.invoice.id
+              },
+            });
+            
+            if (invoiceEmailRes.data?.success) {
+              console.log("[FINALIZE-ORDER] Invoice email sent successfully");
+            } else {
+              console.log("[FINALIZE-ORDER] Invoice email sending failed:", invoiceEmailRes.error);
+            }
+          } catch (invoiceEmailError) {
+            console.error("[FINALIZE-ORDER] Error sending invoice email:", invoiceEmailError);
+          }
+        }
+      } else if (invoiceRes.data?.receiptUrl) {
+        console.log("[FINALIZE-ORDER] Payment receipt available:", invoiceRes.data.receiptUrl);
+      } else {
+        console.log("[FINALIZE-ORDER] No Stripe invoice found for this order");
+      }
+    } catch (invoiceError) {
+      console.error("[FINALIZE-ORDER] Error retrieving Stripe invoice:", invoiceError);
+    }
+
     // Return full order for UI
     const { data: fullOrder, error: fullErr } = await supabase
       .from("orders")
