@@ -95,12 +95,7 @@ serve(async (req) => {
       .insert({
         user_id: user.id,
         event_id: eventId,
-        subtotal_cents: subtotalCents,
-        platform_fee_cents: platformFeeCents,
-        total_ht_cents: totalHTCents,
-        tva_cents: tvaCents,
         total_cents: totalCents,
-        currency: 'EUR',
         status: 'pending'
       })
       .select()
