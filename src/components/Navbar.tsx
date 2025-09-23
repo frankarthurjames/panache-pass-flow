@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { Calendar, User, LogOut } from "lucide-react";
 import panacheLogo from "@/assets/panache-logo.png";
+import panacheLogoText from "@/assets/panache-logo-text.png";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,9 +29,7 @@ export const Navbar = () => {
             <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
               <img src={panacheLogo} alt="Panache" className="w-full h-full object-contain" />
             </div>
-            <span className="text-xl font-bold text-foreground">
-              Panache
-            </span>
+            <img src={panacheLogoText} alt="Panache" className="h-8" />
           </Link>
 
           <div className="hidden md:flex items-center space-x-8">
