@@ -52,10 +52,7 @@ const PaymentSuccess = () => {
 
         // Vérifier si les inscriptions existent déjà (créées par le webhook)
         if (order.status === 'pending' && sessionId) {
-          // Attendre un peu que le webhook traite le paiement
-          setTimeout(async () => {
-            await checkOrderStatus(order.id);
-          }, 3000);
+          await finalizeOrder();
         }
       } catch (error) {
         console.error('Error loading order:', error);
@@ -107,6 +104,27 @@ const PaymentSuccess = () => {
       }
     } catch (error) {
       console.error('Error checking order status:', error);
+    }
+  };
+
+  const finalizeOrder = async () => {
+    if (!sessionId) return;
+    try {
+      const { data, error } = await supabase.functions.invoke('finalize-order', {
+        body: { sessionId, orderId },
+      });
+
+      if (error) throw error as any;
+
+      if (data?.order) {
+        setOrderData(data.order);
+        toast.success("Paiement confirmé ! Vos billets vous ont été envoyés par email.");
+      } else if (orderId) {
+        await checkOrderStatus(orderId);
+      }
+    } catch (err) {
+      console.error('Error finalizing order:', err);
+      toast.error("Erreur lors de la confirmation du paiement");
     }
   };
 
