@@ -70,11 +70,18 @@ const MyEvents = () => {
             acc[eventId] = {
               event: reg.events,
               registrations: [],
-              totalPaid: 0
+              totalPaid: 0,
+              orderIds: new Set()
             };
           }
           acc[eventId].registrations.push(reg);
-          acc[eventId].totalPaid += reg.orders?.total_cents || 0;
+          
+          // Éviter de compter plusieurs fois le même order
+          if (reg.orders?.id && !acc[eventId].orderIds.has(reg.orders.id)) {
+            acc[eventId].orderIds.add(reg.orders.id);
+            acc[eventId].totalPaid += reg.orders.total_cents || 0;
+          }
+          
           return acc;
         }, {}) || {};
 
@@ -545,6 +552,14 @@ const MyEvents = () => {
                         <Users className="w-4 h-4" />
                         <span>{group.registrations.length} billet{group.registrations.length > 1 ? 's' : ''}</span>
                       </div>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-lg font-bold">
+                      {(group.totalPaid / 100).toFixed(2)}€
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Total payé
                     </div>
                   </div>
                 </div>
