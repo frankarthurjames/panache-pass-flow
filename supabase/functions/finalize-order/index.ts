@@ -155,18 +155,34 @@ serve(async (req) => {
     // Try to generate tickets and send emails, but don't fail the whole flow if it breaks
     for (const reg of createdRegs ?? []) {
       try {
+        console.log("[FINALIZE-ORDER] Starting PDF generation for registration", reg.id);
         const pdfRes = await supabase.functions.invoke("generate-ticket-pdf", {
           body: { registrationId: reg.id },
         });
+        
+        if (pdfRes.error) {
+          console.error("[FINALIZE-ORDER] PDF generation error:", pdfRes.error);
+          continue;
+        }
+        
         if (pdfRes.data?.success && pdfRes.data?.pdfUrl) {
-          await supabase.functions.invoke("send-ticket-email", {
+          console.log("[FINALIZE-ORDER] PDF generated successfully, sending email for registration", reg.id);
+          const emailRes = await supabase.functions.invoke("send-ticket-email", {
             body: { registrationId: reg.id, pdfUrl: pdfRes.data.pdfUrl },
           });
+          
+          if (emailRes.error) {
+            console.error("[FINALIZE-ORDER] Email sending failed:", emailRes.error);
+          } else if (emailRes.data?.success) {
+            console.log("[FINALIZE-ORDER] Email sent successfully for registration", reg.id);
+          } else {
+            console.log("[FINALIZE-ORDER] Email sending returned:", emailRes.data);
+          }
         } else {
-          console.log("[FINALIZE-ORDER] PDF generation failed", pdfRes.error);
+          console.log("[FINALIZE-ORDER] PDF generation failed", pdfRes.data || pdfRes.error);
         }
       } catch (e) {
-        console.log("[FINALIZE-ORDER] Ticket generation/send error", e);
+        console.error("[FINALIZE-ORDER] Ticket generation/send error", e);
       }
     }
 
