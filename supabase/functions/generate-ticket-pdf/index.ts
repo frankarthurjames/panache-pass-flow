@@ -263,9 +263,17 @@ serve(async (req) => {
 
     // Upload vers Supabase Storage
     const fileName = `ticket-${registration.id}.pdf`;
+    
+    // Convertir base64 en Uint8Array pour Deno
+    const binaryString = atob(pdfBase64);
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    
     const { data: uploadData, error: uploadError } = await supabaseClient.storage
       .from('event-images')
-      .upload(`tickets/${fileName}`, new Uint8Array(Buffer.from(pdfBase64, 'base64')), {
+      .upload(`tickets/${fileName}`, bytes, {
         contentType: 'application/pdf',
         upsert: true
       });
