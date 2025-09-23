@@ -90,10 +90,9 @@ serve(async (req) => {
             margin-bottom: 30px;
           }
           .logo {
-            font-size: 24px;
-            font-weight: bold;
-            color: #3b82f6;
-            margin-bottom: 10px;
+            height: 32px;
+            margin: 0 auto 10px;
+            display: block;
           }
           .receipt-title {
             font-size: 20px;
@@ -197,7 +196,7 @@ serve(async (req) => {
       </head>
       <body>
         <div class="header">
-          <div class="logo">Panache</div>
+          <img src="https://wlxbydzshqijlfejqafp.supabase.co/storage/v1/object/public/event-images/panache-logo-text.png" alt="Panache" class="logo">
           <div class="receipt-title">Reçu de paiement</div>
         </div>
 
