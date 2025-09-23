@@ -18,6 +18,8 @@ import DashboardLayout from "./layouts/DashboardLayout";
 import Overview from "./pages/dashboard/Overview";
 import Organizations from "./pages/dashboard/Organizations";
 import MyEvents from "./pages/dashboard/MyEvents";
+import QRValidator from "./pages/dashboard/organization/QRValidator";
+import Tickets from "./pages/dashboard/organization/Tickets";
 import NewOrganization from "./pages/dashboard/organizations/NewOrganization";
 import OrganizationDashboard from "./pages/dashboard/organization/OrganizationDashboard";
 import Integrations from "./pages/dashboard/organization/Integrations";
@@ -53,6 +55,8 @@ const App = () => (
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<Overview />} />
               <Route path="my-events" element={<MyEvents />} />
+              <Route path="org/:orgId/qr-validator" element={<QRValidator />} />
+              <Route path="org/:orgId/tickets" element={<Tickets />} />
               <Route path="organizations" element={<Organizations />} />
               <Route path="organizations/new" element={<NewOrganization />} />
               <Route path="org/:orgId" element={<OrganizationDashboard />} />

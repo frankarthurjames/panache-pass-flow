@@ -430,17 +430,25 @@ const PaymentSuccess = () => {
 
           <div class="total-section">
             <div class="total-line">
-              <span>Sous-total:</span>
+              <span>Sous-total HT:</span>
               <span>${((orderData.subtotal_cents || orderData.total_cents) / 100).toFixed(2)}€</span>
             </div>
             ${orderData.platform_fee_cents ? `
               <div class="total-line">
-                <span>Frais de plateforme (2% + 0,50€/billet):</span>
+                <span>Frais de plateforme HT (2% + 0,50€/billet):</span>
                 <span>${(orderData.platform_fee_cents / 100).toFixed(2)}€</span>
               </div>
             ` : ''}
+            <div class="total-line">
+              <span>Total HT:</span>
+              <span>${(((orderData.subtotal_cents || orderData.total_cents) + (orderData.platform_fee_cents || 0)) / 100).toFixed(2)}€</span>
+            </div>
+            <div class="total-line">
+              <span>TVA (20%):</span>
+              <span>${((((orderData.subtotal_cents || orderData.total_cents) + (orderData.platform_fee_cents || 0)) * 0.20) / 100).toFixed(2)}€</span>
+            </div>
             <div class="total-line total-final">
-              <span>Total payé:</span>
+              <span>Total TTC:</span>
               <span>${(orderData.total_cents / 100).toFixed(2)}€</span>
             </div>
           </div>

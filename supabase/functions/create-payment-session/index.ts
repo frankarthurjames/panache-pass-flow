@@ -78,10 +78,16 @@ serve(async (req) => {
     const platformFeePercentage = 0.02; // 2%
     const platformFeeFixed = totalTickets * platformFeePerTicket;
     const platformFeePercentageAmount = Math.round(subtotalCents * platformFeePercentage);
-    const applicationFeeAmount = platformFeeFixed + platformFeePercentageAmount;
+    const platformFeeCents = platformFeeFixed + platformFeePercentageAmount;
     
-    // Calculer le total final (sous-total + frais de plateforme)
-    const totalCents = subtotalCents + applicationFeeAmount;
+    // Calculer le total HT (sous-total + frais de plateforme)
+    const totalHTCents = subtotalCents + platformFeeCents;
+    
+    // Calculer la TVA (20%)
+    const tvaCents = Math.round(totalHTCents * 0.20);
+    
+    // Calculer le total TTC (HT + TVA)
+    const totalCents = totalHTCents + tvaCents;
 
     // Créer une commande dans la base de données
     const { data: orderData, error: orderError } = await supabaseClient
@@ -89,7 +95,12 @@ serve(async (req) => {
       .insert({
         user_id: user.id,
         event_id: eventId,
+        subtotal_cents: subtotalCents,
+        platform_fee_cents: platformFeeCents,
+        total_ht_cents: totalHTCents,
+        tva_cents: tvaCents,
         total_cents: totalCents,
+        currency: 'EUR',
         status: 'pending'
       })
       .select()
@@ -147,7 +158,7 @@ serve(async (req) => {
     });
 
     // Ajouter les frais de plateforme comme ligne séparée
-    if (applicationFeeAmount > 0) {
+    if (platformFeeCents > 0) {
       stripeLineItems.push({
         price_data: {
           currency: 'eur',
@@ -155,7 +166,7 @@ serve(async (req) => {
             name: 'Frais de plateforme',
             description: `Frais de service (2% + 0,50€ par billet)`,
           },
-          unit_amount: applicationFeeAmount,
+          unit_amount: platformFeeCents,
         },
         quantity: 1,
       });
@@ -176,10 +187,17 @@ serve(async (req) => {
         event_id: eventId,
       },
       payment_intent_data: {
-        application_fee_amount: applicationFeeAmount,
+        application_fee_amount: platformFeeCents,
         transfer_data: {
           destination: organization.stripe_account_id,
         },
+        receipt_email: user.email, // Email pour le reçu Stripe automatique
+      },
+      invoice_creation: {
+        enabled: true, // Activer la création de factures automatique
+      },
+      automatic_tax: {
+        enabled: false, // Désactiver car on gère la TVA manuellement
       },
     });
 

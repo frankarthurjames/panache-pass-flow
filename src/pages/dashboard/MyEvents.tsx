@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Calendar, MapPin, Users, Download, Ticket, ExternalLink, Loader2 } from "lucide-react";
+import { Calendar, MapPin, Users, Download, Ticket, ExternalLink, Loader2, FileText, Receipt, QrCode } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -13,6 +13,8 @@ const MyEvents = () => {
   const [registrations, setRegistrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingTickets, setDownloadingTickets] = useState<{[key: string]: boolean}>({});
+  const [stripeInvoices, setStripeInvoices] = useState<{[key: string]: any}>({});
+  const [loadingInvoices, setLoadingInvoices] = useState<{[key: string]: boolean}>({});
 
   useEffect(() => {
     const fetchMyEvents = async () => {
@@ -122,6 +124,54 @@ const MyEvents = () => {
       toast.error("Erreur lors du téléchargement du billet");
     } finally {
       setDownloadingTickets(prev => ({ ...prev, [registrationId]: false }));
+    }
+  };
+
+  const handleGetStripeInvoice = async (orderId: string) => {
+    try {
+      setLoadingInvoices(prev => ({ ...prev, [orderId]: true }));
+      
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Session expirée, veuillez vous reconnecter");
+        return;
+      }
+
+      const response = await fetch(`https://wlxbydzshqijlfejqafp.supabase.co/functions/v1/get-stripe-invoice`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ orderId })
+      });
+
+      const result = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de la récupération de la facture');
+      }
+
+      if (result.invoice) {
+        setStripeInvoices(prev => ({ ...prev, [orderId]: result.invoice }));
+        
+        // Ouvrir la facture Stripe dans un nouvel onglet
+        if (result.invoice.hosted_invoice_url) {
+          window.open(result.invoice.hosted_invoice_url, '_blank');
+        } else if (result.invoice.invoice_pdf) {
+          window.open(result.invoice.invoice_pdf, '_blank');
+        }
+      } else if (result.receiptUrl) {
+        // Ouvrir le reçu Stripe
+        window.open(result.receiptUrl, '_blank');
+      } else {
+        toast.info("Aucune facture Stripe trouvée pour cette commande");
+      }
+    } catch (error) {
+      console.error('Error getting Stripe invoice:', error);
+      toast.error("Erreur lors de la récupération de la facture");
+    } finally {
+      setLoadingInvoices(prev => ({ ...prev, [orderId]: false }));
     }
   };
 
@@ -519,11 +569,10 @@ const MyEvents = () => {
                   {/* Détails des billets */}
                   <div>
                     <h4 className="font-medium mb-2">Vos billets</h4>
-                    <div className="space-y-2">
+                    <div className="max-h-40 overflow-y-auto space-y-2 border rounded-lg p-3">
                       {group.registrations.map((reg: any, regIndex: number) => (
-                        <div key={regIndex} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                        <div key={regIndex} className="flex items-center justify-between p-2 bg-muted/30 rounded">
                           <div className="flex items-center gap-2">
-                            <Ticket className="w-4 h-4 text-primary" />
                             <span>{reg.ticket_types.name}</span>
                             <span className="text-sm text-muted-foreground">
                               - {(reg.ticket_types.price_cents / 100).toFixed(2)}€
@@ -552,13 +601,28 @@ const MyEvents = () => {
                       </Link>
                     </Button>
                     {uniqueOrderId && (
-                      <Button
-                        variant="outline"
-                        onClick={() => handleDownloadReceipt(uniqueOrderId)}
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Télécharger le reçu
-                      </Button>
+                      <>
+                        <Button
+                          variant="outline"
+                          onClick={() => handleGetStripeInvoice(uniqueOrderId)}
+                          disabled={loadingInvoices[uniqueOrderId]}
+                        >
+                          {loadingInvoices[uniqueOrderId] ? (
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          ) : (
+                            <FileText className="w-4 h-4 mr-2" />
+                          )}
+                          {loadingInvoices[uniqueOrderId] ? 'Chargement...' : 'Facture Stripe'}
+                        </Button>
+                        
+                        <Button
+                          variant="outline"
+                          onClick={() => handleDownloadReceipt(uniqueOrderId)}
+                        >
+                          <Receipt className="w-4 h-4 mr-2" />
+                          Reçu PDF
+                        </Button>
+                      </>
                     )}
                   </div>
                 </div>

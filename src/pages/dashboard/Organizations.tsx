@@ -73,24 +73,27 @@ const Organizations = () => {
                 .gte('created_at', startOfLastMonth.toISOString())
                 .lt('created_at', startOfMonth.toISOString());
 
-              // Compter les participants totaux
+              // Compter les participants totaux (seulement les paiements confirmés)
               const { count: totalParticipantsCount } = await supabase
                 .from('registrations')
-                .select('*, events!inner(*)')
-                .eq('events.organization_id', org.id);
+                .select('*, events!inner(*), orders!inner(*)')
+                .eq('events.organization_id', org.id)
+                .eq('orders.status', 'paid');
 
               // Compter les participants cette semaine
               const { count: participantsThisWeek } = await supabase
                 .from('registrations')
-                .select('*, events!inner(*)')
+                .select('*, events!inner(*), orders!inner(*)')
                 .eq('events.organization_id', org.id)
+                .eq('orders.status', 'paid')
                 .gte('created_at', startOfWeek.toISOString());
 
               // Compter les participants la semaine dernière
               const { count: participantsLastWeek } = await supabase
                 .from('registrations')
-                .select('*, events!inner(*)')
+                .select('*, events!inner(*), orders!inner(*)')
                 .eq('events.organization_id', org.id)
+                .eq('orders.status', 'paid')
                 .gte('created_at', startOfLastWeek.toISOString())
                 .lt('created_at', startOfWeek.toISOString());
 
