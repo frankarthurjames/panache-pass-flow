@@ -10,10 +10,7 @@ export const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="space-y-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
-                <img src={panacheLogo} alt="Panache" className="w-full h-full object-contain" />
-              </div>
+            <div className="flex items-center">
               <img src={panacheLogoText} alt="Panache" className="h-6" />
             </div>
             <p className="text-sm text-muted-foreground">

@@ -25,10 +25,7 @@ export const Navbar = () => {
     <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
-              <img src={panacheLogo} alt="Panache" className="w-full h-full object-contain" />
-            </div>
+          <Link to="/" className="flex items-center">
             <img src={panacheLogoText} alt="Panache" className="h-8" />
           </Link>
 
