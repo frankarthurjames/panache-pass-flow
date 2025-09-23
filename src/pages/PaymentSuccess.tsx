@@ -13,6 +13,7 @@ const PaymentSuccess = () => {
   
   const [orderData, setOrderData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [downloadingReceipt, setDownloadingReceipt] = useState(false);
 
   useEffect(() => {
     const loadOrderDetails = async () => {
@@ -49,9 +50,12 @@ const PaymentSuccess = () => {
 
         setOrderData(order);
 
-        // Si le paiement est confirmé, créer les inscriptions
+        // Vérifier si les inscriptions existent déjà (créées par le webhook)
         if (order.status === 'pending' && sessionId) {
-          await createRegistrations(order);
+          // Attendre un peu que le webhook traite le paiement
+          setTimeout(async () => {
+            await checkOrderStatus(order.id);
+          }, 3000);
         }
       } catch (error) {
         console.error('Error loading order:', error);
@@ -63,6 +67,48 @@ const PaymentSuccess = () => {
 
     loadOrderDetails();
   }, [orderId, sessionId]);
+
+  const checkOrderStatus = async (orderId: string) => {
+    try {
+      const { data: updatedOrder, error } = await supabase
+        .from('orders')
+        .select('status')
+        .eq('id', orderId)
+        .single();
+
+      if (!error && updatedOrder?.status === 'paid') {
+        // Recharger les données de la commande
+        const { data: order, error: orderError } = await supabase
+          .from('orders')
+          .select(`
+            *,
+            events (
+              id,
+              title,
+              starts_at,
+              venue,
+              city
+            ),
+            order_items (
+              qty,
+              unit_price_cents,
+              ticket_types (
+                name
+              )
+            )
+          `)
+          .eq('id', orderId)
+          .single();
+
+        if (!orderError && order) {
+          setOrderData(order);
+          toast.success("Paiement confirmé ! Vos billets vous ont été envoyés par email.");
+        }
+      }
+    } catch (error) {
+      console.error('Error checking order status:', error);
+    }
+  };
 
   const createRegistrations = async (order: any) => {
     try {
@@ -150,6 +196,35 @@ const PaymentSuccess = () => {
     } catch (error) {
       console.error('Error creating registrations:', error);
       toast.error("Erreur lors de la confirmation de l'inscription");
+    }
+  };
+
+  const handleDownloadReceipt = async () => {
+    if (!orderId) return;
+    
+    try {
+      setDownloadingReceipt(true);
+      
+      // Générer le PDF du reçu
+      const { data: pdfData, error: pdfError } = await supabase.functions.invoke('generate-receipt-pdf', {
+        body: { orderId: orderId }
+      });
+
+      if (pdfError || !pdfData?.pdfUrl) {
+        console.error("Error generating receipt PDF:", pdfError);
+        toast.error("Erreur lors de la génération du reçu");
+        return;
+      }
+
+      // Ouvrir le reçu dans un nouvel onglet pour impression
+      window.open(pdfData.pdfUrl, '_blank');
+      
+      toast.success("Reçu téléchargé avec succès !");
+    } catch (error) {
+      console.error('Error downloading receipt:', error);
+      toast.error("Erreur lors du téléchargement du reçu");
+    } finally {
+      setDownloadingReceipt(false);
     }
   };
 
@@ -264,9 +339,14 @@ const PaymentSuccess = () => {
                   Voir l'événement
                 </Link>
               </Button>
-              <Button variant="outline" className="flex-1">
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={handleDownloadReceipt}
+                disabled={downloadingReceipt}
+              >
                 <Download className="w-4 h-4 mr-2" />
-                Télécharger le reçu
+                {downloadingReceipt ? 'Génération...' : 'Télécharger le reçu'}
               </Button>
             </div>
 
@@ -274,9 +354,9 @@ const PaymentSuccess = () => {
               <p className="text-sm text-muted-foreground">
                 Vos billets PDF vous ont été envoyés par email. Vérifiez votre boîte de réception.
               </p>
-              <Button variant="ghost" asChild className="mt-2">
-                <Link to="/dashboard">Accéder à mon tableau de bord</Link>
-              </Button>
+              <p className="text-sm text-muted-foreground mt-2">
+                Conservez bien vos billets et présentez-les à l'entrée de l'événement.
+              </p>
             </div>
           </CardContent>
         </Card>

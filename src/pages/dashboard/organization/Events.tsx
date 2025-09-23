@@ -283,11 +283,12 @@ const Events = () => {
       // Pour chaque événement, récupérer les statistiques
       const eventsWithStats = await Promise.all(
         eventsList.map(async (event: any) => {
-          // Compter les participants
+          // Compter les participants (seulement les inscriptions payées)
           const { count: participantsCount } = await supabase
             .from('registrations')
-            .select('*', { count: 'exact', head: true })
-            .eq('event_id', event.id);
+            .select('*, orders!inner(*)', { count: 'exact', head: true })
+            .eq('event_id', event.id)
+            .eq('orders.status', 'paid');
 
           // Calculer les revenus
           const { data: payments } = await supabase
@@ -403,6 +404,17 @@ const Events = () => {
   // Charger les événements au montage
   useEffect(() => {
     fetchEvents(1, true);
+  }, [orgId]);
+
+  // Rafraîchir les données automatiquement toutes les 30 secondes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (orgId) {
+        fetchEvents(1, true);
+      }
+    }, 30000); // 30 secondes
+
+    return () => clearInterval(interval);
   }, [orgId]);
 
 

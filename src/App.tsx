@@ -17,6 +17,7 @@ import Privacy from "./pages/legal/Privacy";
 import DashboardLayout from "./layouts/DashboardLayout";
 import Overview from "./pages/dashboard/Overview";
 import Organizations from "./pages/dashboard/Organizations";
+import MyEvents from "./pages/dashboard/MyEvents";
 import NewOrganization from "./pages/dashboard/organizations/NewOrganization";
 import OrganizationDashboard from "./pages/dashboard/organization/OrganizationDashboard";
 import Integrations from "./pages/dashboard/organization/Integrations";
@@ -51,6 +52,7 @@ const App = () => (
             {/* Dashboard Routes */}
             <Route path="/dashboard" element={<DashboardLayout />}>
               <Route index element={<Overview />} />
+              <Route path="my-events" element={<MyEvents />} />
               <Route path="organizations" element={<Organizations />} />
               <Route path="organizations/new" element={<NewOrganization />} />
               <Route path="org/:orgId" element={<OrganizationDashboard />} />

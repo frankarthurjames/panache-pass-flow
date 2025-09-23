@@ -258,11 +258,25 @@ const EventDetail = () => {
     }));
   };
 
-  const getTotalPrice = () => {
+  const getSubtotalPrice = () => {
     return Object.entries(selectedTickets).reduce((total, [ticketId, quantity]) => {
       const ticket = ticketTypes.find(t => t.id === ticketId);
       return total + (ticket ? ticket.price_cents * quantity : 0);
     }, 0);
+  };
+
+  const getPlatformFees = () => {
+    const totalTickets = getTotalTickets();
+    const subtotal = getSubtotalPrice();
+    const platformFeePerTicket = 50; // 0,50€ en centimes
+    const platformFeePercentage = 0.02; // 2%
+    const platformFeeFixed = totalTickets * platformFeePerTicket;
+    const platformFeePercentageAmount = Math.round(subtotal * platformFeePercentage);
+    return platformFeeFixed + platformFeePercentageAmount;
+  };
+
+  const getTotalPrice = () => {
+    return getSubtotalPrice() + getPlatformFees();
   };
 
   const getTotalTickets = () => {
@@ -615,11 +629,21 @@ const EventDetail = () => {
                     
                     {/* Résumé du panier */}
                     {getTotalTickets() > 0 && (
-                      <div className="mt-4 p-3 bg-muted rounded-lg">
+                      <div className="mt-4 p-3 bg-muted rounded-lg space-y-2">
                         <div className="flex justify-between items-center">
                           <span className="font-medium">
                             {getTotalTickets()} ticket{getTotalTickets() > 1 ? 's' : ''}
                           </span>
+                          <span className="font-medium">
+                            {formatPrice(getSubtotalPrice())}
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center text-sm text-muted-foreground">
+                          <span>Frais de plateforme (2% + 0,50€/billet)</span>
+                          <span>{formatPrice(getPlatformFees())}</span>
+                        </div>
+                        <div className="border-t pt-2 flex justify-between items-center">
+                          <span className="font-semibold">Total</span>
                           <span className="text-lg font-bold">
                             {formatPrice(getTotalPrice())}
                           </span>

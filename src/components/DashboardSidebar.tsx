@@ -33,6 +33,7 @@ import { useAuth } from "@/hooks/useAuth";
 const mainMenuItems = [
   { title: "Accueil", url: "/", icon: Home, exact: true },
   { title: "Vue d'ensemble", url: "/dashboard", icon: LayoutDashboard, exact: true },
+  { title: "Mes événements", url: "/dashboard/my-events", icon: Calendar, exact: true },
   { title: "Organisations", url: "/dashboard/organizations", icon: Building2 },
 ];
 
