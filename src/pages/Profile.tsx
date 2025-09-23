@@ -7,10 +7,84 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, Mail, Phone, MapPin, Calendar, Save } from "lucide-react";
+import { User, Mail, Phone, MapPin, Calendar, Save, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const Profile = () => {
   const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    displayName: '',
+    phone: '',
+    location: '',
+    bio: ''
+  });
+
+  // Initialiser les données du formulaire quand l'utilisateur est chargé
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        firstName: user.user_metadata?.first_name || '',
+        lastName: user.user_metadata?.last_name || '',
+        displayName: user.user_metadata?.display_name || '',
+        phone: user.user_metadata?.phone || '',
+        location: user.user_metadata?.location || '',
+        bio: user.user_metadata?.bio || ''
+      });
+    }
+  }, [user]);
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSave = async () => {
+    if (!user) return;
+
+    try {
+      setLoading(true);
+
+      // Mettre à jour les métadonnées utilisateur dans Supabase Auth
+      const { error: authError } = await supabase.auth.updateUser({
+        data: {
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          display_name: formData.displayName,
+          phone: formData.phone,
+          location: formData.location,
+          bio: formData.bio
+        }
+      });
+
+      if (authError) throw authError;
+
+      // Mettre à jour ou créer le profil dans la table users publique
+      const { error: profileError } = await supabase
+        .from('users')
+        .upsert({
+          id: user.id,
+          email: user.email,
+          display_name: formData.displayName,
+          updated_at: new Date().toISOString()
+        });
+
+      if (profileError) throw profileError;
+
+      toast.success("Profil mis à jour avec succès !");
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error("Erreur lors de la mise à jour du profil");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -37,11 +111,11 @@ const Profile = () => {
                   <Avatar className="w-24 h-24 mx-auto mb-4">
                     <AvatarImage src={user?.user_metadata?.avatar_url} />
                     <AvatarFallback className="text-xl">
-                      {user?.user_metadata?.display_name?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
+                      {formData.displayName?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
                   <CardTitle className="text-xl">
-                    {user?.user_metadata?.display_name || 'Utilisateur'}
+                    {formData.displayName || 'Utilisateur'}
                   </CardTitle>
                   <CardDescription>{user?.email}</CardDescription>
                   <Badge variant="secondary" className="mt-2">
@@ -56,10 +130,9 @@ const Profile = () => {
                     </div>
                     <div className="flex items-center text-muted-foreground">
                       <MapPin className="w-4 h-4 mr-2" />
-                      France
+                      {formData.location || 'France'}
                     </div>
                   </div>
-                  
                 </CardContent>
               </Card>
             </div>
@@ -84,7 +157,8 @@ const Profile = () => {
                       <Label htmlFor="firstName">Prénom</Label>
                       <Input 
                         id="firstName" 
-                        defaultValue={user?.user_metadata?.first_name || ''}
+                        value={formData.firstName}
+                        onChange={(e) => handleInputChange('firstName', e.target.value)}
                         placeholder="Votre prénom" 
                       />
                     </div>
@@ -92,7 +166,8 @@ const Profile = () => {
                       <Label htmlFor="lastName">Nom</Label>
                       <Input 
                         id="lastName" 
-                        defaultValue={user?.user_metadata?.last_name || ''}
+                        value={formData.lastName}
+                        onChange={(e) => handleInputChange('lastName', e.target.value)}
                         placeholder="Votre nom" 
                       />
                     </div>
@@ -102,7 +177,8 @@ const Profile = () => {
                     <Label htmlFor="displayName">Nom d'affichage</Label>
                     <Input 
                       id="displayName" 
-                      defaultValue={user?.user_metadata?.display_name || ''}
+                      value={formData.displayName}
+                      onChange={(e) => handleInputChange('displayName', e.target.value)}
                       placeholder="Comment voulez-vous être appelé ?" 
                     />
                   </div>
@@ -111,6 +187,8 @@ const Profile = () => {
                     <Label htmlFor="bio">Biographie</Label>
                     <Textarea 
                       id="bio"
+                      value={formData.bio}
+                      onChange={(e) => handleInputChange('bio', e.target.value)}
                       placeholder="Parlez-nous de vous et de votre expérience en organisation d'événements..."
                       className="min-h-[100px]"
                     />
@@ -135,7 +213,7 @@ const Profile = () => {
                     <Input 
                       id="email" 
                       type="email"
-                      defaultValue={user?.email || ''}
+                      value={user?.email || ''}
                       disabled
                       className="bg-muted"
                     />
@@ -148,8 +226,9 @@ const Profile = () => {
                     <Label htmlFor="phone">Téléphone</Label>
                     <Input 
                       id="phone" 
+                      value={formData.phone}
+                      onChange={(e) => handleInputChange('phone', e.target.value)}
                       placeholder="+33 6 12 34 56 78"
-                      defaultValue={user?.user_metadata?.phone || ''}
                     />
                   </div>
                   
@@ -157,8 +236,9 @@ const Profile = () => {
                     <Label htmlFor="location">Localisation</Label>
                     <Input 
                       id="location" 
+                      value={formData.location}
+                      onChange={(e) => handleInputChange('location', e.target.value)}
                       placeholder="Ville, Région"
-                      defaultValue={user?.user_metadata?.location || ''}
                     />
                   </div>
                 </CardContent>
@@ -166,9 +246,13 @@ const Profile = () => {
 
               {/* Save Button */}
               <div className="flex justify-end">
-                <Button size="lg">
-                  <Save className="w-4 h-4 mr-2" />
-                  Sauvegarder les modifications
+                <Button size="lg" onClick={handleSave} disabled={loading}>
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="w-4 h-4 mr-2" />
+                  )}
+                  {loading ? 'Sauvegarde...' : 'Sauvegarder les modifications'}
                 </Button>
               </div>
             </div>
