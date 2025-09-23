@@ -60,23 +60,6 @@ const Profile = () => {
                     </div>
                   </div>
                   
-                  <div className="pt-4 border-t">
-                    <h4 className="font-medium mb-3">Statistiques</h4>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Événements créés</span>
-                        <span className="font-medium">3</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Billets vendus</span>
-                        <span className="font-medium">157</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Note moyenne</span>
-                        <span className="font-medium">4.8 ⭐</span>
-                      </div>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
             </div>
