@@ -516,6 +516,33 @@ export type Database = {
           },
         ]
       }
+      ticket_validations: {
+        Row: {
+          created_at: string
+          id: string
+          registration_id: string
+          status: string
+          validated_at: string
+          validated_by: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          registration_id: string
+          status?: string
+          validated_at?: string
+          validated_by?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          registration_id?: string
+          status?: string
+          validated_at?: string
+          validated_by?: string
+        }
+        Relationships: []
+      }
       users: {
         Row: {
           avatar_url: string | null

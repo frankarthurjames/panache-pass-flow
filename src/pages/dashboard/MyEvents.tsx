@@ -409,14 +409,8 @@ const MyEvents = () => {
           <div class="total-section">
             <div class="total-line">
               <span>Sous-total:</span>
-              <span>${((order.subtotal_cents || order.total_cents) / 100).toFixed(2)}€</span>
+              <span>${(order.total_cents / 100).toFixed(2)}€</span>
             </div>
-            ${order.platform_fee_cents ? `
-              <div class="total-line">
-                <span>Frais de plateforme (2% + 0,50€/billet):</span>
-                <span>${(order.platform_fee_cents / 100).toFixed(2)}€</span>
-              </div>
-            ` : ''}
             <div class="total-line total-final">
               <span>Total payé:</span>
               <span>${(order.total_cents / 100).toFixed(2)}€</span>

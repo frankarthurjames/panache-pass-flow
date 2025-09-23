@@ -85,6 +85,21 @@ serve(async (req) => {
       throw new Error("Événement non disponible");
     }
 
+    // VÉRIFIER SI LE BILLET A DÉJÀ ÉTÉ VALIDÉ
+    const { data: existingValidation, error: validationCheckError } = await supabaseClient
+      .from('ticket_validations')
+      .select('id, validated_at, status')
+      .eq('registration_id', registrationId)
+      .maybeSingle();
+
+    if (validationCheckError) {
+      console.log("Error checking existing validation:", validationCheckError);
+    }
+
+    if (existingValidation) {
+      throw new Error(`Billet déjà validé le ${new Date(existingValidation.validated_at).toLocaleDateString('fr-FR')} à ${new Date(existingValidation.validated_at).toLocaleTimeString('fr-FR')}`);
+    }
+
     // Vérifier les dates de l'événement
     const now = new Date();
     const eventStart = new Date(registration.events.starts_at);
@@ -104,19 +119,19 @@ serve(async (req) => {
       message = 'Billet valide - Événement en cours';
     }
 
-    // Enregistrer la validation (optionnel)
+    // Enregistrer la validation OBLIGATOIRE pour éviter les doublons
     const { error: validationError } = await supabaseClient
       .from('ticket_validations')
       .insert({
         registration_id: registrationId,
         validated_at: new Date().toISOString(),
-        validated_by: 'qr_scanner', // ou l'ID de l'utilisateur qui scanne
+        validated_by: 'qr_scanner',
         status: validationStatus
       });
 
     if (validationError) {
-      console.log("Could not save validation:", validationError);
-      // Ne pas faire échouer la validation pour ça
+      console.error("CRITICAL: Could not save validation:", validationError);
+      throw new Error("Erreur lors de l'enregistrement de la validation");
     }
 
     return new Response(JSON.stringify({

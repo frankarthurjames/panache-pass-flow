@@ -69,7 +69,9 @@ serve(async (req) => {
       timestamp: new Date().toISOString()
     };
 
-    const qrCodeDataURL = await QRCode.toDataURL(JSON.stringify(qrData), {
+    // Générer le QR code sous format SVG pour éviter les problèmes canvas
+    const qrCodeSVG = await QRCode.toString(JSON.stringify(qrData), {
+      type: 'svg',
       width: 200,
       margin: 2,
       color: {
@@ -77,79 +79,182 @@ serve(async (req) => {
         light: '#FFFFFF'
       }
     });
+    
+    // Convertir SVG en base64 pour l'utiliser dans le PDF
+    const qrCodeDataURL = `data:image/svg+xml;base64,${btoa(qrCodeSVG)}`;
 
     console.log("QR code generated");
 
-    // Créer le PDF
+    // Créer le PDF professionnel
     const doc = new jsPDF();
     
     // Configuration des couleurs
-    const primaryColor = [59, 130, 246]; // Blue-500
-    const textColor = [31, 41, 55]; // Gray-800
-    const lightColor = [243, 244, 246]; // Gray-100
+    const primaryColor = [0, 48, 135]; // Bleu professionnel
+    const accentColor = [255, 215, 0]; // Or
+    const textColor = [31, 41, 55]; // Gris foncé
+    const lightGray = [248, 250, 252];
+    const darkGray = [107, 114, 128];
 
-    // Header avec couleur de fond
+    // === HEADER PRINCIPAL ===
     doc.setFillColor(...primaryColor);
-    doc.rect(0, 0, 210, 40, 'F');
+    doc.rect(0, 0, 210, 50, 'F');
     
-    // Logo et titre
+    // Logo et titre principal
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(20);
+    doc.setFontSize(24);
     doc.setFont('helvetica', 'bold');
-    doc.text('PANACHE', 20, 20);
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'normal');
-    doc.text('BILLET D\'ÉVÉNEMENT', 20, 30);
-
-    // Informations de l'événement
-    doc.setTextColor(...textColor);
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.text(registration.events.title, 20, 60);
-
+    doc.text('PANACHE', 20, 25);
+    
     doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
+    doc.text('BILLET D\'ACCÈS OFFICIEL', 20, 35);
+
+    // Numéro de billet (corner supérieur droit)
+    doc.setFontSize(10);
+    doc.text(`#${registration.id.substring(0, 8).toUpperCase()}`, 170, 20);
+    doc.text(`${new Date().toLocaleDateString('fr-FR')}`, 170, 30);
+
+    // === SECTION ÉVÉNEMENT ===
+    doc.setFillColor(...lightGray);
+    doc.rect(0, 50, 210, 80, 'F');
     
-    // Date et heure
+    doc.setTextColor(...textColor);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    
+    // Titre événement (avec gestion de la longueur)
+    const eventTitle = registration.events.title;
+    const maxWidth = 120;
+    const splitTitle = doc.splitTextToSize(eventTitle, maxWidth);
+    doc.text(splitTitle, 20, 70);
+
+    // Date et heure avec icônes
     const startDate = new Date(registration.events.starts_at);
-    doc.text(`Date: ${startDate.toLocaleDateString('fr-FR')}`, 20, 80);
-    doc.text(`Heure: ${startDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`, 20, 90);
+    const endDate = new Date(registration.events.ends_at);
     
-    // Lieu
-    if (registration.events.venue) {
-      doc.text(`Lieu: ${registration.events.venue}`, 20, 100);
-    }
-    if (registration.events.city) {
-      doc.text(`Ville: ${registration.events.city}`, 20, 110);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...primaryColor);
+    doc.text('📅 DATE & HEURE', 20, 95);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...textColor);
+    doc.setFontSize(12);
+    doc.text(`${startDate.toLocaleDateString('fr-FR', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    })}`, 20, 105);
+    doc.text(`De ${startDate.toLocaleTimeString('fr-FR', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    })} à ${endDate.toLocaleTimeString('fr-FR', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    })}`, 20, 115);
+
+    // Lieu avec icône
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...primaryColor);
+    doc.text('📍 LIEU', 20, 125);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...textColor);
+    doc.setFontSize(12);
+    if (registration.events.venue && registration.events.city) {
+      doc.text(`${registration.events.venue}`, 20, 135);
+      doc.text(`${registration.events.city}`, 20, 145);
+    } else if (registration.events.venue || registration.events.city) {
+      doc.text(`${registration.events.venue || registration.events.city}`, 20, 135);
     }
 
-    // Type de billet et prix
-    if (registration.ticket_types) {
-      doc.text(`Type: ${registration.ticket_types.name}`, 20, 130);
-      const price = registration.ticket_types.price_cents / 100;
-      doc.text(`Prix: ${price}€`, 20, 140);
-    }
-
-    // Participant
-    doc.text(`Participant: ${registration.users?.display_name || registration.users?.email}`, 20, 160);
+    // === QR CODE SECTION ===
+    // Fond pour QR Code
+    doc.setFillColor(255, 255, 255);
+    doc.rect(145, 65, 60, 60, 'F');
+    doc.setDrawColor(...darkGray);
+    doc.rect(145, 65, 60, 60, 'S');
     
     // QR Code
-    doc.addImage(qrCodeDataURL, 'PNG', 140, 70, 50, 50);
-    doc.setFontSize(10);
-    doc.text('Scannez ce code à l\'entrée', 140, 130, { align: 'left' });
-
-    // Numéro de billet
+    try {
+      doc.addImage(qrCodeDataURL, 'SVG', 150, 70, 50, 50);
+    } catch (e) {
+      // Fallback si SVG ne marche pas
+      doc.setFontSize(8);
+      doc.text('QR Code Error', 175, 95, { align: 'center' });
+    }
+    
     doc.setFontSize(8);
-    doc.text(`Numéro de billet: ${registration.id}`, 20, 280);
-    doc.text(`Généré le: ${new Date().toLocaleDateString('fr-FR')}`, 120, 280);
+    doc.setTextColor(...darkGray);
+    doc.text('SCANNER À L\'ENTRÉE', 175, 130, { align: 'center' });
 
-    // Footer
-    doc.setFillColor(...lightColor);
-    doc.rect(0, 250, 210, 47, 'F');
+    // === SECTION PARTICIPANT ===
+    doc.setFillColor(255, 255, 255);
+    doc.rect(0, 150, 210, 40, 'F');
+    
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(...primaryColor);
+    doc.text('👤 TITULAIRE DU BILLET', 20, 165);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(...textColor);
+    doc.setFontSize(12);
+    const participantName = registration.users?.display_name || registration.users?.email || 'Non spécifié';
+    doc.text(participantName, 20, 175);
+    
+    if (registration.users?.email) {
+      doc.setFontSize(10);
+      doc.setTextColor(...darkGray);
+      doc.text(registration.users.email, 20, 185);
+    }
+
+    // === SECTION TYPE DE BILLET ===
+    if (registration.ticket_types) {
+      doc.setFillColor(...accentColor);
+      doc.rect(120, 155, 80, 25, 'F');
+      
+      doc.setTextColor(0, 0, 0);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text(registration.ticket_types.name.toUpperCase(), 125, 165);
+      
+      const price = registration.ticket_types.price_cents / 100;
+      doc.setFontSize(14);
+      doc.text(`${price.toFixed(2)} ${registration.ticket_types.currency || 'EUR'}`, 125, 175);
+    }
+
+    // === CONDITIONS ET SÉCURITÉ ===
+    doc.setFillColor(...lightGray);
+    doc.rect(0, 200, 210, 60, 'F');
+    
     doc.setTextColor(...textColor);
     doc.setFontSize(10);
-    doc.text('Panache - Plateforme de billetterie sportive', 105, 265, { align: 'center' });
-    doc.text('Présentez ce billet (imprimé ou numérique) à l\'entrée', 105, 275, { align: 'center' });
+    doc.setFont('helvetica', 'bold');
+    doc.text('CONDITIONS D\'ACCÈS:', 20, 215);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.text('• Ce billet est personnel et non transférable', 20, 225);
+    doc.text('• Présentez ce billet (papier ou numérique) + pièce d\'identité', 20, 235);
+    doc.text('• Accès refusé si billet déjà validé ou contrefait', 20, 245);
+    doc.text('• Organisateur: ' + (registration.events.organizations?.name || 'Non spécifié'), 20, 255);
+
+    // === FOOTER SÉCURISÉ ===
+    doc.setFillColor(...primaryColor);
+    doc.rect(0, 270, 210, 27, 'F');
+    
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(8);
+    doc.text(`Billet généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}`, 20, 280);
+    doc.text('Panache © - Plateforme officielle de billetterie sportive', 20, 290);
+    
+    // Hash de sécurité (simple)
+    const securityHash = btoa(registration.id + registration.event_id + registration.user_id).substring(0, 12);
+    doc.text(`Hash: ${securityHash}`, 150, 280);
+    doc.text(`ID: ${registration.id}`, 150, 290);
 
     // Convertir en base64
     const pdfBase64 = doc.output('datauristring').split(',')[1];
