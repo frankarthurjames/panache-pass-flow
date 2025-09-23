@@ -31,15 +31,14 @@ serve(async (req) => {
     const { eventId, lineItems } = await req.json();
     console.log("Payment request:", { eventId, lineItems });
 
-    // Récupérer les données de l'événement et de l'organisation
+    // Récupérer les données de l'événement
     const { data: eventData, error: eventError } = await supabaseClient
       .from('events')
       .select(`
         *,
         organizations!inner (
           id,
-          name,
-          stripe_account_id
+          name
         )
       `)
       .eq('id', eventId)
@@ -47,11 +46,6 @@ serve(async (req) => {
 
     if (eventError || !eventData) {
       throw new Error("Event not found");
-    }
-
-    const organization = eventData.organizations;
-    if (!organization.stripe_account_id) {
-      throw new Error("Organization has no Stripe account connected");
     }
 
     console.log("Event and organization data loaded");
@@ -67,20 +61,18 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
-    // Créer une commande dans la base de données
+    // Calculer le sous-total
     const subtotalCents = lineItems.reduce((sum: number, item: any) =>
       sum + (item.unit_price_cents * item.quantity), 0
     );
 
+    // Créer une commande dans la base de données
     const { data: orderData, error: orderError } = await supabaseClient
       .from('orders')
       .insert({
         user_id: user.id,
         event_id: eventId,
-        subtotal_cents: subtotalCents,
-        platform_fee_cents: applicationFeeAmount,
-        total_cents: totalCents,
-        currency: 'EUR',
+        total_cents: subtotalCents,
         status: 'pending'
       })
       .select()
@@ -110,17 +102,6 @@ serve(async (req) => {
       throw new Error("Failed to create order items");
     }
 
-    // Calculer les frais de la plateforme (2% + 0,50€ par billet)
-    const totalTickets = lineItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
-    const platformFeePerTicket = 50; // 0,50€ en centimes
-    const platformFeePercentage = 0.02; // 2%
-    const platformFeeFixed = totalTickets * platformFeePerTicket;
-    const platformFeePercentageAmount = Math.round(subtotalCents * platformFeePercentage);
-    const applicationFeeAmount = platformFeeFixed + platformFeePercentageAmount;
-    
-    // Calculer le total final (sous-total + frais de plateforme)
-    const totalCents = subtotalCents + applicationFeeAmount;
-
     // Récupérer les détails des types de tickets pour Stripe
     const { data: ticketTypesData, error: ticketTypesError } = await supabaseClient
       .from('ticket_types')
@@ -148,24 +129,9 @@ serve(async (req) => {
       };
     });
 
-    // Ajouter les frais de plateforme comme ligne séparée
-    if (applicationFeeAmount > 0) {
-      stripeLineItems.push({
-        price_data: {
-          currency: 'eur',
-          product_data: {
-            name: 'Frais de plateforme',
-            description: `Frais de service (2% + 0,50€ par billet)`,
-          },
-          unit_amount: applicationFeeAmount,
-        },
-        quantity: 1,
-      });
-    }
-
     const origin = req.headers.get("origin") || "http://localhost:8080";
 
-    // Créer la session de paiement Stripe avec Connect
+    // Créer la session de paiement Stripe (paiement direct, sans Connect)
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -176,13 +142,7 @@ serve(async (req) => {
       metadata: {
         order_id: orderData.id,
         event_id: eventId,
-      },
-      payment_intent_data: {
-        application_fee_amount: applicationFeeAmount,
-        transfer_data: {
-          destination: organization.stripe_account_id,
-        },
-      },
+      }
     });
 
     console.log("Stripe session created:", session.id);
