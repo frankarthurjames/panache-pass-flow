@@ -7,9 +7,7 @@ import {
   Users, 
   TrendingUp, 
   Calendar, 
-  CreditCard,
   Download,
-  Eye,
   UserCheck,
   Activity,
   Clock,
@@ -228,7 +226,7 @@ const Analytics = () => {
             color: "text-muted-foreground"
           },
           {
-            title: "Revenus générés",
+            title: "Revenus générés", 
             value: `${(totalRevenue / 100).toFixed(0)}€`,
             change: `${revenueVariationPercent >= 0 ? '+' : ''}${revenueVariationPercent}% ce mois`,
             icon: TrendingUp,
@@ -239,13 +237,6 @@ const Analytics = () => {
             value: `${currentFillRate}%`,
             change: `${fillRateVariation >= 0 ? '+' : ''}${fillRateVariation}% cette semaine`,
             icon: BarChart,
-            color: "text-muted-foreground"
-          },
-          {
-            title: "Vues de l'événement",
-            value: "Non disponible",
-            change: "Données non collectées",
-            icon: Eye,
             color: "text-muted-foreground"
           }
         ]);
@@ -411,7 +402,7 @@ const Analytics = () => {
       </div>
 
       {/* Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {registrationStats.map((stat) => (
           <Card key={stat.title} className="h-full">
             <CardContent className="p-6 h-full">
