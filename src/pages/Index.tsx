@@ -7,7 +7,7 @@ import { EventCard } from "@/components/EventCard";
 import { FeatureCard } from "@/components/FeatureCard";
 import { SearchSection } from "@/components/SearchSection";
 import { Footer } from "@/components/Footer";
-import { ArrowRight, Play, Zap, Shield, BarChart3, Search, Loader2, Calendar } from "lucide-react";
+import { ArrowRight, Zap, Shield, BarChart3, Search, Loader2, Calendar } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -171,10 +171,6 @@ const Index = () => {
                 Créer mon événement
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
-            </Button>
-            <Button size="lg" variant="ghost" className="text-lg px-6 py-4 h-auto group">
-              <Play className="mr-2 h-5 w-5 group-hover:scale-110 transition-transform" />
-              Voir la démo (2 min)
             </Button>
           </div>
           
