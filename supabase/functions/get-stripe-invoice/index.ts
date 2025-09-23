@@ -34,7 +34,7 @@ serve(async (req) => {
     // Récupérer la commande avec l'ID de session Stripe
     const { data: order, error: orderError } = await supabaseClient
       .from('orders')
-      .select('stripe_session_id, stripe_payment_intent_id')
+      .select('stripe_session_id, stripe_payment_intent')
       .eq('id', orderId)
       .eq('user_id', user.id)
       .single();
@@ -63,9 +63,9 @@ serve(async (req) => {
     }
 
     // Essayer de récupérer via l'ID de payment intent
-    if (!invoice && order.stripe_payment_intent_id) {
+    if (!invoice && order.stripe_payment_intent) {
       try {
-        const paymentIntent = await stripe.paymentIntents.retrieve(order.stripe_payment_intent_id);
+        const paymentIntent = await stripe.paymentIntents.retrieve(order.stripe_payment_intent);
         if (paymentIntent.invoice) {
           invoice = await stripe.invoices.retrieve(paymentIntent.invoice);
         }
