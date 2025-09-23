@@ -125,7 +125,7 @@ const Index = () => {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="relative py-32 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <header className="relative py-32 px-4 sm:px-6 lg:px-8 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5 -z-10" />
         <div className="container mx-auto text-center max-w-4xl">
           <Badge variant="secondary" className="mb-8 text-sm font-medium px-4 py-2">
@@ -206,10 +206,11 @@ const Index = () => {
             </div>
           </div>
         </div>
-      </section>
+      </header>
 
-      {/* Search Section */}
-      <SearchSection />
+      <main>
+        {/* Search Section */}
+        <SearchSection />
 
       {/* How it works */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/30">
@@ -372,29 +373,30 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-primary via-primary to-primary/90">
-        <div className="container mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-            Votre prochain événement commence ici
-          </h2>
-          <p className="text-xl mb-10 text-white/90 max-w-2xl mx-auto leading-relaxed">
-            Rejoignez plus de 5000 organisateurs qui ont choisi Panache Esport 
-            pour créer des événements sportifs exceptionnels.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Button size="lg" variant="secondary" asChild className="text-lg px-10 py-4 h-auto">
-              <Link to="/auth?tab=signup">
-                Créer mon événement gratuitement
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
-            <div className="text-white/80 text-sm">
-              ✨ Aucune carte bancaire requise
+        {/* Final CTA */}
+        <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-primary via-primary to-primary/90">
+          <div className="container mx-auto text-center">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
+              Votre prochain événement commence ici
+            </h2>
+            <p className="text-xl mb-10 text-white/90 max-w-2xl mx-auto leading-relaxed">
+              Rejoignez plus de 5000 organisateurs qui ont choisi Panache 
+              pour créer des événements sportifs exceptionnels.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+              <Button size="lg" variant="secondary" asChild className="text-lg px-10 py-4 h-auto">
+                <Link to="/auth?tab=signup">
+                  Créer mon événement gratuitement
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Link>
+              </Button>
+              <div className="text-white/80 text-sm">
+                ✨ Aucune carte bancaire requise
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
       
       <Footer />
     </div>

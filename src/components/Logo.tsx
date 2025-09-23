@@ -21,14 +21,9 @@ export const Logo = ({ size = "md", showText = false, className = "" }: LogoProp
     >
       <img 
         src={panacheLogoText} 
-        alt="Panache" 
+        alt="Panache - Plateforme de billetterie événements sportifs" 
         className={`${sizeClasses[size]} w-auto object-contain`} 
       />
-      {showText && (
-        <div className="ml-2 flex flex-col">
-          <span className="text-sm text-muted-foreground">Event Management</span>
-        </div>
-      )}
     </Link>
   );
 };

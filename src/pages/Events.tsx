@@ -283,9 +283,9 @@ const Events = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       
-
-      {/* Search Section */}
-      <SearchSection />
+      <main>
+        {/* Search Section */}
+        <SearchSection />
 
       {/* Filters & Stats */}
       <section className="py-8 px-4 sm:px-6 lg:px-8 bg-muted/30">
@@ -400,6 +400,7 @@ const Events = () => {
           
         </div>
       </section>
+      </main>
       
       <Footer />
     </div>
