@@ -92,11 +92,14 @@ serve(async (req) => {
     doc.setFillColor(...primaryColor);
     doc.rect(0, 0, 210, 40, 'F');
     
-    // Titre
+    // Logo et titre
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(24);
+    doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
-    doc.text('BILLET D\'ÉVÉNEMENT', 105, 25, { align: 'center' });
+    doc.text('PANACHE', 20, 20);
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'normal');
+    doc.text('BILLET D\'ÉVÉNEMENT', 20, 30);
 
     // Informations de l'événement
     doc.setTextColor(...textColor);
@@ -145,7 +148,7 @@ serve(async (req) => {
     doc.rect(0, 250, 210, 47, 'F');
     doc.setTextColor(...textColor);
     doc.setFontSize(10);
-    doc.text('Panache Esport - Plateforme de billetterie sportive', 105, 265, { align: 'center' });
+    doc.text('Panache - Plateforme de billetterie sportive', 105, 265, { align: 'center' });
     doc.text('Présentez ce billet (imprimé ou numérique) à l\'entrée', 105, 275, { align: 'center' });
 
     // Convertir en base64

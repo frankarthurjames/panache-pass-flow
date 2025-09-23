@@ -31,8 +31,7 @@ export const WelcomeEmail = ({
         {/* Header with Panache branding */}
         <Section style={header}>
           <div style={logoContainer}>
-            <div style={logoIcon}>🏆</div>
-            <Heading style={logoText}>Panache</Heading>
+            <img src="https://wlxbydzshqijlfejqafp.supabase.co/storage/v1/object/public/event-images/panache-logo-text.png" alt="Panache" style={logoImage} />
           </div>
         </Section>
 
@@ -132,25 +131,11 @@ const logoContainer = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  gap: '12px',
 }
 
-const logoIcon = {
-  fontSize: '32px',
-  width: '48px',
+const logoImage = {
   height: '48px',
-  borderRadius: '12px',
-  backgroundColor: 'hsl(25, 95%, 55%)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-}
-
-const logoText = {
-  fontSize: '28px',
-  fontWeight: 'bold',
-  color: 'hsl(224, 71%, 4%)',
-  margin: 0,
+  width: 'auto',
 }
 
 const content = {

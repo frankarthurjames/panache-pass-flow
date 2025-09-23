@@ -7,9 +7,7 @@ import {
   Users, 
   TrendingUp, 
   Calendar, 
-  CreditCard,
   Download,
-  Eye,
   UserCheck,
   Activity,
   Clock,
@@ -215,8 +213,8 @@ const Analytics = () => {
           totalRegistrations: totalRegistrationsCount || 0,
           capacity: event.capacity || 0,
           revenue: `${(totalRevenue / 100).toFixed(2)}€`,
-          views: Math.floor(Math.random() * 1000) + 500, // Simulé - à implémenter avec vraies données
-          conversionRate: "12.5%" // Simulé - à implémenter avec vraies données
+          views: 0, // Non disponible actuellement
+          conversionRate: "0%" // Non disponible actuellement
         });
 
         setRegistrationStats([
@@ -225,28 +223,21 @@ const Analytics = () => {
             value: (totalRegistrationsCount || 0).toString(),
             change: `${registrationsVariation >= 0 ? '+' : ''}${registrationsVariation} cette semaine`,
             icon: Users,
-            color: "text-blue-600"
+            color: "text-muted-foreground"
           },
           {
-            title: "Revenus générés",
+            title: "Revenus générés", 
             value: `${(totalRevenue / 100).toFixed(0)}€`,
             change: `${revenueVariationPercent >= 0 ? '+' : ''}${revenueVariationPercent}% ce mois`,
             icon: TrendingUp,
-            color: "text-green-600"
+            color: "text-muted-foreground"
           },
           {
             title: "Taux de remplissage",
             value: `${currentFillRate}%`,
             change: `${fillRateVariation >= 0 ? '+' : ''}${fillRateVariation}% cette semaine`,
             icon: BarChart,
-            color: "text-purple-600"
-          },
-          {
-            title: "Vues de l'événement",
-            value: (Math.floor(Math.random() * 1000) + 500).toString(),
-            change: "+15% ce mois",
-            icon: Eye,
-            color: "text-indigo-600"
+            color: "text-muted-foreground"
           }
         ]);
 
@@ -406,30 +397,24 @@ const Analytics = () => {
               <Calendar className="w-4 h-4" />
               {eventData.date}
             </span>
-            {stripeStatus?.connected && stripeStatus?.charges_enabled && (
-              <Badge variant="default" className="bg-green-600">
-                <CreditCard className="w-3 h-3 mr-1" />
-                Stripe actif
-              </Badge>
-            )}
           </div>
         </div>
       </div>
 
       {/* Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {registrationStats.map((stat) => (
-          <Card key={stat.title}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
+          <Card key={stat.title} className="h-full">
+            <CardContent className="p-6 h-full">
+              <div className="flex items-center justify-between h-full">
+                <div className="flex-1">
                   <p className="text-sm font-medium text-muted-foreground mb-1">
                     {stat.title}
                   </p>
                   <div className="text-2xl font-bold mb-1">{stat.value}</div>
                   <p className="text-xs text-muted-foreground">{stat.change}</p>
                 </div>
-                <stat.icon className={`h-8 w-8 ${stat.color}`} />
+                <stat.icon className={`h-8 w-8 ${stat.color} flex-shrink-0 ml-4`} />
               </div>
             </CardContent>
           </Card>

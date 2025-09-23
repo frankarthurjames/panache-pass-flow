@@ -42,8 +42,7 @@ export const EventReminderEmail = ({
         {/* Header */}
         <Section style={header}>
           <div style={logoContainer}>
-            <div style={logoIcon}>🏆</div>
-            <Heading style={logoText}>Panache</Heading>
+            <img src="https://wlxbydzshqijlfejqafp.supabase.co/storage/v1/object/public/event-images/panache-logo-text.png" alt="Panache" style={logoImage} />
           </div>
         </Section>
 
@@ -227,25 +226,11 @@ const logoContainer = {
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  gap: '12px',
 }
 
-const logoIcon = {
-  fontSize: '24px',
-  width: '40px',
+const logoImage = {
   height: '40px',
-  borderRadius: '8px',
-  backgroundColor: 'hsl(25, 95%, 55%)',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-}
-
-const logoText = {
-  fontSize: '24px',
-  fontWeight: 'bold',
-  color: 'hsl(224, 71%, 4%)',
-  margin: 0,
+  width: 'auto',
 }
 
 const content = {
