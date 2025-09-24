@@ -197,6 +197,11 @@ const EventDetail = () => {
     return 'Terminé';
   };
 
+  const isEventFull = () => {
+    if (!event || !event.capacity) return false;
+    return getParticipantsCount() >= event.capacity;
+  };
+
   const nextImage = () => {
     if (event?.images && event.images.length > 0) {
       setCurrentImageIndex((prev) => (prev + 1) % event.images.length);
@@ -507,6 +512,11 @@ const EventDetail = () => {
                   <Badge variant={getStatus() === 'À venir' ? 'default' : getStatus() === 'En cours' ? 'secondary' : 'outline'}>
                     {getStatus()}
                   </Badge>
+                  {isEventFull() && (
+                    <Badge variant="destructive">
+                      COMPLET
+                    </Badge>
+                  )}
                 </div>
                 <h1 className="text-3xl font-bold mb-4">{event.title}</h1>
                 <p className="text-lg text-muted-foreground leading-relaxed">
@@ -530,10 +540,13 @@ const EventDetail = () => {
                     <div className="text-muted-foreground">{event.city || 'Ville non spécifiée'}</div>
                   </div>
                 </div>
-                <div className="flex items-center text-sm">
-                  <Users className="w-4 h-4 mr-2 text-primary" />
+                <div className={`flex items-center text-sm ${isEventFull() ? 'text-red-600' : ''}`}>
+                  <Users className={`w-4 h-4 mr-2 ${isEventFull() ? 'text-red-600' : 'text-primary'}`} />
                   <div>
-                    <div className="font-medium">{getParticipantsCount()}/{event.capacity || '∞'}</div>
+                    <div className={`font-medium ${isEventFull() ? 'text-red-600' : ''}`}>
+                      {getParticipantsCount()}/{event.capacity || '∞'}
+                      {isEventFull() && ' - COMPLET'}
+                    </div>
                     <div className="text-muted-foreground">participants</div>
                   </div>
                 </div>
@@ -675,13 +688,15 @@ const EventDetail = () => {
                   size="lg" 
                   className="w-full mb-4"
                   onClick={handleCheckout}
-                  disabled={getTotalTickets() === 0 || checkoutLoading}
+                  disabled={getTotalTickets() === 0 || checkoutLoading || isEventFull()}
                 >
                   {checkoutLoading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Traitement...
                     </>
+                  ) : isEventFull() ? (
+                    'Événement complet'
                   ) : (
                     `Réserver maintenant${getTotalTickets() > 0 ? ` - ${formatPrice(getTotalPrice())}` : ''}`
                   )}
