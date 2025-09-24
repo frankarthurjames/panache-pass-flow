@@ -39,131 +39,79 @@ export const EventConfirmationEmail = ({
 }: EventConfirmationEmailProps) => (
   <Html>
     <Head />
-    <Preview>Confirmation de votre inscription à {eventTitle}</Preview>
+    <Preview>Votre billet pour {eventTitle} est prêt !</Preview>
     <Body style={main}>
       <Container style={container}>
-        {/* Header */}
+        {/* Header simple avec logo */}
         <Section style={header}>
-          <div style={logoContainer}>
-            <img src="https://wlxbydzshqijlfejqafp.supabase.co/storage/v1/object/public/event-images/panache-logo-text.png" alt="Panache" style={logoImage} />
-          </div>
+          <img src="https://wlxbydzshqijlfejqafp.supabase.co/storage/v1/object/public/event-images/panache-logo-text.png" alt="Panache" style={logoImage} />
         </Section>
 
-        {/* Confirmation message */}
+        {/* Contenu principal */}
         <Section style={content}>
-          <div style={successBadge}>
-            <span style={successIcon}>✅</span>
-            <Text style={successText}>Inscription confirmée !</Text>
-          </div>
-
           <Heading style={h1}>Bonjour {userName},</Heading>
           
           <Text style={text}>
             Votre inscription à <strong>{eventTitle}</strong> a été confirmée avec succès.
           </Text>
 
-          {/* Event details card */}
-          <div style={eventCard}>
-            <Heading style={eventTitle}>{eventTitle}</Heading>
-            
-            <div style={eventDetail}>
-              <span style={eventIcon}>📅</span>
-              <Text style={eventText}>{eventDate}</Text>
-            </div>
-            
-            <div style={eventDetail}>
-              <span style={eventIcon}>📍</span>
-              <Text style={eventText}>{eventVenue}, {eventCity}</Text>
-            </div>
+          {/* Résumé simple */}
+          <div style={summaryCard}>
+            <Text style={summaryTitle}>{eventTitle}</Text>
+            <Text style={summaryDate}>{eventDate}</Text>
+            <Text style={summaryLocation}>{eventVenue}, {eventCity}</Text>
           </div>
 
-          {/* Tickets summary */}
-          <Section style={ticketSection}>
-            <Heading style={sectionTitle}>Détail de vos billets</Heading>
+          {/* Détails essentiels */}
+          <div style={detailsSection}>
+            <Text style={detailsTitle}>Détails de votre réservation</Text>
             
             {ticketTypes.map((ticket, index) => (
-              <div key={index} style={ticketItem}>
-                <div style={ticketInfo}>
-                  <Text style={ticketName}>{ticket.name}</Text>
-                  <Text style={ticketQuantity}>Quantité: {ticket.quantity}</Text>
-                </div>
+              <div key={index} style={ticketRow}>
+                <Text style={ticketName}>{ticket.name} x{ticket.quantity}</Text>
                 <Text style={ticketPrice}>
                   {ticket.price > 0 ? `${(ticket.price / 100).toFixed(2)} €` : 'Gratuit'}
                 </Text>
               </div>
             ))}
             
-            <Hr style={divider} />
-            
             <div style={totalRow}>
-              <Text style={totalLabel}>Total payé :</Text>
+              <Text style={totalLabel}>Total</Text>
               <Text style={totalAmount}>
                 {totalAmount > 0 ? `${(totalAmount / 100).toFixed(2)} €` : 'Gratuit'}
               </Text>
             </div>
-          </Section>
+          </div>
 
-          {/* QR Code section */}
+          {/* QR Code si disponible */}
           {qrCodeUrl && (
-            <Section style={qrSection}>
-              <Heading style={sectionTitle}>Votre billet numérique</Heading>
-              <Text style={text}>
-                Présentez ce QR code à l'entrée de l'événement :
-              </Text>
+            <div style={qrSection}>
+              <Text style={qrTitle}>Votre billet</Text>
               <div style={qrContainer}>
                 <img src={qrCodeUrl} alt="QR Code" style={qrCode} />
               </div>
-            </Section>
+              <Text style={qrText}>Présentez ce QR code à l'entrée</Text>
+            </div>
           )}
 
-          {/* Important information */}
-          <Section style={infoSection}>
-            <Heading style={infoTitle}>Informations importantes</Heading>
-            <div style={infoItem}>
-              <span style={infoIcon}>⏰</span>
-              <Text style={infoText}>
-                Arrivez 15 minutes avant le début de l'événement
-              </Text>
-            </div>
-            <div style={infoItem}>
-              <span style={infoIcon}>🎫</span>
-              <Text style={infoText}>
-                Conservez cet email comme preuve d'achat
-              </Text>
-            </div>
-            <div style={infoItem}>
-              <span style={infoIcon}>📱</span>
-              <Text style={infoText}>
-                Vous pouvez aussi accéder à vos billets depuis votre compte
-              </Text>
-            </div>
-          </Section>
-
-          {/* CTA */}
-          <Section style={buttonContainer}>
-            <Link href="#" style={button}>
-              Voir mes billets
-            </Link>
-          </Section>
+          {/* Message important simple */}
+          <div style={importantBox}>
+            <Text style={importantText}>
+              <strong>Important :</strong> Arrivez 15 minutes avant le début. 
+              Conservez cet email comme preuve d'achat.
+            </Text>
+          </div>
 
           <Text style={helpText}>
-            Des questions ? Contactez l'organisateur ou notre 
-            <Link href="#" style={link}> équipe support</Link>.
+            Des questions ? Contactez l'organisateur.
           </Text>
         </Section>
 
-        {/* Footer */}
+        {/* Footer simple */}
         <Section style={footer}>
           <Text style={footerText}>
-            Email envoyé par Panache pour {eventTitle}
+            Panache - Plateforme de billetterie sportive
           </Text>
-          <div style={footerLinks}>
-            <Link href="#" style={footerLink}>Gérer mes billets</Link>
-            <span style={separator}>•</span>
-            <Link href="#" style={footerLink}>Support</Link>
-            <span style={separator}>•</span>
-            <Link href="#" style={footerLink}>Conditions d'annulation</Link>
-          </div>
         </Section>
       </Container>
     </Body>
@@ -172,32 +120,26 @@ export const EventConfirmationEmail = ({
 
 export default EventConfirmationEmail
 
-// Styles using Panache design system
+// Styles simplifiés et naturels
 const main = {
-  backgroundColor: 'hsl(210, 20%, 98%)',
+  backgroundColor: '#ffffff',
   fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
 }
 
 const container = {
   margin: '0 auto',
-  padding: '20px 0 48px',
+  padding: '0',
   maxWidth: '600px',
 }
 
 const header = {
-  padding: '24px 0',
+  padding: '32px 24px 24px',
   textAlign: 'center' as const,
-  borderBottom: '1px solid hsl(220, 13%, 91%)',
-}
-
-const logoContainer = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
+  borderBottom: '1px solid #e5e7eb',
 }
 
 const logoImage = {
-  height: '40px',
+  height: '32px',
   width: 'auto',
 }
 
@@ -205,259 +147,165 @@ const content = {
   padding: '32px 24px',
 }
 
-const successBadge = {
-  backgroundColor: 'hsl(142, 76%, 95%)',
-  border: '2px solid hsl(142, 76%, 85%)',
-  borderRadius: '12px',
-  padding: '16px',
-  textAlign: 'center' as const,
-  margin: '0 0 32px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: '8px',
-}
-
-const successIcon = {
-  fontSize: '24px',
-}
-
-const successText = {
-  color: 'hsl(142, 76%, 36%)',
-  fontSize: '18px',
-  fontWeight: 'bold',
-  margin: 0,
-}
-
 const h1 = {
-  color: 'hsl(224, 71%, 4%)',
+  color: '#111827',
   fontSize: '24px',
   fontWeight: 'bold',
   margin: '0 0 16px',
 }
 
 const text = {
-  color: 'hsl(220, 9%, 46%)',
+  color: '#6b7280',
   fontSize: '16px',
   lineHeight: '24px',
   margin: '16px 0',
 }
 
-const eventCard = {
-  background: 'linear-gradient(135deg, hsl(25, 95%, 55%), hsl(25, 95%, 70%))',
-  borderRadius: '16px',
-  padding: '24px',
-  margin: '32px 0',
-  color: '#ffffff',
+const summaryCard = {
+  backgroundColor: '#f9fafb',
+  border: '1px solid #e5e7eb',
+  borderRadius: '8px',
+  padding: '20px',
+  margin: '24px 0',
 }
 
-const eventTitle = {
-  fontSize: '20px',
-  fontWeight: 'bold',
-  margin: '0 0 20px',
-  color: '#ffffff',
-}
-
-const eventDetail = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '12px',
-  margin: '12px 0',
-}
-
-const eventIcon = {
-  fontSize: '18px',
-  width: '20px',
-}
-
-const eventText = {
-  fontSize: '16px',
-  margin: 0,
-  color: '#ffffff',
-  fontWeight: '500',
-}
-
-const ticketSection = {
-  backgroundColor: 'hsl(220, 14%, 96%)',
-  borderRadius: '12px',
-  padding: '24px',
-  margin: '32px 0',
-}
-
-const sectionTitle = {
-  color: 'hsl(224, 71%, 4%)',
+const summaryTitle = {
+  color: '#111827',
   fontSize: '18px',
   fontWeight: 'bold',
-  margin: '0 0 20px',
+  margin: '0 0 8px',
 }
 
-const ticketItem = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: '12px 0',
-  borderBottom: '1px solid hsl(220, 13%, 91%)',
-}
-
-const ticketInfo = {
-  flex: 1,
-}
-
-const ticketName = {
-  color: 'hsl(224, 71%, 4%)',
-  fontSize: '16px',
-  fontWeight: '600',
+const summaryDate = {
+  color: '#6b7280',
+  fontSize: '14px',
   margin: '0 0 4px',
 }
 
-const ticketQuantity = {
-  color: 'hsl(220, 9%, 46%)',
+const summaryLocation = {
+  color: '#6b7280',
   fontSize: '14px',
-  margin: 0,
+  margin: '0',
+}
+
+const detailsSection = {
+  margin: '24px 0',
+}
+
+const detailsTitle = {
+  color: '#111827',
+  fontSize: '16px',
+  fontWeight: 'bold',
+  margin: '0 0 16px',
+}
+
+const ticketRow = {
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  padding: '8px 0',
+  borderBottom: '1px solid #f3f4f6',
+}
+
+const ticketName = {
+  color: '#111827',
+  fontSize: '14px',
+  margin: '0',
 }
 
 const ticketPrice = {
-  color: 'hsl(25, 95%, 55%)',
-  fontSize: '16px',
+  color: '#111827',
+  fontSize: '14px',
   fontWeight: 'bold',
-  margin: 0,
-}
-
-const divider = {
-  border: 'none',
-  borderTop: '2px solid hsl(220, 13%, 91%)',
-  margin: '16px 0',
+  margin: '0',
 }
 
 const totalRow = {
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
-  padding: '16px 0 0',
+  padding: '12px 0 0',
+  borderTop: '1px solid #d1d5db',
+  marginTop: '8px',
 }
 
 const totalLabel = {
-  color: 'hsl(224, 71%, 4%)',
-  fontSize: '18px',
+  color: '#111827',
+  fontSize: '16px',
   fontWeight: 'bold',
-  margin: 0,
+  margin: '0',
 }
 
 const totalAmount = {
-  color: 'hsl(25, 95%, 55%)',
-  fontSize: '20px',
+  color: '#111827',
+  fontSize: '16px',
   fontWeight: 'bold',
-  margin: 0,
+  margin: '0',
 }
 
 const qrSection = {
   textAlign: 'center' as const,
-  margin: '32px 0',
+  margin: '24px 0',
 }
 
-const qrContainer = {
-  backgroundColor: '#ffffff',
-  border: '2px solid hsl(220, 13%, 91%)',
-  borderRadius: '12px',
-  padding: '20px',
-  display: 'inline-block',
-  margin: '16px 0',
-}
-
-const qrCode = {
-  width: '150px',
-  height: '150px',
-}
-
-const infoSection = {
-  margin: '32px 0',
-}
-
-const infoTitle = {
-  color: 'hsl(224, 71%, 4%)',
-  fontSize: '18px',
+const qrTitle = {
+  color: '#111827',
+  fontSize: '16px',
   fontWeight: 'bold',
   margin: '0 0 16px',
 }
 
-const infoItem = {
-  display: 'flex',
-  alignItems: 'flex-start',
-  gap: '12px',
-  margin: '12px 0',
-}
-
-const infoIcon = {
-  fontSize: '16px',
-  width: '20px',
-  marginTop: '2px',
-}
-
-const infoText = {
-  color: 'hsl(220, 9%, 46%)',
-  fontSize: '14px',
-  margin: 0,
-  lineHeight: '20px',
-}
-
-const buttonContainer = {
-  textAlign: 'center' as const,
-  margin: '32px 0',
-}
-
-const button = {
-  backgroundColor: 'hsl(25, 95%, 55%)',
+const qrContainer = {
+  backgroundColor: '#ffffff',
+  border: '1px solid #e5e7eb',
   borderRadius: '8px',
-  color: '#ffffff',
-  fontSize: '16px',
-  fontWeight: 'bold',
-  textDecoration: 'none',
-  textAlign: 'center' as const,
+  padding: '16px',
   display: 'inline-block',
-  padding: '14px 28px',
-  boxShadow: '0 4px 30px -4px hsl(25, 95%, 55%, 0.25)',
+  margin: '0 0 8px',
+}
+
+const qrCode = {
+  width: '120px',
+  height: '120px',
+}
+
+const qrText = {
+  color: '#6b7280',
+  fontSize: '12px',
+  margin: '0',
+}
+
+const importantBox = {
+  backgroundColor: '#fef3c7',
+  border: '1px solid #fbbf24',
+  borderRadius: '6px',
+  padding: '12px',
+  margin: '24px 0',
+}
+
+const importantText = {
+  color: '#92400e',
+  fontSize: '14px',
+  margin: '0',
+  lineHeight: '20px',
 }
 
 const helpText = {
-  color: 'hsl(220, 9%, 46%)',
+  color: '#6b7280',
   fontSize: '14px',
-  lineHeight: '20px',
-  margin: '24px 0',
+  margin: '24px 0 0',
   textAlign: 'center' as const,
 }
 
 const footer = {
-  padding: '24px 0',
-  borderTop: '1px solid hsl(220, 13%, 91%)',
+  padding: '24px',
+  borderTop: '1px solid #e5e7eb',
   textAlign: 'center' as const,
+  backgroundColor: '#f9fafb',
 }
 
 const footerText = {
-  color: 'hsl(220, 9%, 46%)',
+  color: '#6b7280',
   fontSize: '12px',
-  margin: '0 0 12px',
-}
-
-const footerLinks = {
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  gap: '8px',
-  flexWrap: 'wrap' as const,
-}
-
-const footerLink = {
-  color: 'hsl(25, 95%, 55%)',
-  fontSize: '12px',
-  textDecoration: 'none',
-}
-
-const separator = {
-  color: 'hsl(220, 9%, 46%)',
-  fontSize: '12px',
-}
-
-const link = {
-  color: 'hsl(25, 95%, 55%)',
-  textDecoration: 'none',
+  margin: '0',
 }

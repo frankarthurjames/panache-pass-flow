@@ -8,6 +8,7 @@ import { QrCode, CheckCircle, XCircle, Clock, AlertCircle, User, Calendar, MapPi
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import jsQR from "jsqr";
 
 const QRValidator = () => {
   const { user } = useAuth();
@@ -107,13 +108,16 @@ const QRValidator = () => {
 
   const startQRDetection = () => {
     const detectQR = () => {
-      if (!videoRef.current || !canvasRef.current) return;
+      if (!videoRef.current || !canvasRef.current || !isScanning) return;
 
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const context = canvas.getContext('2d');
 
-      if (!context) return;
+      if (!context || video.readyState !== video.HAVE_ENOUGH_DATA) {
+        setTimeout(detectQR, 100);
+        return;
+      }
 
       // Dessiner l'image de la vidéo sur le canvas
       canvas.width = video.videoWidth;
@@ -123,9 +127,23 @@ const QRValidator = () => {
       // Obtenir les données de l'image
       const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
       
-      // Détection simple de QR code (version basique)
-      // Dans une vraie application, vous utiliseriez une librairie comme jsQR
-      // Pour cette démo, on simule une détection
+      // Détection QR code avec jsQR
+      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      
+      if (code) {
+        console.log("QR Code détecté:", code.data);
+        setQrData(code.data);
+        stopCamera();
+        toast.success("QR Code détecté ! Validation en cours...");
+        
+        // Auto-valider le QR code détecté
+        setTimeout(() => {
+          handleQRScan();
+        }, 500);
+        return;
+      }
+
+      // Continuer la détection
       setTimeout(detectQR, 100);
     };
 
@@ -301,6 +319,9 @@ const QRValidator = () => {
                         <div className="w-48 h-48 border-2 border-white border-dashed rounded-lg flex items-center justify-center">
                           <QrCode className="w-16 h-16 text-white opacity-50" />
                         </div>
+                      </div>
+                      <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-sm">
+                        🔍 Recherche de QR code...
                       </div>
                     </div>
                   )}
