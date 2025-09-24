@@ -183,7 +183,21 @@ const EventDetail = () => {
   };
 
   const getParticipantsCount = () => {
-    return registrations.length;
+    // Calculer le nombre total de tickets vendus (pas juste le nombre de registrations)
+    return registrations.reduce((total, registration) => {
+      // Chaque registration correspond à 1 ticket vendu
+      return total + 1;
+    }, 0);
+  };
+
+  const getTicketSoldCount = (ticketTypeId: string) => {
+    // Compter le nombre de tickets vendus pour ce type de ticket spécifique
+    return registrations.filter(registration => registration.ticket_type_id === ticketTypeId).length;
+  };
+
+  const getAvailableTickets = (ticketType: any) => {
+    const soldCount = getTicketSoldCount(ticketType.id);
+    return Math.max(0, ticketType.quantity - soldCount);
   };
 
   const getStatus = () => {
@@ -624,9 +638,15 @@ const EventDetail = () => {
                       <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
                         <div className="flex-1">
                           <div className="font-medium">{ticket.name}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {ticket.quantity > 0 ? `${ticket.quantity} places disponibles` : 'Complet'}
-                          </div>
+                           <div className="text-sm text-muted-foreground">
+                             {(() => {
+                               const available = getAvailableTickets(ticket);
+                               const sold = getTicketSoldCount(ticket.id);
+                               return available > 0 
+                                 ? `${available} places disponibles (${sold} vendues)` 
+                                 : 'Complet';
+                             })()}
+                           </div>
                           <div className="text-lg font-bold mt-1">{formatPrice(ticket.price_cents)}</div>
                         </div>
                         <div className="flex items-center gap-2">
@@ -641,12 +661,12 @@ const EventDetail = () => {
                           <span className="w-8 text-center">
                             {selectedTickets[ticket.id] || 0}
                           </span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => updateTicketQuantity(ticket.id, (selectedTickets[ticket.id] || 0) + 1)}
-                            disabled={ticket.quantity <= 0 || (selectedTickets[ticket.id] || 0) >= ticket.quantity}
-                          >
+                           <Button
+                             variant="outline"
+                             size="sm"
+                             onClick={() => updateTicketQuantity(ticket.id, (selectedTickets[ticket.id] || 0) + 1)}
+                             disabled={getAvailableTickets(ticket) <= 0 || (selectedTickets[ticket.id] || 0) >= getAvailableTickets(ticket)}
+                           >
                             +
                           </Button>
                         </div>
