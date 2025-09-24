@@ -30,6 +30,7 @@ import Settings from "./pages/dashboard/organization/Settings";
 import EventEdit from "./pages/dashboard/organization/EventEdit";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import TestQR from "./pages/TestQR";
+import ValidateTicket from "./pages/ValidateTicket";
 
 const queryClient = new QueryClient();
 
@@ -44,6 +45,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/test-qr" element={<TestQR />} />
+            <Route path="/validate-ticket" element={<ValidateTicket />} />
             <Route path="/events" element={<Events />} />
             <Route path="/events/:id" element={<EventDetail />} />
             <Route path="/profile" element={<Profile />} />

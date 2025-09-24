@@ -60,7 +60,7 @@ serve(async (req) => {
 
     console.log("Registration data loaded");
 
-    // Générer le QR code
+    // Générer le QR code avec URL de validation
     const qrData = {
       registrationId: registration.id,
       eventId: registration.event_id,
@@ -69,8 +69,13 @@ serve(async (req) => {
       timestamp: new Date().toISOString()
     };
 
-    // Générer le QR code en PNG pour une meilleure compatibilité
-    const qrCodePNG = await QRCode.toDataURL(JSON.stringify(qrData), {
+    // URL de validation que le QR code va contenir
+    const baseUrl = "http://localhost:8080"; // Domaine de l'application
+    const validationUrl = `${baseUrl}/validate-ticket?registrationId=${registration.id}&eventId=${registration.event_id}&userId=${registration.user_id}`;
+    const qrCodeData = JSON.stringify(qrData);
+
+    // Générer le QR code avec l'URL de validation
+    const qrCodePNG = await QRCode.toDataURL(validationUrl, {
       width: 200,
       margin: 2,
       color: {
@@ -324,15 +329,15 @@ serve(async (req) => {
       .from('event-images')
       .getPublicUrl(`tickets/${fileName}`);
 
-    // Mettre à jour la registration avec les URLs
-    const { error: updateError } = await supabaseClient
-      .from('registrations')
-      .update({
-        ticket_pdf_url: urlData.publicUrl,
-        ticket_qr_url: qrCodePNG,
-        qr_code: JSON.stringify(qrData)
-      })
-      .eq('id', registrationId);
+        // Mettre à jour la registration avec les URLs
+        const { error: updateError } = await supabaseClient
+          .from('registrations')
+          .update({
+            ticket_pdf_url: urlData.publicUrl,
+            ticket_qr_url: qrCodePNG,
+            qr_code: qrCodeData
+          })
+          .eq('id', registrationId);
 
     if (updateError) {
       console.error("Update error:", updateError);
