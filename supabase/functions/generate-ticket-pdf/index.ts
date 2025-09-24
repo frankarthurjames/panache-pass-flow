@@ -111,45 +111,45 @@ serve(async (req) => {
 
     // === HEADER PRINCIPAL ===
     doc.setFillColor(...primaryColor);
-    doc.rect(0, 0, 210, 45, 'F');
+    doc.rect(0, 0, 210, 50, 'F');
     
     // Logo Panache avec style moderne
     doc.setTextColor(...white);
-    doc.setFontSize(28);
+    doc.setFontSize(32);
     doc.setFont('helvetica', 'bold');
-    doc.text('PANACHE', 20, 22);
+    doc.text('PANACHE', 20, 25);
     
     // Badge "BILLET OFFICIEL"
     doc.setFillColor(...accentColor);
-    doc.rect(20, 28, 60, 12, 'F');
-    doc.setTextColor(...white);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('BILLET OFFICIEL', 25, 36);
-
-    // Numéro de billet et date (corner supérieur droit)
+    doc.rect(20, 32, 70, 12, 'F');
     doc.setTextColor(...white);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text(`#${registration.id.substring(0, 8).toUpperCase()}`, 170, 18);
-    doc.setFontSize(9);
+    doc.text('BILLET OFFICIEL', 23, 40);
+
+    // Numéro de billet et date (corner supérieur droit)
+    doc.setTextColor(...white);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text(`#${registration.id.substring(0, 8).toUpperCase()}`, 155, 18);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.text(`${new Date().toLocaleDateString('fr-FR')}`, 170, 28);
-    doc.text(`${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`, 170, 35);
+    doc.text(`${new Date().toLocaleDateString('fr-FR')}`, 155, 30);
+    doc.text(`${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`, 155, 38);
 
     // === SECTION ÉVÉNEMENT ===
     doc.setFillColor(...white);
-    doc.rect(0, 45, 210, 85, 'F');
+    doc.rect(0, 50, 210, 90, 'F');
     
     // Titre événement avec style moderne
     doc.setTextColor(...textColor);
-    doc.setFontSize(22);
+    doc.setFontSize(20);
     doc.setFont('helvetica', 'bold');
     
     const eventTitle = registration.events.title;
-    const maxWidth = 100;
+    const maxWidth = 120;
     const splitTitle = doc.splitTextToSize(eventTitle, maxWidth);
-    doc.text(splitTitle, 20, 65);
+    doc.text(splitTitle, 20, 70);
 
     // Date et heure avec design propre
     const startDate = new Date(registration.events.starts_at);
@@ -157,66 +157,68 @@ serve(async (req) => {
     
     // Box pour date/heure
     doc.setFillColor(...lightGray);
-    doc.rect(20, 75, 90, 25, 'F');
+    doc.rect(20, 85, 80, 25, 'F');
     doc.setDrawColor(...accentColor);
-    doc.rect(20, 75, 90, 25, 'S');
+    doc.setLineWidth(1);
+    doc.rect(20, 85, 80, 25, 'S');
     
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...accentColor);
-    doc.text('DATE & HEURE', 25, 85);
+    doc.text('DATE & HEURE', 23, 94);
     
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...textColor);
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.text(`${startDate.toLocaleDateString('fr-FR', { 
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
       day: 'numeric' 
-    })}`, 25, 92);
+    })}`, 23, 101);
     doc.text(`${startDate.toLocaleTimeString('fr-FR', { 
       hour: '2-digit', 
       minute: '2-digit' 
     })} - ${endDate.toLocaleTimeString('fr-FR', { 
       hour: '2-digit', 
       minute: '2-digit' 
-    })}`, 25, 98);
+    })}`, 23, 107);
 
     // Box pour lieu
     doc.setFillColor(...lightGray);
-    doc.rect(20, 105, 90, 20, 'F');
+    doc.rect(20, 115, 80, 20, 'F');
     doc.setDrawColor(...accentColor);
-    doc.rect(20, 105, 90, 20, 'S');
+    doc.setLineWidth(1);
+    doc.rect(20, 115, 80, 20, 'S');
     
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...accentColor);
-    doc.text('LIEU', 25, 115);
+    doc.text('LIEU', 23, 124);
     
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...textColor);
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     if (registration.events.venue && registration.events.city) {
-      doc.text(`${registration.events.venue}`, 25, 120);
-      doc.text(`${registration.events.city}`, 25, 125);
+      doc.text(`${registration.events.venue}`, 23, 130);
+      doc.text(`${registration.events.city}`, 23, 135);
     } else if (registration.events.venue || registration.events.city) {
-      doc.text(`${registration.events.venue || registration.events.city}`, 25, 120);
+      doc.text(`${registration.events.venue || registration.events.city}`, 23, 130);
     }
 
     // === QR CODE SECTION ===
     // Box moderne pour QR Code
     doc.setFillColor(...white);
-    doc.rect(120, 75, 80, 50, 'F');
+    doc.rect(110, 85, 65, 50, 'F');
     doc.setDrawColor(...accentColor);
     doc.setLineWidth(2);
-    doc.rect(120, 75, 80, 50, 'S');
+    doc.rect(110, 85, 65, 50, 'S');
     
       // QR Code rendu direct sans canvas (dessin des modules dans le PDF)
       try {
-        const qrSize = 60; // mm
-        const qrX = 130;
-        const qrY = 85;
+        const qrSize = 40; // mm
+        const qrX = 122.5;
+        const qrY = 92;
         const cell = qrSize / moduleCount;
         doc.setFillColor(0, 0, 0);
         for (let r = 0; r < moduleCount; r++) {
@@ -230,94 +232,95 @@ serve(async (req) => {
         console.error("QR Code draw error:", e);
         // Fallback avec message d'erreur stylé
         doc.setFillColor(...lightGray);
-        doc.rect(130, 85, 60, 60, 'F');
+        doc.rect(122.5, 92, 40, 40, 'F');
         doc.setFontSize(8);
         doc.setTextColor(...darkGray);
-        doc.text('QR Code', 160, 110, { align: 'center' });
-        doc.text('Non disponible', 160, 120, { align: 'center' });
+        doc.text('QR Code', 142.5, 110, { align: 'center' });
+        doc.text('Non disponible', 142.5, 118, { align: 'center' });
       }
     
     // Instructions de scan
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...accentColor);
-    doc.text('SCANNER À L\'ENTRÉE', 160, 140, { align: 'center' });
+    doc.text('SCANNER À L\'ENTRÉE', 142.5, 130, { align: 'center' });
 
     // === SECTION PARTICIPANT ===
     doc.setFillColor(...white);
-    doc.rect(0, 130, 210, 50, 'F');
+    doc.rect(0, 140, 210, 40, 'F');
     
     // Box pour participant
     doc.setFillColor(...lightGray);
-    doc.rect(20, 140, 90, 30, 'F');
+    doc.rect(20, 150, 80, 25, 'F');
     doc.setDrawColor(...accentColor);
-    doc.rect(20, 140, 90, 30, 'S');
+    doc.setLineWidth(1);
+    doc.rect(20, 150, 80, 25, 'S');
     
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...accentColor);
-    doc.text('TITULAIRE DU BILLET', 25, 150);
+    doc.text('TITULAIRE DU BILLET', 23, 159);
     
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(...textColor);
-    doc.setFontSize(11);
+    doc.setFontSize(10);
     const participantName = registration.users?.display_name || registration.users?.email || 'Non spécifié';
-    doc.text(participantName, 25, 158);
+    doc.text(participantName, 23, 166);
     
     if (registration.users?.email) {
-      doc.setFontSize(9);
+      doc.setFontSize(8);
       doc.setTextColor(...darkGray);
-      doc.text(registration.users.email, 25, 165);
+      doc.text(registration.users.email, 23, 172);
     }
 
     // === SECTION TYPE DE BILLET ===
     if (registration.ticket_types) {
       // Box moderne pour le type de billet
       doc.setFillColor(...accentColor);
-      doc.rect(120, 140, 80, 30, 'F');
+      doc.rect(110, 150, 65, 25, 'F');
       doc.setDrawColor(...primaryColor);
       doc.setLineWidth(1);
-      doc.rect(120, 140, 80, 30, 'S');
+      doc.rect(110, 150, 65, 25, 'S');
       
       doc.setTextColor(...white);
-      doc.setFontSize(11);
+      doc.setFontSize(10);
       doc.setFont('helvetica', 'bold');
-      doc.text(registration.ticket_types.name.toUpperCase(), 125, 150);
+      doc.text(registration.ticket_types.name.toUpperCase(), 113, 159);
       
       const price = registration.ticket_types.price_cents / 100;
-      doc.setFontSize(14);
-      doc.text(`${price.toFixed(2)} ${registration.ticket_types.currency || 'EUR'}`, 125, 160);
+      doc.setFontSize(12);
+      doc.text(`${price.toFixed(2)} ${registration.ticket_types.currency || 'EUR'}`, 113, 169);
     }
 
     // === CONDITIONS ET SÉCURITÉ ===
     doc.setFillColor(...lightGray);
-    doc.rect(0, 180, 210, 50, 'F');
+    doc.rect(0, 180, 210, 40, 'F');
     
     doc.setTextColor(...textColor);
-    doc.setFontSize(11);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
-    doc.text('CONDITIONS D\'ACCÈS', 20, 195);
+    doc.text('CONDITIONS D\'ACCÈS', 20, 190);
     
     doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.text('• Ce billet est personnel et non transférable', 20, 205);
-    doc.text('• Présentez ce billet (papier ou numérique) + pièce d\'identité', 20, 212);
-    doc.text('• Accès refusé si billet déjà validé ou contrefait', 20, 219);
-    doc.text('• Organisateur: ' + (registration.events.organizations?.name || 'Non spécifié'), 20, 226);
+    doc.setFontSize(8);
+    doc.text('• Ce billet est personnel et non transférable', 20, 198);
+    doc.text('• Présentez ce billet (papier ou numérique) + pièce d\'identité', 20, 204);
+    doc.text('• Accès refusé si billet déjà validé ou contrefait', 20, 210);
+    doc.text('• Organisateur: ' + (registration.events.organizations?.name || 'Non spécifié'), 20, 216);
 
     // === FOOTER SÉCURISÉ ===
     doc.setFillColor(...primaryColor);
-    doc.rect(0, 230, 210, 30, 'F');
+    doc.rect(0, 220, 210, 25, 'F');
     
     doc.setTextColor(...white);
-    doc.setFontSize(8);
-    doc.text(`Billet généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}`, 20, 240);
-    doc.text('Panache © - Plateforme officielle de billetterie sportive', 20, 248);
+    doc.setFontSize(7);
+    doc.text(`Billet généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}`, 20, 230);
+    doc.text('Panache © - Plateforme officielle de billetterie sportive', 20, 236);
     
     // Hash de sécurité (simple)
     const securityHash = btoa(registration.id + registration.event_id + registration.user_id).substring(0, 12);
-    doc.text(`Hash: ${securityHash}`, 150, 240);
-    doc.text(`ID: ${registration.id}`, 150, 248);
+    doc.text(`Hash: ${securityHash}`, 140, 230);
+    doc.text(`ID: ${registration.id}`, 140, 236);
 
     // Convertir en base64
     const pdfBase64 = doc.output('datauristring').split(',')[1];
