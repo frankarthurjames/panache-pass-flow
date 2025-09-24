@@ -293,7 +293,8 @@ serve(async (req) => {
       .from('registrations')
       .update({
         ticket_pdf_url: urlData.publicUrl,
-        ticket_qr_url: qrCodeDataURL
+        ticket_qr_url: qrCodeDataURL,
+        qr_code: JSON.stringify(qrData)
       })
       .eq('id', registrationId);
 

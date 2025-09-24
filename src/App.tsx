@@ -29,6 +29,7 @@ import Analytics from "./pages/dashboard/organization/Analytics";
 import Settings from "./pages/dashboard/organization/Settings";
 import EventEdit from "./pages/dashboard/organization/EventEdit";
 import PaymentSuccess from "./pages/PaymentSuccess";
+import TestQR from "./pages/TestQR";
 
 const queryClient = new QueryClient();
 
@@ -42,6 +43,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
+            <Route path="/test-qr" element={<TestQR />} />
             <Route path="/events" element={<Events />} />
             <Route path="/events/:id" element={<EventDetail />} />
             <Route path="/profile" element={<Profile />} />
