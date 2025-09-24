@@ -1,7 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
 import jsPDF from "https://esm.sh/jspdf@2.5.1";
-import QRCode from "https://esm.sh/qrcode@1.5.3";
+import qrcode from "https://esm.sh/qrcode-generator@1.4.4";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -60,7 +60,7 @@ serve(async (req) => {
 
     console.log("Registration data loaded");
 
-    // Générer le QR code avec URL de validation
+    // Générer le QR code avec URL de validation (sans canvas)
     const qrData = {
       registrationId: registration.id,
       eventId: registration.event_id,
@@ -74,15 +74,26 @@ serve(async (req) => {
     const validationUrl = `${baseUrl}/validate-ticket?registrationId=${registration.id}&eventId=${registration.event_id}&userId=${registration.user_id}`;
     const qrCodeData = JSON.stringify(qrData);
 
-    // Générer le QR code avec l'URL de validation
-    const qrCodePNG = await QRCode.toDataURL(validationUrl, {
-      width: 200,
-      margin: 2,
-      color: {
-        dark: '#000000',
-        light: '#FFFFFF'
+    // Utilise qrcode-generator (compatible Deno/Edge) pour créer la matrice
+    const qr = qrcode(0, 'M');
+    qr.addData(validationUrl);
+    qr.make();
+
+    // Créer une version SVG (pour stockage/email) sans dépendre de canvas
+    const moduleCount = qr.getModuleCount();
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${moduleCount} ${moduleCount}" shape-rendering="crispEdges">`;
+    svg += `<rect width="100%" height="100%" fill="#FFFFFF"/>`;
+    for (let r = 0; r < moduleCount; r++) {
+      for (let c = 0; c < moduleCount; c++) {
+        if (qr.isDark(r, c)) {
+          svg += `<rect x="${c}" y="${r}" width="1" height="1" fill="#000000"/>`;
+        }
       }
-    });
+    }
+    svg += `</svg>`;
+    const qrCodeSvgDataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+
+    console.log("QR code SVG generated");
 
     console.log("QR code generated");
 
@@ -201,19 +212,30 @@ serve(async (req) => {
     doc.setLineWidth(2);
     doc.rect(120, 75, 80, 50, 'S');
     
-    // QR Code avec gestion d'erreur améliorée
-    try {
-      doc.addImage(qrCodePNG, 'PNG', 130, 85, 60, 60);
-    } catch (e) {
-      console.error("QR Code generation error:", e);
-      // Fallback avec message d'erreur stylé
-      doc.setFillColor(...lightGray);
-      doc.rect(130, 85, 60, 60, 'F');
-      doc.setFontSize(8);
-      doc.setTextColor(...darkGray);
-      doc.text('QR Code', 160, 110, { align: 'center' });
-      doc.text('Non disponible', 160, 120, { align: 'center' });
-    }
+      // QR Code rendu direct sans canvas (dessin des modules dans le PDF)
+      try {
+        const qrSize = 60; // mm
+        const qrX = 130;
+        const qrY = 85;
+        const cell = qrSize / moduleCount;
+        doc.setFillColor(0, 0, 0);
+        for (let r = 0; r < moduleCount; r++) {
+          for (let c = 0; c < moduleCount; c++) {
+            if (qr.isDark(r, c)) {
+              doc.rect(qrX + c * cell, qrY + r * cell, cell, cell, 'F');
+            }
+          }
+        }
+      } catch (e) {
+        console.error("QR Code draw error:", e);
+        // Fallback avec message d'erreur stylé
+        doc.setFillColor(...lightGray);
+        doc.rect(130, 85, 60, 60, 'F');
+        doc.setFontSize(8);
+        doc.setTextColor(...darkGray);
+        doc.text('QR Code', 160, 110, { align: 'center' });
+        doc.text('Non disponible', 160, 120, { align: 'center' });
+      }
     
     // Instructions de scan
     doc.setFontSize(9);
@@ -334,7 +356,7 @@ serve(async (req) => {
           .from('registrations')
           .update({
             ticket_pdf_url: urlData.publicUrl,
-            ticket_qr_url: qrCodePNG,
+            ticket_qr_url: qrCodeSvgDataUrl,
             qr_code: qrCodeData
           })
           .eq('id', registrationId);
@@ -348,7 +370,7 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       success: true,
       pdfUrl: urlData.publicUrl,
-      qrCode: qrCodePNG
+      qrCode: qrCodeSvgDataUrl
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,
