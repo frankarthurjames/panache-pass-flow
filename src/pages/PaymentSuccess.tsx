@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle, Calendar, MapPin, Ticket, Download } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { Logo } from "@/components/Logo";
 
 const PaymentSuccess = () => {
   const [searchParams] = useSearchParams();
@@ -488,10 +489,15 @@ const PaymentSuccess = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p>Confirmation de votre paiement...</p>
+      <div className="min-h-screen bg-background">
+        <header className="border-b bg-background px-4 py-4">
+          <Logo size="md" />
+        </header>
+        <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p>Confirmation de votre paiement...</p>
+          </div>
         </div>
       </div>
     );
@@ -499,20 +505,25 @@ const PaymentSuccess = () => {
 
   if (!orderData) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-destructive">Commande introuvable</CardTitle>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-muted-foreground mb-4">
-              Impossible de trouver les détails de votre commande.
-            </p>
-            <Button asChild>
-              <Link to="/">Retour à l'accueil</Link>
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-background">
+        <header className="border-b bg-background px-4 py-4">
+          <Logo size="md" />
+        </header>
+        <div className="flex items-center justify-center min-h-[calc(100vh-80px)]">
+          <Card className="w-full max-w-md">
+            <CardHeader className="text-center">
+              <CardTitle className="text-destructive">Commande introuvable</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center">
+              <p className="text-muted-foreground mb-4">
+                Impossible de trouver les détails de votre commande.
+              </p>
+              <Button asChild>
+                <Link to="/">Retour à l'accueil</Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
@@ -521,8 +532,12 @@ const PaymentSuccess = () => {
   const totalTickets = orderData.order_items.reduce((sum: number, item: any) => sum + item.qty, 0);
 
   return (
-    <div className="min-h-screen bg-background py-12">
-      <div className="container mx-auto px-4 max-w-2xl">
+    <div className="min-h-screen bg-background">
+      <header className="border-b bg-background px-4 py-4">
+        <Logo size="md" />
+      </header>
+      <div className="py-12">
+        <div className="container mx-auto px-4 max-w-2xl">
         <Card>
           <CardHeader className="text-center">
             <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -620,6 +635,7 @@ const PaymentSuccess = () => {
         </Card>
       </div>
     </div>
+  </div>
   );
 };
 
