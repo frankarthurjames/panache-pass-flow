@@ -641,9 +641,8 @@ const EventDetail = () => {
                            <div className="text-sm text-muted-foreground">
                              {(() => {
                                const available = getAvailableTickets(ticket);
-                               const sold = getTicketSoldCount(ticket.id);
                                return available > 0 
-                                 ? `${available} places disponibles (${sold} vendues)` 
+                                 ? `${available} places disponibles` 
                                  : 'Complet';
                              })()}
                            </div>
