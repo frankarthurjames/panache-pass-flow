@@ -69,10 +69,19 @@ serve(async (req) => {
     const eventDate = new Date(event.starts_at);
     const orderDate = new Date(order.created_at);
     
-    // Calculer le prix réel des billets (sans frais de plateforme)
+    // Prix des billets TTC (inclut déjà la TVA)
     const ticketsTotal = order.order_items.reduce((sum: number, item: any) => {
       return sum + (item.unit_price_cents * item.qty);
     }, 0);
+    
+    const platformTTC = order.platform_fee_cents ?? 0;
+    const totalTTC = order.total_cents ?? (ticketsTotal + platformTTC);
+    
+    // Calculer HT en déduisant la TVA (prix TTC / (1 + taux TVA))
+    const ticketsHT = Math.round(ticketsTotal / 1.2); // 20% TVA 
+    const platformHT = Math.round(platformTTC / 1.2);
+    const totalHT = ticketsHT + platformHT;
+    const tvaAmount = totalTTC - totalHT;
     
     const htmlContent = `
       <!DOCTYPE html>
@@ -304,24 +313,27 @@ serve(async (req) => {
         </table>
 
         <div class="total-section">
-          ${order.platform_fee_cents ? `
+          <div class="total-line">
+            <span>Billets HT:</span>
+            <span>${(ticketsHT / 100).toFixed(2)}€</span>
+          </div>
+          ${platformTTC ? `
             <div class="total-line">
-              <span>Prix des billets:</span>
-              <span>${(ticketsTotal / 100).toFixed(2)}€</span>
+              <span>Frais de plateforme HT:</span>
+              <span>${(platformHT / 100).toFixed(2)}€</span>
             </div>
-            <div class="total-line">
-              <span>Frais de plateforme:</span>
-              <span>${(order.platform_fee_cents / 100).toFixed(2)}€</span>
-            </div>
-          ` : `
-            <div class="total-line">
-              <span>Prix des billets:</span>
-              <span>${(ticketsTotal / 100).toFixed(2)}€</span>
-            </div>
-          `}
+          ` : ''}
+          <div class="total-line">
+            <span>Total HT:</span>
+            <span>${(totalHT / 100).toFixed(2)}€</span>
+          </div>
+          <div class="total-line">
+            <span>TVA (20%):</span>
+            <span>${(tvaAmount / 100).toFixed(2)}€</span>
+          </div>
           <div class="total-line total-final">
-            <span>Total payé:</span>
-            <span>${(order.total_cents / 100).toFixed(2)}€</span>
+            <span>Total TTC:</span>
+            <span>${(totalTTC / 100).toFixed(2)}€</span>
           </div>
         </div>
 

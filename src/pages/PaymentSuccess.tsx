@@ -161,11 +161,17 @@ const PaymentSuccess = () => {
         )
         .join("");
 
-      const subtotal = (orderData.subtotal_cents ?? orderData.total_cents) / 100;
+      // Prix des billets TTC (inclut déjà la TVA)
+      const ticketsTotal = orderData.order_items.reduce((sum, item) => 
+        sum + (item.unit_price_cents * item.qty), 0) / 100;
       const fees = (orderData.platform_fee_cents ?? 0) / 100;
-      const totalHT = subtotal + fees;
-      const tva = +(totalHT * 0.2).toFixed(2);
-      const totalTTC = (orderData.total_cents / 100).toFixed(2);
+      const totalTTC = orderData.total_cents / 100;
+      
+      // Calculer HT en déduisant la TVA (prix TTC / (1 + taux TVA))
+      const ticketsHT = ticketsTotal / 1.2; // 20% TVA
+      const feesHT = fees / 1.2;
+      const totalHT = ticketsHT + feesHT;
+      const tva = totalTTC - totalHT;
 
       const html = `
 <!doctype html>
@@ -279,11 +285,11 @@ const PaymentSuccess = () => {
   </table>
 
   <div class="totals">
-    <div class="line"><span>Sous-total HT :</span><span>${subtotal.toFixed(2)}€</span></div>
-    ${fees ? `<div class="line"><span>Frais de plateforme HT :</span><span>${fees.toFixed(2)}€</span></div>` : ""}
+    <div class="line"><span>Billets HT :</span><span>${ticketsHT.toFixed(2)}€</span></div>
+    ${fees ? `<div class="line"><span>Frais de plateforme HT :</span><span>${feesHT.toFixed(2)}€</span></div>` : ""}
     <div class="line"><span>Total HT :</span><span>${totalHT.toFixed(2)}€</span></div>
     <div class="line"><span>TVA (20%) :</span><span>${tva.toFixed(2)}€</span></div>
-    <div class="line final"><span>Total TTC :</span><span>${totalTTC}€</span></div>
+    <div class="line final"><span>Total TTC :</span><span>${totalTTC.toFixed(2)}€</span></div>
   </div>
 
   <div class="footer">
