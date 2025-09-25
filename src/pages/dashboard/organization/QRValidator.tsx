@@ -27,26 +27,105 @@ const QRValidator = () => {
   // Fonction pour charger l'historique depuis la BDD
   const loadScanHistory = async () => {
     try {
-      // Utiliser une approche plus simple pour récupérer les validations récentes
-      const { data: validations, error } = await supabase
+      // D'abord récupérer les validations récentes
+      const { data: validations, error: validationsError } = await supabase
         .from('ticket_validations')
         .select('*')
         .order('created_at', { ascending: false })
         .limit(20);
 
-      if (error) {
-        console.error('Error loading scan history:', error);
+      if (validationsError || !validations) {
+        console.error('Error loading validations:', validationsError);
         return;
       }
 
-      // Pour l'instant, utiliser juste les données de base des validations
-      const formattedHistory = validations?.map(validation => ({
-        valid: validation.status === 'validated',
-        message: `Billet validé avec succès`,
-        validated_at: validation.validated_at,
-        validated_by: validation.validated_by,
-        registration_id: validation.registration_id
-      })) || [];
+      // Récupérer les registration_ids uniques
+      const registrationIds = validations.map(v => v.registration_id);
+
+      if (registrationIds.length === 0) {
+        setScanHistory([]);
+        return;
+      }
+
+      // Récupérer les détails des registrations
+      const { data: registrations, error: registrationsError } = await supabase
+        .from('registrations')
+        .select(`
+          id,
+          events (
+            id,
+            title,
+            starts_at,
+            ends_at,
+            venue,
+            city,
+            organizations (
+              name
+            )
+          ),
+          ticket_types (
+            name,
+            price_cents
+          ),
+          users (
+            display_name,
+            email
+          ),
+          orders (
+            status
+          )
+        `)
+        .in('id', registrationIds);
+
+      if (registrationsError) {
+        console.error('Error loading registrations:', registrationsError);
+        return;
+      }
+
+      // Créer un map des registrations par ID pour faciliter la recherche
+      const registrationMap = new Map(
+        registrations?.map(reg => [reg.id, reg]) || []
+      );
+
+      // Formater l'historique en combinant les données
+      const formattedHistory = validations.map(validation => {
+        const registration = registrationMap.get(validation.registration_id);
+        
+        return {
+          valid: ['validated', 'valid', 'active'].includes(validation.status),
+          status: validation.status,
+          message: `Billet validé avec succès`,
+          validated_at: validation.validated_at,
+          validated_by: validation.validated_by,
+          registration_id: validation.registration_id,
+          ticket: registration ? {
+            id: registration.id,
+            event: {
+              title: registration.events?.title || 'Événement inconnu',
+              starts_at: registration.events?.starts_at,
+              ends_at: registration.events?.ends_at,
+              venue: registration.events?.venue,
+              city: registration.events?.city,
+              organization: registration.events?.organizations?.name
+            },
+            ticket_type: {
+              name: registration.ticket_types?.name || 'Type inconnu',
+              price_cents: registration.ticket_types?.price_cents || 0
+            },
+            user: {
+              name: registration.users?.display_name || registration.users?.email || 'Utilisateur inconnu',
+              email: registration.users?.email
+            },
+            order: {
+              status: registration.orders?.status
+            }
+          } : {
+            event: { title: 'Événement inconnu' },
+            user: { name: 'Utilisateur inconnu' },
+            ticket_type: { name: 'Type inconnu' }
+          }
+        };
+      });
 
       setScanHistory(formattedHistory);
     } catch (error) {
