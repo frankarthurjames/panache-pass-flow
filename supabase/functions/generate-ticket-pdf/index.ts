@@ -242,12 +242,13 @@ serve(async (req) => {
         }
       }
     }
+    console.log("QR code generated");
 
     // Légende sous le QR
     setText(palette.sub);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
-    doc.text("Présenter ce QR lors du contrôle d’accès", qrBoxX + qrBoxSize / 2, qrBoxY + qrBoxSize + 6, {
+    doc.text("Présenter ce QR lors du contrôle d'accès", qrBoxX + qrBoxSize / 2, qrBoxY + qrBoxSize + 6, {
       align: "center",
     });
 
@@ -258,17 +259,17 @@ serve(async (req) => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
     setText(palette.accentDark);
-    doc.text("Conditions d’accès", margin, conditionsYStart + 6);
+    doc.text("Conditions d'accès", margin, conditionsYStart + 6);
 
     doc.setFont("helvetica", "normal");
     setText(palette.sub);
     doc.setFontSize(7);
     const conditions = [
-      "Billet personnel et non transférable. Une pièce d’identité peut être demandée.",
+      "Billet personnel et non transférable. Une pièce d'identité peut être demandée.",
       "Présenter le billet au format papier ou numérique avec le QR code parfaitement lisible.",
-      "L’accès pourra être refusé en cas de billet déjà validé, altéré ou contrefait.",
-      `Organisateur : ${orgName || "Non spécifié"}. Lieu et horaires susceptibles d’évoluer, consulter les communications officielles.`,
-      "Toute sortie peut être définitive selon les conditions de l’organisateur. Règlement intérieur applicable sur site.",
+      "L'accès pourra être refusé en cas de billet déjà validé, altéré ou contrefait.",
+      `Organisateur : ${orgName || "Non spécifié"}. Lieu et horaires susceptibles d'évoluer, consulter les communications officielles.`,
+      "Toute sortie peut être définitive selon les conditions de l'organisateur. Règlement intérieur applicable sur site.",
     ].join(" ");
     const condLines = doc.splitTextToSize(conditions, page.w - margin * 2);
     doc.text(condLines, margin, conditionsYStart + 11);
@@ -284,6 +285,8 @@ serve(async (req) => {
       page.h - margin - 4
     );
 
+    console.log("PDF generated");
+
     // ---- Export PDF (base64)
     const pdfBase64 = doc.output("datauristring").split(",")[1];
 
@@ -292,7 +295,7 @@ serve(async (req) => {
       .replace(/[^a-zA-Z0-9-_]+/g, "-")
       .replace(/-+/g, "-")
       .replace(/^-|-$/g, "");
-    const fileName = `ticket-${safeTitle}-${registration.id}.pdf`;
+    const fileName = `ticket-${registration.id}.pdf`;
 
     // Convert base64 → bytes
     const binaryString = atob(pdfBase64);
@@ -325,6 +328,7 @@ serve(async (req) => {
     }
     svg += `</svg>`;
     const qrCodeSvgDataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+    console.log("QR code SVG generated");
 
     // ---- Persist ticket URLs & QR payload
     const { error: updateError } = await supabaseClient
@@ -348,7 +352,7 @@ serve(async (req) => {
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error generating ticket PDF:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
