@@ -20,15 +20,26 @@ serve(async (req) => {
     const { qrData } = await req.json();
     console.log("QR Data received:", qrData);
 
-    // Parser les données QR
+    // Parser les données QR - supporter URL et JSON
     let parsedQrData;
     try {
-      parsedQrData = JSON.parse(qrData);
+      // Si c'est une URL (nouveau format)
+      if (typeof qrData === 'string' && qrData.includes('/validate-ticket?')) {
+        const url = new URL(qrData);
+        parsedQrData = {
+          registrationId: url.searchParams.get('registrationId'),
+          eventId: url.searchParams.get('eventId'),
+          userId: url.searchParams.get('userId')
+        };
+      } else {
+        // Ancien format JSON
+        parsedQrData = JSON.parse(qrData);
+      }
     } catch (error) {
       throw new Error("Format QR code invalide");
     }
 
-    const { registrationId, eventId, userId, ticketType, timestamp } = parsedQrData;
+    const { registrationId, eventId, userId } = parsedQrData;
 
     if (!registrationId || !eventId || !userId) {
       throw new Error("Données QR code incomplètes");

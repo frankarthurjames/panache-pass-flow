@@ -447,24 +447,6 @@ const QRValidator = () => {
                         Capturer QR
                       </Button>
                     )}
-                    
-                    <Button
-                      onClick={() => {
-                        console.log("État actuel:");
-                        console.log("- isScanning:", isScanning);
-                        console.log("- stream:", stream);
-                        console.log("- videoRef.current:", videoRef.current);
-                        console.log("- videoRef.current?.srcObject:", videoRef.current?.srcObject);
-                        console.log("- videoRef.current?.readyState:", videoRef.current?.readyState);
-                        console.log("- videoRef.current?.videoWidth:", videoRef.current?.videoWidth);
-                        console.log("- videoRef.current?.videoHeight:", videoRef.current?.videoHeight);
-                        toast.info("Informations de débogage dans la console");
-                      }}
-                      variant="outline"
-                      size="sm"
-                    >
-                      Debug
-                    </Button>
                   </div>
 
                   {isScanning && (
