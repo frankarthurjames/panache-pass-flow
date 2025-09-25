@@ -4,6 +4,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { PublicRoute } from "@/components/PublicRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Events from "./pages/Events";
@@ -42,21 +44,26 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/auth" element={<Auth />} />
+            {/* Public Routes */}
+            <Route path="/" element={<PublicRoute allowAuthenticated><Index /></PublicRoute>} />
+            <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
+            <Route path="/events" element={<PublicRoute allowAuthenticated><Events /></PublicRoute>} />
+            <Route path="/events/:id" element={<PublicRoute allowAuthenticated><EventDetail /></PublicRoute>} />
+            <Route path="/faq" element={<PublicRoute allowAuthenticated><FAQ /></PublicRoute>} />
+            <Route path="/legal/terms" element={<PublicRoute allowAuthenticated><Terms /></PublicRoute>} />
+            <Route path="/legal/privacy" element={<PublicRoute allowAuthenticated><Privacy /></PublicRoute>} />
+            
+            {/* Protected Routes */}
+            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+            <Route path="/dashboard/events/new" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
+            <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
+            
+            {/* Special Routes */}
             <Route path="/test-qr" element={<TestQR />} />
             <Route path="/validate-ticket" element={<ValidateTicket />} />
-            <Route path="/events" element={<Events />} />
-            <Route path="/events/:id" element={<EventDetail />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/dashboard/events/new" element={<CreateEvent />} />
-            <Route path="/faq" element={<FAQ />} />
-            <Route path="/payment-success" element={<PaymentSuccess />} />
-            <Route path="/legal/terms" element={<Terms />} />
-            <Route path="/legal/privacy" element={<Privacy />} />
             
-            {/* Dashboard Routes */}
-            <Route path="/dashboard" element={<DashboardLayout />}>
+            {/* Protected Dashboard Routes */}
+            <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
               <Route index element={<Overview />} />
               <Route path="my-events" element={<MyEvents />} />
               <Route path="org/:orgId/qr-validator" element={<QRValidator />} />

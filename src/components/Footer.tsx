@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import { Calendar, Mail, Phone, MapPin } from "lucide-react";
 import { Logo } from "@/components/Logo";
+import { useAuth } from "@/hooks/useAuth";
 
 export const Footer = () => {
+  const { user } = useAuth();
   return (
     <footer className="bg-muted/30 border-t border-border mt-auto">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -30,16 +32,20 @@ export const Footer = () => {
                   Événements
                 </Link>
               </li>
-              <li>
-                <Link to="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Dashboard
-                </Link>
-              </li>
-              <li>
-                <Link to="/auth" className="text-muted-foreground hover:text-foreground transition-colors">
-                  Connexion
-                </Link>
-              </li>
+              {user && (
+                <li>
+                  <Link to="/dashboard" className="text-muted-foreground hover:text-foreground transition-colors">
+                    Dashboard
+                  </Link>
+                </li>
+              )}
+              {!user && (
+                <li>
+                  <Link to="/auth" className="text-muted-foreground hover:text-foreground transition-colors">
+                    Connexion
+                  </Link>
+                </li>
+              )}
             </ul>
           </div>
 
