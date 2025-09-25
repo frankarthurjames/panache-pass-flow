@@ -22,11 +22,12 @@ serve(async (req) => {
     );
 
     const { registrationId } = await req.json();
+    if (!registrationId) throw new Error("Missing registrationId");
     console.log("Registration ID:", registrationId);
 
-    // Récupérer les données de la registration avec toutes les infos nécessaires
+    // ---- Fetch registration + relations
     const { data: registration, error: regError } = await supabaseClient
-      .from('registrations')
+      .from("registrations")
       .select(`
         *,
         events (
@@ -51,297 +52,258 @@ serve(async (req) => {
           email
         )
       `)
-      .eq('id', registrationId)
+      .eq("id", registrationId)
       .single();
 
-    if (regError || !registration) {
-      throw new Error("Registration not found");
-    }
-
+    if (regError || !registration) throw new Error("Registration not found");
     console.log("Registration data loaded");
 
-    // Générer le QR code avec URL de validation (sans canvas)
-    const qrData = {
-      registrationId: registration.id,
-      eventId: registration.event_id,
-      userId: registration.user_id,
-      ticketType: registration.ticket_types?.name,
-      timestamp: new Date().toISOString()
+    // ---- Palette (alignée avec l'email : orange)
+    const palette = {
+      text: [15, 23, 42],        // slate-900
+      sub: [71, 85, 105],        // slate-600
+      line: [226, 232, 240],     // slate-200
+      accent: [249, 115, 22],    // #F97316
+      accentDark: [234, 88, 12], // #EA580C
+      soft: [255, 247, 237],     // orange-50
+      white: [255, 255, 255],
     };
 
-    // URL de validation que le QR code va contenir
-    const baseUrl = "http://localhost:8080"; // Domaine de l'application
-    const validationUrl = `${baseUrl}/validate-ticket?registrationId=${registration.id}&eventId=${registration.event_id}&userId=${registration.user_id}`;
-    const qrCodeData = JSON.stringify(qrData);
+    // ---- Data formatting
+    const safe = (v: unknown) => (v ?? "").toString();
+    const orgName = safe(registration.events.organizations?.name || "Panache Esport");
+    const orgLogo = safe(registration.events.organizations?.logo_url || "");
+    const eventTitle = safe(registration.events.title);
+    const startDate = new Date(registration.events.starts_at);
+    const endDate = registration.events.ends_at ? new Date(registration.events.ends_at) : null;
+    const venue = safe(registration.events.venue);
+    const city = safe(registration.events.city);
+    const attendee = safe(registration.users?.display_name || registration.users?.email || "");
+    const ticketType = safe(registration.ticket_types?.name || "");
+    const price = registration.ticket_types?.price_cents ? (registration.ticket_types.price_cents / 100) : null;
+    const currency = safe(registration.ticket_types?.currency || "EUR");
 
-    // Utilise qrcode-generator (compatible Deno/Edge) pour créer la matrice
-    const qr = qrcode(0, 'M');
+    // ---- QR payload (URL de validation)
+    const baseUrl = Deno.env.get("APP_BASE_URL") || "https://panache-esport.com";
+    const validationUrl = `${baseUrl.replace(/\/+$/,"")}/validate-ticket?registrationId=${registration.id}&eventId=${registration.event_id}&userId=${registration.user_id}`;
+
+    const qr = qrcode(0, "M");
     qr.addData(validationUrl);
     qr.make();
-
-    // Créer une version SVG (pour stockage/email) sans dépendre de canvas
     const moduleCount = qr.getModuleCount();
-    let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${moduleCount} ${moduleCount}" shape-rendering="crispEdges">`;
-    svg += `<rect width="100%" height="100%" fill="#FFFFFF"/>`;
+
+    // ---- PDF
+    // A4 mm, portrait
+    const doc = new jsPDF({ unit: "mm", format: "a4", compress: true });
+    const page = { w: 210, h: 297 };
+    const margin = 20;
+
+    // Helpers
+    const setText = (rgb: number[]) => doc.setTextColor(rgb[0], rgb[1], rgb[2]);
+    const setLine = (rgb: number[]) => doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
+    const setFill = (rgb: number[]) => doc.setFillColor(rgb[0], rgb[1], rgb[2]);
+
+    const drawDivider = (x: number, y: number, w: number) => {
+      setLine(palette.line);
+      doc.setLineWidth(0.3);
+      doc.line(x, y, x + w, y);
+    };
+
+    const titleY = margin;
+    const contentY = titleY + 22;
+    const rightColX = page.w - margin - 70; // QR / colonne droite
+    const leftColX = margin;
+
+    // ---- Header (logo + brand + ticket id / date)
+    // Ligne 1: logo/brand gauche, ID/date droite
+    setText(palette.text);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+
+    if (orgLogo) {
+      // Tentative d'affichage logo si accessible (base64 non requis si public)
+      try {
+        // jsPDF accepte les images par URL data; si URL http(s), cela ne marchera pas côté edge.
+        // On garde un fallback texte (ci-dessous) ; on n'échoue pas si le logo ne se charge pas.
+        // @ts-ignore
+        await doc.addImage(orgLogo, "PNG", leftColX, titleY - 2, 28, 10);
+      } catch {
+        doc.text(orgName, leftColX, titleY + 6);
+      }
+    } else {
+      doc.text(orgName, leftColX, titleY + 6);
+    }
+
+    // Ticket ID + date/heure à droite
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    const now = new Date();
+    const rightMetaX = page.w - margin;
+    setText(palette.sub);
+    doc.text(`ID ${registration.id}`, rightMetaX, titleY + 1, { align: "right" });
+    doc.text(
+      `${now.toLocaleDateString("fr-FR")} · ${now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`,
+      rightMetaX,
+      titleY + 6,
+      { align: "right" }
+    );
+
+    // Titre événement
+    doc.setFont("helvetica", "bold");
+    setText(palette.text);
+    doc.setFontSize(16);
+    const titleMaxW = page.w - margin * 2;
+    const splitTitle = doc.splitTextToSize(eventTitle, titleMaxW);
+    doc.text(splitTitle, margin, titleY + 18);
+
+    drawDivider(margin, contentY - 4, page.w - margin * 2);
+
+    // ---- Grille 2 colonnes: Left = détails, Right = QR
+    // LEFT: blocs info
+    let y = contentY + 4;
+
+    const label = (t: string, px = 0) => {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      setText(palette.accentDark);
+      doc.text(t.toUpperCase(), leftColX + px, y);
+      y += 5;
+    };
+    const value = (t: string, px = 0) => {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(11);
+      setText(palette.text);
+      const lines = doc.splitTextToSize(t, rightColX - leftColX - 6 - px);
+      doc.text(lines, leftColX + px, y);
+      y += (lines.length * 5.2) + 4;
+    };
+
+    // Date & heure
+    label("Date & heure");
+    value(
+      `${startDate.toLocaleDateString("fr-FR", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}`
+    );
+    value(
+      `${startDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` +
+      (endDate ? ` – ${endDate.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` : "")
+    );
+
+    // Lieu
+    if (venue || city) {
+      label("Lieu");
+      value([venue, city].filter(Boolean).join(" · "));
+    }
+
+    // Titulaire
+    label("Titulaire du billet");
+    value(attendee);
+
+    // Type & prix
+    if (ticketType || price !== null) {
+      label("Billet");
+      value(
+        [ticketType, (price !== null ? `${price.toFixed(2)} ${currency}` : "")].filter(Boolean).join(" · ")
+      );
+    }
+
+    // Référence d'accès (courte)
+    label("Référence");
+    value(registration.id);
+
+    // RIGHT: QR code fixé dans un cadre propre, parfaitement aligné
+    // Carré de 70x70 mm moins marges internes
+    const qrBoxSize = 70;
+    const qrBoxX = rightColX;
+    const qrBoxY = contentY + 4;
+
+    // Cadre léger
+    setLine(palette.line);
+    doc.setLineWidth(0.4);
+    doc.rect(qrBoxX, qrBoxY, qrBoxSize, qrBoxSize);
+
+    // Rendu QR: on calcule une cellule + "quiet zone" de 4 modules
+    const quiet = 4; // modules
+    const usable = qrBoxSize - 10; // padding interne (mm) : 5mm de chaque côté
+    const modulesWithQuiet = moduleCount + quiet * 2;
+    const cell = usable / modulesWithQuiet;
+    const startX = qrBoxX + 5 + quiet * cell;
+    const startY = qrBoxY + 5 + quiet * cell;
+
+    // Fond blanc propre
+    setFill(palette.white);
+    doc.rect(qrBoxX + 2, qrBoxY + 2, qrBoxSize - 4, qrBoxSize - 4, "F");
+
+    // Dessin des modules
+    doc.setFillColor(0, 0, 0);
     for (let r = 0; r < moduleCount; r++) {
       for (let c = 0; c < moduleCount; c++) {
         if (qr.isDark(r, c)) {
-          svg += `<rect x="${c}" y="${r}" width="1" height="1" fill="#000000"/>`;
+          doc.rect(startX + c * cell, startY + r * cell, cell, cell, "F");
         }
       }
     }
-    svg += `</svg>`;
-    const qrCodeSvgDataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
 
-    console.log("QR code SVG generated");
-
-    console.log("QR code generated");
-
-    // Créer le PDF professionnel
-    const doc = new jsPDF();
-    
-    // Configuration des couleurs professionnelles
-    const primaryColor = [15, 23, 42]; // Slate-900 - Bleu foncé moderne
-    const accentColor = [59, 130, 246]; // Blue-500 - Bleu vif
-    const successColor = [34, 197, 94]; // Green-500 - Vert
-    const textColor = [30, 41, 59]; // Slate-800 - Gris foncé
-    const lightGray = [248, 250, 252]; // Slate-50
-    const darkGray = [71, 85, 105]; // Slate-600
-    const white = [255, 255, 255];
-
-    // === HEADER PRINCIPAL ===
-    doc.setFillColor(...primaryColor);
-    doc.rect(0, 0, 210, 50, 'F');
-    
-    // Logo Panache avec style moderne
-    doc.setTextColor(...white);
-    doc.setFontSize(32);
-    doc.setFont('helvetica', 'bold');
-    doc.text('PANACHE', 20, 25);
-    
-    // Badge "BILLET OFFICIEL"
-    doc.setFillColor(...accentColor);
-    doc.rect(20, 32, 70, 12, 'F');
-    doc.setTextColor(...white);
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.text('BILLET OFFICIEL', 23, 40);
-
-    // Numéro de billet et date (corner supérieur droit)
-    doc.setTextColor(...white);
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'bold');
-    doc.text(`#${registration.id.substring(0, 8).toUpperCase()}`, 155, 18);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text(`${new Date().toLocaleDateString('fr-FR')}`, 155, 30);
-    doc.text(`${new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`, 155, 38);
-
-    // === SECTION ÉVÉNEMENT ===
-    doc.setFillColor(...white);
-    doc.rect(0, 50, 210, 90, 'F');
-    
-    // Titre événement avec style moderne
-    doc.setTextColor(...textColor);
-    doc.setFontSize(20);
-    doc.setFont('helvetica', 'bold');
-    
-    const eventTitle = registration.events.title;
-    const maxWidth = 120;
-    const splitTitle = doc.splitTextToSize(eventTitle, maxWidth);
-    doc.text(splitTitle, 20, 70);
-
-    // Date et heure avec design propre
-    const startDate = new Date(registration.events.starts_at);
-    const endDate = new Date(registration.events.ends_at);
-    
-    // Box pour date/heure
-    doc.setFillColor(...lightGray);
-    doc.rect(20, 85, 80, 25, 'F');
-    doc.setDrawColor(...accentColor);
-    doc.setLineWidth(1);
-    doc.rect(20, 85, 80, 25, 'S');
-    
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...accentColor);
-    doc.text('DATE & HEURE', 23, 94);
-    
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...textColor);
-    doc.setFontSize(9);
-    doc.text(`${startDate.toLocaleDateString('fr-FR', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    })}`, 23, 101);
-    doc.text(`${startDate.toLocaleTimeString('fr-FR', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    })} - ${endDate.toLocaleTimeString('fr-FR', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
-    })}`, 23, 107);
-
-    // Box pour lieu
-    doc.setFillColor(...lightGray);
-    doc.rect(20, 115, 80, 20, 'F');
-    doc.setDrawColor(...accentColor);
-    doc.setLineWidth(1);
-    doc.rect(20, 115, 80, 20, 'S');
-    
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...accentColor);
-    doc.text('LIEU', 23, 124);
-    
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...textColor);
-    doc.setFontSize(9);
-    if (registration.events.venue && registration.events.city) {
-      doc.text(`${registration.events.venue}`, 23, 130);
-      doc.text(`${registration.events.city}`, 23, 135);
-    } else if (registration.events.venue || registration.events.city) {
-      doc.text(`${registration.events.venue || registration.events.city}`, 23, 130);
-    }
-
-    // === QR CODE SECTION ===
-    // Box moderne pour QR Code
-    doc.setFillColor(...white);
-    doc.rect(110, 85, 65, 50, 'F');
-    doc.setDrawColor(...accentColor);
-    doc.setLineWidth(2);
-    doc.rect(110, 85, 65, 50, 'S');
-    
-      // QR Code rendu direct sans canvas (dessin des modules dans le PDF)
-      try {
-        const qrSize = 40; // mm
-        const qrX = 122.5;
-        const qrY = 92;
-        const cell = qrSize / moduleCount;
-        doc.setFillColor(0, 0, 0);
-        for (let r = 0; r < moduleCount; r++) {
-          for (let c = 0; c < moduleCount; c++) {
-            if (qr.isDark(r, c)) {
-              doc.rect(qrX + c * cell, qrY + r * cell, cell, cell, 'F');
-            }
-          }
-        }
-      } catch (e) {
-        console.error("QR Code draw error:", e);
-        // Fallback avec message d'erreur stylé
-        doc.setFillColor(...lightGray);
-        doc.rect(122.5, 92, 40, 40, 'F');
-        doc.setFontSize(8);
-        doc.setTextColor(...darkGray);
-        doc.text('QR Code', 142.5, 110, { align: 'center' });
-        doc.text('Non disponible', 142.5, 118, { align: 'center' });
-      }
-    
-    // Instructions de scan
+    // Légende sous le QR
+    setText(palette.sub);
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...accentColor);
-    doc.text('SCANNER À L\'ENTRÉE', 142.5, 130, { align: 'center' });
+    doc.text("Présenter ce QR lors du contrôle d’accès", qrBoxX + qrBoxSize / 2, qrBoxY + qrBoxSize + 6, {
+      align: "center",
+    });
 
-    // === SECTION PARTICIPANT ===
-    doc.setFillColor(...white);
-    doc.rect(0, 140, 210, 40, 'F');
-    
-    // Box pour participant
-    doc.setFillColor(...lightGray);
-    doc.rect(20, 150, 80, 25, 'F');
-    doc.setDrawColor(...accentColor);
-    doc.setLineWidth(1);
-    doc.rect(20, 150, 80, 25, 'S');
-    
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(...accentColor);
-    doc.text('TITULAIRE DU BILLET', 23, 159);
-    
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(...textColor);
-    doc.setFontSize(10);
-    const participantName = registration.users?.display_name || registration.users?.email || 'Non spécifié';
-    doc.text(participantName, 23, 166);
-    
-    if (registration.users?.email) {
-      doc.setFontSize(8);
-      doc.setTextColor(...darkGray);
-      doc.text(registration.users.email, 23, 172);
-    }
+    // ---- Conditions (micro-texte, tout en bas)
+    const conditionsYStart = page.h - margin - 30;
+    drawDivider(margin, conditionsYStart, page.w - margin * 2);
 
-    // === SECTION TYPE DE BILLET ===
-    if (registration.ticket_types) {
-      // Box moderne pour le type de billet
-      doc.setFillColor(...accentColor);
-      doc.rect(110, 150, 65, 25, 'F');
-      doc.setDrawColor(...primaryColor);
-      doc.setLineWidth(1);
-      doc.rect(110, 150, 65, 25, 'S');
-      
-      doc.setTextColor(...white);
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'bold');
-      doc.text(registration.ticket_types.name.toUpperCase(), 113, 159);
-      
-      const price = registration.ticket_types.price_cents / 100;
-      doc.setFontSize(12);
-      doc.text(`${price.toFixed(2)} ${registration.ticket_types.currency || 'EUR'}`, 113, 169);
-    }
-
-    // === CONDITIONS ET SÉCURITÉ ===
-    doc.setFillColor(...lightGray);
-    doc.rect(0, 180, 210, 40, 'F');
-    
-    doc.setTextColor(...textColor);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'bold');
-    doc.text('CONDITIONS D\'ACCÈS', 20, 190);
-    
-    doc.setFont('helvetica', 'normal');
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
-    doc.text('• Ce billet est personnel et non transférable', 20, 198);
-    doc.text('• Présentez ce billet (papier ou numérique) + pièce d\'identité', 20, 204);
-    doc.text('• Accès refusé si billet déjà validé ou contrefait', 20, 210);
-    doc.text('• Organisateur: ' + (registration.events.organizations?.name || 'Non spécifié'), 20, 216);
+    setText(palette.accentDark);
+    doc.text("Conditions d’accès", margin, conditionsYStart + 6);
 
-    // === FOOTER SÉCURISÉ ===
-    doc.setFillColor(...primaryColor);
-    doc.rect(0, 220, 210, 25, 'F');
-    
-    doc.setTextColor(...white);
+    doc.setFont("helvetica", "normal");
+    setText(palette.sub);
     doc.setFontSize(7);
-    doc.text(`Billet généré le ${new Date().toLocaleDateString('fr-FR')} à ${new Date().toLocaleTimeString('fr-FR')}`, 20, 230);
-    doc.text('Panache © - Plateforme officielle de billetterie sportive', 20, 236);
-    
-    // Hash de sécurité (simple)
-    const securityHash = btoa(registration.id + registration.event_id + registration.user_id).substring(0, 12);
-    doc.text(`Hash: ${securityHash}`, 140, 230);
-    doc.text(`ID: ${registration.id}`, 140, 236);
+    const conditions = [
+      "Billet personnel et non transférable. Une pièce d’identité peut être demandée.",
+      "Présenter le billet au format papier ou numérique avec le QR code parfaitement lisible.",
+      "L’accès pourra être refusé en cas de billet déjà validé, altéré ou contrefait.",
+      `Organisateur : ${orgName || "Non spécifié"}. Lieu et horaires susceptibles d’évoluer, consulter les communications officielles.`,
+      "Toute sortie peut être définitive selon les conditions de l’organisateur. Règlement intérieur applicable sur site.",
+    ].join(" ");
+    const condLines = doc.splitTextToSize(conditions, page.w - margin * 2);
+    doc.text(condLines, margin, conditionsYStart + 11);
 
-    // Convertir en base64
-    const pdfBase64 = doc.output('datauristring').split(',')[1];
-    
-    console.log("PDF generated");
+    // ---- Footer (ligne fine + métadonnées)
+    drawDivider(margin, page.h - margin - 10, page.w - margin * 2);
+    doc.setFontSize(7);
+    setText(palette.sub);
+    const hash = btoa(`${registration.id}|${registration.event_id}|${registration.user_id}`).slice(0, 14);
+    doc.text(
+      `Généré le ${now.toLocaleDateString("fr-FR")} ${now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} · Réf: ${registration.id} · Hash: ${hash}`,
+      margin,
+      page.h - margin - 4
+    );
 
-    // Upload vers Supabase Storage
-    const fileName = `ticket-${registration.id}.pdf`;
-    
-    // Convertir base64 en Uint8Array pour Deno
+    // ---- Export PDF (base64)
+    const pdfBase64 = doc.output("datauristring").split(",")[1];
+
+    // ---- Upload to Supabase Storage
+    const safeTitle = String(eventTitle || "evenement")
+      .replace(/[^a-zA-Z0-9-_]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+    const fileName = `ticket-${safeTitle}-${registration.id}.pdf`;
+
+    // Convert base64 → bytes
     const binaryString = atob(pdfBase64);
     const bytes = new Uint8Array(binaryString.length);
-    for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
-    }
-    
+    for (let i = 0; i < binaryString.length; i++) bytes[i] = binaryString.charCodeAt(i);
+
     const { data: uploadData, error: uploadError } = await supabaseClient.storage
-      .from('event-images')
+      .from("event-images")
       .upload(`tickets/${fileName}`, bytes, {
-        contentType: 'application/pdf',
-        upsert: true
+        contentType: "application/pdf",
+        upsert: true,
       });
 
     if (uploadError) {
@@ -349,41 +311,48 @@ serve(async (req) => {
       throw new Error("Failed to upload PDF");
     }
 
-    // Obtenir l'URL publique
     const { data: urlData } = supabaseClient.storage
-      .from('event-images')
+      .from("event-images")
       .getPublicUrl(`tickets/${fileName}`);
 
-        // Mettre à jour la registration avec les URLs
-        const { error: updateError } = await supabaseClient
-          .from('registrations')
-          .update({
-            ticket_pdf_url: urlData.publicUrl,
-            ticket_qr_url: qrCodeSvgDataUrl,
-            qr_code: qrCodeData
-          })
-          .eq('id', registrationId);
-
-    if (updateError) {
-      console.error("Update error:", updateError);
+    // Préparer aussi une version SVG du QR si besoin dans l'app/email
+    let svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${moduleCount} ${moduleCount}" shape-rendering="crispEdges">`;
+    svg += `<rect width="100%" height="100%" fill="#FFFFFF"/>`;
+    for (let r = 0; r < moduleCount; r++) {
+      for (let c = 0; c < moduleCount; c++) {
+        if (qr.isDark(r, c)) svg += `<rect x="${c}" y="${r}" width="1" height="1" fill="#000000"/>`;
+      }
     }
+    svg += `</svg>`;
+    const qrCodeSvgDataUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`;
+
+    // ---- Persist ticket URLs & QR payload
+    const { error: updateError } = await supabaseClient
+      .from("registrations")
+      .update({
+        ticket_pdf_url: urlData.publicUrl,
+        ticket_qr_url: qrCodeSvgDataUrl,
+        qr_code: validationUrl, // on stocke la payload URL utile pour le scan
+      })
+      .eq("id", registrationId);
+
+    if (updateError) console.error("Update error:", updateError);
 
     console.log("Ticket PDF generated successfully");
 
-    return new Response(JSON.stringify({
-      success: true,
-      pdfUrl: urlData.publicUrl,
-      qrCode: qrCodeSvgDataUrl
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
-
+    return new Response(
+      JSON.stringify({
+        success: true,
+        pdfUrl: urlData.publicUrl,
+        qrCode: qrCodeSvgDataUrl,
+      }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
+    );
   } catch (error) {
     console.error("Error generating ticket PDF:", error);
-    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    return new Response(
+      JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 500 }
+    );
   }
 });
