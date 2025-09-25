@@ -63,29 +63,40 @@ const MyEvents = () => {
           return;
         }
 
-        // Grouper les inscriptions par événement
+        // Grouper les inscriptions par événement puis par commande
         const groupedRegistrations = registrationsData?.reduce((acc: any, reg: any) => {
           const eventId = reg.events.id;
+          const orderId = reg.orders?.id;
+          
           if (!acc[eventId]) {
             acc[eventId] = {
               event: reg.events,
-              registrations: [],
-              totalPaid: 0,
-              orderIds: new Set()
+              orders: {}
             };
           }
-          acc[eventId].registrations.push(reg);
           
-          // Éviter de compter plusieurs fois le même order
-          if (reg.orders?.id && !acc[eventId].orderIds.has(reg.orders.id)) {
-            acc[eventId].orderIds.add(reg.orders.id);
-            acc[eventId].totalPaid += reg.orders.total_cents || 0;
+          if (orderId && !acc[eventId].orders[orderId]) {
+            acc[eventId].orders[orderId] = {
+              order: reg.orders,
+              registrations: [],
+              totalPaid: reg.orders.total_cents || 0
+            };
+          }
+          
+          if (orderId) {
+            acc[eventId].orders[orderId].registrations.push(reg);
           }
           
           return acc;
         }, {}) || {};
 
-        setRegistrations(Object.values(groupedRegistrations));
+        // Convertir en format pour l'affichage
+        const eventsList = Object.values(groupedRegistrations).map((eventGroup: any) => ({
+          event: eventGroup.event,
+          orders: Object.values(eventGroup.orders)
+        }));
+
+        setRegistrations(eventsList);
       } catch (error) {
         console.error('Error:', error);
         toast.error("Erreur lors du chargement de vos événements");
@@ -523,13 +534,14 @@ const MyEvents = () => {
       </div>
 
       <div className="grid gap-6">
-        {registrations.map((group: any, index: number) => {
-          const event = group.event;
+        {registrations.map((eventGroup: any, eventIndex: number) => {
+          const event = eventGroup.event;
           const eventStatus = getEventStatus(event);
-          const uniqueOrderId = group.registrations[0]?.orders?.id;
+          const totalTickets = eventGroup.orders.reduce((sum: number, order: any) => sum + order.registrations.length, 0);
+          const totalPaid = eventGroup.orders.reduce((sum: number, order: any) => sum + order.totalPaid, 0);
 
           return (
-            <Card key={index} className="overflow-hidden">
+            <Card key={eventIndex} className="overflow-hidden">
               <CardHeader className="pb-4">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -550,82 +562,108 @@ const MyEvents = () => {
                       </div>
                       <div className="flex items-center gap-1">
                         <Users className="w-4 h-4" />
-                        <span>{group.registrations.length} billet{group.registrations.length > 1 ? 's' : ''}</span>
+                        <span>{totalTickets} billet{totalTickets > 1 ? 's' : ''}</span>
                       </div>
                     </div>
                   </div>
                   <div className="text-right">
                     <div className="text-lg font-bold">
-                      {(group.totalPaid / 100).toFixed(2)}€
+                      {(totalPaid / 100).toFixed(2)}€
                     </div>
                     <div className="text-sm text-muted-foreground">
                       Total payé
                     </div>
                   </div>
                 </div>
+                
+                {/* Bouton pour voir l'événement - global */}
+                <div className="mt-4 pt-4 border-t">
+                  <Button asChild variant="outline" size="sm">
+                    <Link to={`/events/${event.id}`}>
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Voir l'événement
+                    </Link>
+                  </Button>
+                </div>
               </CardHeader>
 
               <CardContent className="pt-0">
-                <div className="space-y-4">
-                  {/* Détails des billets */}
-                  <div>
-                    <h4 className="font-medium mb-2">Vos billets</h4>
-                    <div className="max-h-40 overflow-y-auto space-y-2 border rounded-lg p-3">
-                      {group.registrations.map((reg: any, regIndex: number) => (
-                        <div key={regIndex} className="flex items-center justify-between p-2 bg-muted/30 rounded">
-                          <div className="flex items-center gap-2">
-                            <span>{reg.ticket_types.name}</span>
-                            <span className="text-sm text-muted-foreground">
-                              - {(reg.ticket_types.price_cents / 100).toFixed(2)}€
-                            </span>
+                <div className="space-y-6">
+                  {/* Transactions séparées */}
+                  {eventGroup.orders.map((orderGroup: any, orderIndex: number) => {
+                    const order = orderGroup.order;
+                    const orderDate = new Date(order.created_at);
+                    
+                    return (
+                      <div key={orderIndex} className="border rounded-lg p-4 bg-muted/20">
+                        <div className="flex items-center justify-between mb-3">
+                          <div>
+                            <h4 className="font-medium">Transaction #{order.id.slice(-8).toUpperCase()}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {orderDate.toLocaleDateString('fr-FR')} à {orderDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
                           </div>
+                          <div className="text-right">
+                            <div className="font-semibold">
+                              {(orderGroup.totalPaid / 100).toFixed(2)}€
+                            </div>
+                            <Badge variant="outline" className="text-xs">
+                              {orderGroup.registrations.length} billet{orderGroup.registrations.length > 1 ? 's' : ''}
+                            </Badge>
+                          </div>
+                        </div>
+
+                        {/* Détails des billets de cette commande */}
+                        <div className="space-y-2 mb-4">
+                          {orderGroup.registrations.map((reg: any, regIndex: number) => (
+                            <div key={regIndex} className="flex items-center justify-between p-2 bg-background rounded border">
+                              <div className="flex items-center gap-2">
+                                <span>{reg.ticket_types.name}</span>
+                                <span className="text-sm text-muted-foreground">
+                                  - {(reg.ticket_types.price_cents / 100).toFixed(2)}€
+                                </span>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleDownloadTicket(reg.id)}
+                                disabled={downloadingTickets[reg.id]}
+                              >
+                                <Download className="w-4 h-4 mr-2" />
+                                {downloadingTickets[reg.id] ? 'Génération...' : 'Télécharger'}
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Actions spécifiques à cette commande */}
+                        <div className="flex flex-wrap gap-2 pt-3 border-t">
                           <Button
                             variant="outline"
                             size="sm"
-                            onClick={() => handleDownloadTicket(reg.id)}
-                            disabled={downloadingTickets[reg.id]}
+                            onClick={() => handleGetStripeInvoice(order.id)}
+                            disabled={loadingInvoices[order.id]}
                           >
-                            <Download className="w-4 h-4 mr-2" />
-                            {downloadingTickets[reg.id] ? 'Génération...' : 'Télécharger'}
+                            {loadingInvoices[order.id] ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <FileText className="w-4 h-4 mr-2" />
+                            )}
+                            {loadingInvoices[order.id] ? 'Chargement...' : 'Facture Stripe'}
+                          </Button>
+                          
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownloadReceipt(order.id)}
+                          >
+                            <Receipt className="w-4 h-4 mr-2" />
+                            Reçu PDF
                           </Button>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex flex-wrap gap-3 pt-4 border-t">
-                    <Button asChild variant="outline">
-                      <Link to={`/events/${event.id}`}>
-                        <ExternalLink className="w-4 h-4 mr-2" />
-                        Voir l'événement
-                      </Link>
-                    </Button>
-                    {uniqueOrderId && (
-                      <>
-                        <Button
-                          variant="outline"
-                          onClick={() => handleGetStripeInvoice(uniqueOrderId)}
-                          disabled={loadingInvoices[uniqueOrderId]}
-                        >
-                          {loadingInvoices[uniqueOrderId] ? (
-                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          ) : (
-                            <FileText className="w-4 h-4 mr-2" />
-                          )}
-                          {loadingInvoices[uniqueOrderId] ? 'Chargement...' : 'Facture Stripe'}
-                        </Button>
-                        
-                        <Button
-                          variant="outline"
-                          onClick={() => handleDownloadReceipt(uniqueOrderId)}
-                        >
-                          <Receipt className="w-4 h-4 mr-2" />
-                          Reçu PDF
-                        </Button>
-                      </>
-                    )}
-                  </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
