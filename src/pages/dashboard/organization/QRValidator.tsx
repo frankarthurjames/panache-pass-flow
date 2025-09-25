@@ -206,6 +206,8 @@ const QRValidator = () => {
       clearInterval(detectionIntervalRef.current);
     }
 
+    console.log("Démarrage de la détection automatique QR...");
+
     const detectQR = () => {
       if (!videoRef.current || !canvasRef.current || !isScanning || !detectionActive) {
         return;
@@ -234,12 +236,13 @@ const QRValidator = () => {
 
         const imageData = context.getImageData(0, 0, width, height);
         
+        // Détection QR code avec jsQR - paramètres optimisés
         const code = jsQR(imageData.data, imageData.width, imageData.height, {
           inversionAttempts: "dontInvert"
         });
         
         if (code && code.data) {
-          console.log("QR Code détecté:", code.data);
+          console.log("QR Code détecté automatiquement:", code.data);
           setQrData(code.data);
           stopCamera();
           toast.success("QR Code détecté ! Validation en cours...");
@@ -251,29 +254,72 @@ const QRValidator = () => {
           return;
         }
       } catch (error) {
-        console.error("Erreur lors de la détection QR:", error);
+        console.error("Erreur lors de la détection QR automatique:", error);
       }
     };
 
-    // Intervalle plus long pour éviter la surcharge
-    detectionIntervalRef.current = setInterval(detectQR, 300);
+    // Démarrer la détection avec un intervalle optimisé
+    detectionIntervalRef.current = setInterval(detectQR, 200);
+    console.log("Détection automatique démarrée");
   };
 
   const captureQR = () => {
-    if (!videoRef.current || !canvasRef.current) return;
+    if (!videoRef.current || !canvasRef.current) {
+      toast.error("Caméra non disponible");
+      return;
+    }
 
     const video = videoRef.current;
     const canvas = canvasRef.current;
     const context = canvas.getContext('2d');
 
-    if (!context) return;
+    if (!context) {
+      toast.error("Erreur de contexte canvas");
+      return;
+    }
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    // Vérifier que la vidéo est prête
+    if (video.readyState !== video.HAVE_ENOUGH_DATA || video.videoWidth === 0) {
+      toast.error("Vidéo non prête, veuillez attendre");
+      return;
+    }
 
-    const imageData = canvas.toDataURL('image/png');
-    toast.info("QR code détecté ! (Fonctionnalité de détection automatique en développement)");
+    try {
+      console.log("Capture de l'image pour détection QR...");
+      
+      // Capturer l'image de la vidéo
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Obtenir les données de l'image pour la détection QR
+      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+      
+      console.log("Recherche de QR code dans l'image capturée...");
+      
+      // Détection QR code avec jsQR
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: "dontInvert"
+      });
+      
+      if (code && code.data) {
+        console.log("QR Code détecté dans l'image:", code.data);
+        setQrData(code.data);
+        stopCamera();
+        toast.success("QR Code détecté ! Validation en cours...");
+        
+        // Auto-valider le QR code détecté
+        setTimeout(() => {
+          handleQRScan();
+        }, 500);
+      } else {
+        console.log("Aucun QR code détecté dans l'image");
+        toast.error("Aucun QR code détecté dans l'image. Essayez de repositionner le QR code.");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la capture et détection:", error);
+      toast.error("Erreur lors de la détection du QR code");
+    }
   };
 
   useEffect(() => {
@@ -454,6 +500,11 @@ const QRValidator = () => {
                       <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-sm">
                         {detectionActive ? "🔍 Recherche de QR code..." : "⏳ Initialisation..."}
                       </div>
+                      {detectionActive && (
+                        <div className="absolute top-2 right-2 bg-green-600 text-white px-2 py-1 rounded text-xs animate-pulse">
+                          Détection active
+                        </div>
+                      )}
                       <div className="absolute bottom-2 left-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs text-center">
                         Positionnez le QR code dans le cadre pour une détection automatique
                       </div>

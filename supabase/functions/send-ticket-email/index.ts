@@ -81,7 +81,7 @@ serve(async (req) => {
 
     // Couleurs (orange)
     const brand = {
-      bg: "#0B0B0C",            // fond global très sombre pour encadrer
+      bg: "#FFFFFF",            // fond global blanc
       card: "#FFFFFF",          // cartes / blocs
       text: "#0F172A",          // slate-900
       subtext: "#475569",       // slate-600
@@ -105,10 +105,10 @@ serve(async (req) => {
     .preheader { display:none!important; visibility:hidden; opacity:0; color:transparent; height:0; width:0; overflow:hidden; }
     @media (prefers-color-scheme: dark) {
       .dark-bg { background:${brand.bg} !important; }
-      .card { background:#111827 !important; color:#F9FAFB !important; }
-      .text { color:#F3F4F6 !important; }
-      .subtext { color:#D1D5DB !important; }
-      .divider { border-color:#374151 !important; }
+      .card { background:${brand.card} !important; color:${brand.text} !important; }
+      .text { color:${brand.text} !important; }
+      .subtext { color:${brand.subtext} !important; }
+      .divider { border-color:${brand.divider} !important; }
       .btn { color:#111827 !important; }
     }
   </style>
@@ -122,17 +122,14 @@ serve(async (req) => {
         <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;">
           <!-- Header -->
           <tr>
-            <td style="padding:16px 20px;">
+            <td style="padding:16px 20px; background:${brand.bg};">
               <table role="presentation" width="100%">
                 <tr>
                   <td align="left" style="vertical-align:middle;">
-                    ${orgLogo
-                      ? `<img src="${orgLogo}" alt="${orgName}" height="36" style="display:block; border:0; outline:none; text-decoration:none; height:36px;">`
-                      : `<div style="font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#FFFFFF;">${orgName}</div>`
-                    }
+                    <img src="https://wlxbydzshqijlfejqafp.supabase.co/storage/v1/object/public/panache-assets/panache-logo-text.png" alt="Panache Esport" height="36" style="display:block; border:0; outline:none; text-decoration:none; height:36px;">
                   </td>
                   <td align="right" style="vertical-align:middle;">
-                    <span style="font-family:Arial,Helvetica,sans-serif; font-size:12px; color:#CBD5E1;">Confirmation de billet</span>
+                    <span style="font-family:Arial,Helvetica,sans-serif; font-size:12px; color:${brand.subtext};">Confirmation de billet</span>
                   </td>
                 </tr>
               </table>
@@ -145,8 +142,11 @@ serve(async (req) => {
               <table role="presentation" width="100%" style="border-radius:16px; overflow:hidden;">
                 <tr>
                   <td bgcolor="${brand.accent}" style="background:${brand.accent}; padding:32px 28px; text-align:center;">
+                    <div style="margin-bottom:16px;">
+                      <img src="https://wlxbydzshqijlfejqafp.supabase.co/storage/v1/object/public/panache-assets/panache-logo-text.png" alt="Panache Esport" height="40" style="display:block; border:0; outline:none; text-decoration:none; height:40px; margin:0 auto;">
+                    </div>
                     <div style="font-family:Arial,Helvetica,sans-serif; color:#FFFFFF; font-size:26px; line-height:1.25; font-weight:800; letter-spacing:0.2px;">
-                      🎫 Votre billet est prêt
+                      Votre billet est prêt
                     </div>
                     <div style="font-family:Arial,Helvetica,sans-serif; color:#FFE4D5; font-size:14px; margin-top:8px;">
                       ${orgName} × Panache Esport
@@ -251,7 +251,7 @@ serve(async (req) => {
                       <a href="${pdfUrl}"
                          style="background:${brand.accent}; color:#111827; text-decoration:none; display:inline-block; padding:14px 22px; border-radius:10px; font-family:Arial,Helvetica,sans-serif; font-weight:800; font-size:15px; letter-spacing:0.2px;"
                          class="btn">
-                        📄 Télécharger mon billet (PDF)
+                        Télécharger mon billet (PDF)
                       </a>
                     </div>
 
