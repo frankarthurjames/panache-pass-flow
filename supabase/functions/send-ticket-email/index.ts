@@ -126,7 +126,10 @@ serve(async (req) => {
               <table role="presentation" width="100%">
                 <tr>
                   <td align="left" style="vertical-align:middle;">
-                    <img src="https://wlxbydzshqijlfejqafp.supabase.co/storage/v1/object/public/panache-assets/panache-logo-text.png" alt="Panache Esport" height="36" style="display:block; border:0; outline:none; text-decoration:none; height:36px;">
+                    ${orgLogo ? 
+                      `<img src="${orgLogo}" alt="${orgName}" height="36" style="display:block; border:0; outline:none; text-decoration:none; height:36px; margin-right:12px;">` : 
+                      `<img src="https://wlxbydzshqijlfejqafp.supabase.co/storage/v1/object/public/event-images/panache-logo-text.png" alt="Panache Esport" height="36" style="display:block; border:0; outline:none; text-decoration:none; height:36px;">`
+                    }
                   </td>
                   <td align="right" style="vertical-align:middle;">
                     <span style="font-family:Arial,Helvetica,sans-serif; font-size:12px; color:${brand.subtext};">Confirmation de billet</span>
@@ -143,7 +146,11 @@ serve(async (req) => {
                 <tr>
                   <td bgcolor="${brand.accent}" style="background:${brand.accent}; padding:32px 28px; text-align:center;">
                     <div style="margin-bottom:16px;">
-                      <img src="https://wlxbydzshqijlfejqafp.supabase.co/storage/v1/object/public/panache-assets/panache-logo-text.png" alt="Panache Esport" height="40" style="display:block; border:0; outline:none; text-decoration:none; height:40px; margin:0 auto;">
+                      ${orgLogo ? 
+                        `<img src="${orgLogo}" alt="${orgName}" height="40" style="display:block; border:0; outline:none; text-decoration:none; height:40px; margin:0 auto 8px;">
+                         <img src="https://wlxbydzshqijlfejqafp.supabase.co/storage/v1/object/public/event-images/panache-logo-text.png" alt="Panache Esport" height="32" style="display:block; border:0; outline:none; text-decoration:none; height:32px; margin:0 auto;">` :
+                        `<img src="https://wlxbydzshqijlfejqafp.supabase.co/storage/v1/object/public/event-images/panache-logo-text.png" alt="Panache Esport" height="40" style="display:block; border:0; outline:none; text-decoration:none; height:40px; margin:0 auto;">`
+                      }
                     </div>
                     <div style="font-family:Arial,Helvetica,sans-serif; color:#FFFFFF; font-size:26px; line-height:1.25; font-weight:800; letter-spacing:0.2px;">
                       Votre billet est prêt
