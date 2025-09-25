@@ -72,22 +72,13 @@ serve(async (req) => {
       sum + (item.unit_price_cents * item.quantity), 0
     );
 
-    // Calculer les frais de la plateforme (2% + 0,50€ par billet)
-    const totalTickets = lineItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
-    const platformFeePerTicket = 50; // 0,50€ en centimes
+    // Calculer les frais de la plateforme (2% du TTC billets + 0,50€ par commande)
     const platformFeePercentage = 0.02; // 2%
-    const platformFeeFixed = totalTickets * platformFeePerTicket;
-    const platformFeePercentageAmount = Math.round(subtotalCents * platformFeePercentage);
-    const platformFeeCents = platformFeeFixed + platformFeePercentageAmount;
+    const platformFeeFixed = 50; // 0,50€ en centimes (par commande)
+    const platformFeeCents = Math.round(subtotalCents * platformFeePercentage) + platformFeeFixed;
     
-    // Calculer le total HT (sous-total + frais de plateforme)
-    const totalHTCents = subtotalCents + platformFeeCents;
-    
-    // Calculer la TVA (20%)
-    const tvaCents = Math.round(totalHTCents * 0.20);
-    
-    // Calculer le total TTC (HT + TVA)
-    const totalCents = totalHTCents + tvaCents;
+    // Le total payé est TTC (les prix des billets sont déjà TTC) → on ajoute simplement les frais de plateforme TTC
+    const totalCents = subtotalCents + platformFeeCents;
 
     // Créer une commande dans la base de données
     const { data: orderData, error: orderError } = await supabaseClient
@@ -206,7 +197,7 @@ serve(async (req) => {
           currency: 'eur',
           product_data: {
             name: 'Frais de plateforme',
-            description: `Frais de service (2% + 0,50€ par billet)`,
+            description: `Frais de service (2% + 0,50€)`,
           },
           unit_amount: platformFeeCents,
         },
