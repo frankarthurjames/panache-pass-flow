@@ -129,7 +129,7 @@ const Index = () => {
         <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5 -z-10" />
         <div className="container mx-auto text-center max-w-4xl">
           <Badge variant="secondary" className="mb-8 text-sm font-medium px-4 py-2">
-            🏆 Plateforme #1 en billetterie sportive
+            🏆 Plateforme de billetterie sportive
           </Badge>
           <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight">
             Organisez vos événements{" "}
