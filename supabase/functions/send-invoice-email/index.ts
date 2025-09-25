@@ -86,7 +86,7 @@ serve(async (req) => {
   } catch (error) {
     console.error("Error sending invoice email:", error);
     return new Response(JSON.stringify({ 
-      error: error.message,
+      error: error instanceof Error ? error.message : 'Unknown error',
       success: false 
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

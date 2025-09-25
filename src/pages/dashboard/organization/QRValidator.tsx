@@ -95,17 +95,30 @@ const QRValidator = () => {
         setStream(null);
       }
       
-      // Configuration simplifiée de la caméra
-      const constraints = {
+      // Configuration plus permissive de la caméra
+      let constraints: MediaStreamConstraints = {
         video: {
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-          facingMode: 'environment'
+          width: { ideal: 640, min: 320 },
+          height: { ideal: 480, min: 240 },
+          facingMode: { ideal: 'environment' }
         }
       };
       
-      console.log("Demande d'accès à la caméra avec contraintes:", constraints);
-      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      let mediaStream;
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      } catch (error) {
+        // Fallback sans contrainte de facingMode pour desktop
+        console.log("Tentative avec contraintes simplifiées...");
+        constraints = {
+          video: {
+            width: { ideal: 640, min: 320 },
+            height: { ideal: 480, min: 240 }
+          }
+        };
+        mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      }
+      
       console.log("Stream obtenu:", mediaStream);
       
       setStream(mediaStream);
@@ -113,19 +126,22 @@ const QRValidator = () => {
       
       // Attendre que le composant soit mis à jour
       setTimeout(() => {
-        if (videoRef.current) {
+        if (videoRef.current && mediaStream.active) {
           console.log("Configuration de l'élément vidéo...");
           videoRef.current.srcObject = mediaStream;
           
           // Événements de la vidéo
           videoRef.current.onloadedmetadata = () => {
             console.log("Métadonnées chargées, dimensions:", videoRef.current?.videoWidth, "x", videoRef.current?.videoHeight);
+            // S'assurer que les dimensions sont disponibles
+            if (videoRef.current && videoRef.current.videoWidth > 0) {
+              setDetectionActive(true);
+              startQRDetection();
+            }
           };
           
           videoRef.current.oncanplay = () => {
             console.log("Vidéo prête à être lue");
-            setDetectionActive(true);
-            startQRDetection();
           };
           
           videoRef.current.onplay = () => {
@@ -137,19 +153,24 @@ const QRValidator = () => {
             toast.error("Erreur lors de l'affichage de la caméra");
           };
           
-          // Forcer le démarrage
-          videoRef.current.play().catch(playError => {
-            console.error("Erreur play:", playError);
-            // Essayer avec muted
-            if (videoRef.current) {
-              videoRef.current.muted = true;
-              videoRef.current.play().catch(e => console.error("Erreur play muted:", e));
+          // Forcer le démarrage avec gestion d'erreur améliorée
+          const playVideo = async () => {
+            try {
+              videoRef.current!.muted = true;
+              videoRef.current!.playsInline = true;
+              await videoRef.current!.play();
+              console.log("Vidéo démarrée avec succès");
+            } catch (playError) {
+              console.error("Erreur play:", playError);
+              toast.error("Impossible de démarrer la vidéo. Vérifiez les permissions.");
             }
-          });
+          };
+          playVideo();
         } else {
-          console.error("Référence vidéo non disponible");
+          console.error("Référence vidéo non disponible ou stream inactif");
+          toast.error("Erreur lors de l'initialisation de la caméra");
         }
-      }, 100);
+      }, 200);
       
     } catch (error) {
       console.error('Error accessing camera:', error);
@@ -186,40 +207,56 @@ const QRValidator = () => {
     }
 
     const detectQR = () => {
-      if (!videoRef.current || !canvasRef.current || !isScanning || !detectionActive) return;
+      if (!videoRef.current || !canvasRef.current || !isScanning || !detectionActive) {
+        return;
+      }
 
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const context = canvas.getContext('2d');
 
-      if (!context || video.readyState !== video.HAVE_ENOUGH_DATA) {
+      if (!context || video.readyState !== video.HAVE_ENOUGH_DATA || video.videoWidth === 0) {
         return;
       }
 
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-      
-      const code = jsQR(imageData.data, imageData.width, imageData.height, {
-        inversionAttempts: "dontInvert"
-      });
-      
-      if (code) {
-        console.log("QR Code détecté:", code.data);
-        setQrData(code.data);
-        stopCamera();
-        toast.success("QR Code détecté ! Validation en cours...");
+      try {
+        // S'assurer que les dimensions sont valides
+        const width = video.videoWidth;
+        const height = video.videoHeight;
         
-        setTimeout(() => {
-          handleQRScan();
-        }, 500);
-        return;
+        if (width === 0 || height === 0) {
+          return;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        context.drawImage(video, 0, 0, width, height);
+
+        const imageData = context.getImageData(0, 0, width, height);
+        
+        const code = jsQR(imageData.data, imageData.width, imageData.height, {
+          inversionAttempts: "dontInvert"
+        });
+        
+        if (code && code.data) {
+          console.log("QR Code détecté:", code.data);
+          setQrData(code.data);
+          stopCamera();
+          toast.success("QR Code détecté ! Validation en cours...");
+          
+          // Validation automatique après détection
+          setTimeout(() => {
+            handleQRScan();
+          }, 500);
+          return;
+        }
+      } catch (error) {
+        console.error("Erreur lors de la détection QR:", error);
       }
     };
 
-    detectionIntervalRef.current = setInterval(detectQR, 200);
+    // Intervalle plus long pour éviter la surcharge
+    detectionIntervalRef.current = setInterval(detectQR, 300);
   };
 
   const captureQR = () => {
