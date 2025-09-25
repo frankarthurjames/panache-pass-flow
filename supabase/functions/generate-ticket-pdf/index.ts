@@ -72,7 +72,7 @@ serve(async (req) => {
     // ---- Data formatting
     const safe = (v: unknown) => (v ?? "").toString();
     const orgName = safe(registration.events.organizations?.name || "Panache Esport");
-    const orgLogo = safe(registration.events.organizations?.logo_url || "");
+    const panacheLogo = "https://wlxbydzshqijlfejqafp.supabase.co/storage/v1/object/public/event-images/panache-logo-text.png";
     const eventTitle = safe(registration.events.title);
     const startDate = new Date(registration.events.starts_at);
     const endDate = registration.events.ends_at ? new Date(registration.events.ends_at) : null;
@@ -110,7 +110,7 @@ serve(async (req) => {
     };
 
     const titleY = margin;
-    const contentY = titleY + 22;
+    const contentY = titleY + 30; // Plus d'espace entre titre et contenu
     const rightColX = page.w - margin - 70; // QR / colonne droite
     const leftColX = margin;
 
@@ -120,18 +120,21 @@ serve(async (req) => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
 
-    if (orgLogo) {
-      // Tentative d'affichage logo si accessible (base64 non requis si public)
-      try {
-        // jsPDF accepte les images par URL data; si URL http(s), cela ne marchera pas côté edge.
-        // On garde un fallback texte (ci-dessous) ; on n'échoue pas si le logo ne se charge pas.
+    // Toujours utiliser le logo Panache
+    try {
+      // Utiliser le logo Panache depuis le storage public
+      const logoResponse = await fetch(panacheLogo);
+      if (logoResponse.ok) {
+        const logoBuffer = await logoResponse.arrayBuffer();
+        const logoBase64 = btoa(String.fromCharCode(...new Uint8Array(logoBuffer)));
+        const logoDataUrl = `data:image/png;base64,${logoBase64}`;
         // @ts-ignore
-        await doc.addImage(orgLogo, "PNG", leftColX, titleY - 2, 28, 10);
-      } catch {
-        doc.text(orgName, leftColX, titleY + 6);
+        doc.addImage(logoDataUrl, "PNG", leftColX, titleY - 2, 35, 12);
+      } else {
+        doc.text("Panache Esport", leftColX, titleY + 6);
       }
-    } else {
-      doc.text(orgName, leftColX, titleY + 6);
+    } catch {
+      doc.text("Panache Esport", leftColX, titleY + 6);
     }
 
     // Ticket ID + date/heure à droite
@@ -148,13 +151,13 @@ serve(async (req) => {
       { align: "right" }
     );
 
-    // Titre événement
+    // Titre événement avec plus d'espace
     doc.setFont("helvetica", "bold");
     setText(palette.text);
     doc.setFontSize(16);
     const titleMaxW = page.w - margin * 2;
     const splitTitle = doc.splitTextToSize(eventTitle, titleMaxW);
-    doc.text(splitTitle, margin, titleY + 18);
+    doc.text(splitTitle, margin, titleY + 24);
 
     drawDivider(margin, contentY - 4, page.w - margin * 2);
 
