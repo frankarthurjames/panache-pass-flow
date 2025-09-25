@@ -24,6 +24,41 @@ const QRValidator = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const detectionIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Fonction pour charger l'historique depuis la BDD
+  const loadScanHistory = async () => {
+    try {
+      // Utiliser une approche plus simple pour récupérer les validations récentes
+      const { data: validations, error } = await supabase
+        .from('ticket_validations')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) {
+        console.error('Error loading scan history:', error);
+        return;
+      }
+
+      // Pour l'instant, utiliser juste les données de base des validations
+      const formattedHistory = validations?.map(validation => ({
+        valid: validation.status === 'validated',
+        message: `Billet validé avec succès`,
+        validated_at: validation.validated_at,
+        validated_by: validation.validated_by,
+        registration_id: validation.registration_id
+      })) || [];
+
+      setScanHistory(formattedHistory);
+    } catch (error) {
+      console.error('Error loading scan history:', error);
+    }
+  };
+
+  // Charger l'historique au démarrage
+  useEffect(() => {
+    loadScanHistory();
+  }, []);
+
   const handleQRScan = async () => {
     if (!qrData.trim()) {
       toast.error("Veuillez saisir ou scanner un QR code");
@@ -52,13 +87,53 @@ const QRValidator = () => {
         setValidationResult(result);
         setScanHistory(prev => [result, ...prev.slice(0, 9)]);
         toast.success(result.message);
+        // Effacer automatiquement pour enchaîner les scans
+        setQrData("");
+        // Recharger l'historique depuis la BDD
+        loadScanHistory();
       } else {
-        setValidationResult({ valid: false, error: result.error });
-        toast.error(result.error || "Billet invalide");
+        // Améliorer l'affichage des erreurs de billet déjà validé
+        const isAlreadyValidated = result.error && result.error.includes("déjà validé");
+        setValidationResult({ 
+          valid: false, 
+          error: result.error,
+          alreadyValidated: isAlreadyValidated,
+          validatedAt: isAlreadyValidated ? result.error.match(/le (\d{2}\/\d{2}\/\d{4} à \d{2}:\d{2}:\d{2})/)?.[1] : null
+        });
+        
+        if (isAlreadyValidated) {
+          toast.error(`⚠️ Billet déjà validé`, {
+            description: result.error,
+            duration: 5000,
+          });
+        } else {
+          toast.error(result.error || "Billet invalide");
+        }
+        // Effacer également en cas d'erreur pour enchaîner
+        setQrData("");
       }
     } catch (error) {
       console.error('Error validating QR:', error);
-      toast.error("Erreur lors de la validation du billet");
+      const errorMessage = error.message || "Erreur lors de la validation du billet";
+      
+      // Vérifier si c'est un billet déjà validé
+      const isAlreadyValidated = errorMessage.includes("déjà validé");
+      if (isAlreadyValidated) {
+        setValidationResult({ 
+          valid: false, 
+          error: errorMessage,
+          alreadyValidated: true,
+          validatedAt: errorMessage.match(/le (\d{2}\/\d{2}\/\d{4} à \d{2}:\d{2}:\d{2})/)?.[1]
+        });
+        toast.error("⚠️ Billet déjà validé", {
+          description: errorMessage,
+          duration: 5000,
+        });
+      } else {
+        toast.error(errorMessage);
+      }
+      // Effacer en cas d'erreur
+      setQrData("");
     } finally {
       setLoading(false);
     }
@@ -244,7 +319,7 @@ const QRValidator = () => {
           stopCamera();
           toast.success("QR Code détecté ! Validation en cours...");
           
-          // Validation automatique après détection
+          // Auto-valider le QR code détecté et effacer pour enchaîner
           setTimeout(() => {
             handleQRScan();
           }, 500);
@@ -305,7 +380,7 @@ const QRValidator = () => {
         stopCamera();
         toast.success("QR Code détecté ! Validation en cours...");
         
-        // Auto-valider le QR code détecté
+        // Auto-valider le QR code détecté et effacer pour enchaîner
         setTimeout(() => {
           handleQRScan();
         }, 500);
@@ -554,8 +629,15 @@ const QRValidator = () => {
                   </div>
                 ) : (
                   <div className="text-red-600">
-                    <p className="font-medium">Billet invalide</p>
+                    <p className="font-medium">
+                      {validationResult.alreadyValidated ? "Billet déjà validé" : "Billet invalide"}
+                    </p>
                     <p className="text-sm mt-1">{validationResult.error}</p>
+                    {validationResult.alreadyValidated && validationResult.validatedAt && (
+                      <p className="text-xs mt-1 text-red-500">
+                        Validé le {validationResult.validatedAt}
+                      </p>
+                    )}
                   </div>
                 )}
               </CardContent>
@@ -564,10 +646,18 @@ const QRValidator = () => {
         </div>
 
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Historique des validations</CardTitle>
-            </CardHeader>
+        <Card>
+          <CardHeader>
+            <CardTitle>Historique des validations</CardTitle>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={loadScanHistory}
+              className="w-fit"
+            >
+              Actualiser
+            </Button>
+          </CardHeader>
             <CardContent>
               {scanHistory.length === 0 ? (
                 <p className="text-muted-foreground text-center py-4">
