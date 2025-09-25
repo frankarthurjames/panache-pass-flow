@@ -17,11 +17,12 @@ interface Filters {
   priceMax?: string;
   date?: string;
   keyword?: string;
+  timeFilter?: 'upcoming' | 'past' | 'all';
 }
 
 const Events = () => {
   const [searchParams] = useSearchParams();
-  const [filters, setFilters] = useState<Filters>({});
+  const [filters, setFilters] = useState<Filters>({ timeFilter: 'upcoming' });
   const [urlFilters, setUrlFilters] = useState<Filters>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -38,7 +39,7 @@ const Events = () => {
       try {
         setLoading(true);
         
-        // Récupérer les événements publiés avec les organisations et les inscriptions
+        // Récupérer tous les événements publiés avec les organisations et les inscriptions
         const { data: eventsData, error: eventsError } = await supabase
           .from('events')
           .select(`
@@ -58,7 +59,6 @@ const Events = () => {
             )
           `)
           .eq('status', 'published')
-          .gte('starts_at', new Date().toISOString()) // Seulement les événements futurs
           .order('starts_at', { ascending: true });
 
         if (eventsError) {
@@ -109,8 +109,19 @@ const Events = () => {
   const filteredEvents = useMemo(() => {
     // Combiner les filtres de l'URL et les filtres manuels
     const combinedFilters = { ...urlFilters, ...filters };
+    const now = new Date();
     
-    return allEvents.filter(event => {
+    let filteredEventsList = allEvents.filter(event => {
+      const eventDate = new Date(event.starts_at);
+      
+      // Filter by time (upcoming, past, all)
+      if (combinedFilters.timeFilter === 'upcoming' && eventDate < now) {
+        return false;
+      }
+      if (combinedFilters.timeFilter === 'past' && eventDate >= now) {
+        return false;
+      }
+      
       // Filter by sport
       if (combinedFilters.sport) {
         const sportKeywords = {
@@ -167,6 +178,19 @@ const Events = () => {
 
       return true;
     });
+
+    // Sort events: upcoming events first (by date), then past events (most recent first)
+    filteredEventsList.sort((a, b) => {
+      const dateA = new Date(a.starts_at);
+      const dateB = new Date(b.starts_at);
+      
+      if (combinedFilters.timeFilter === 'past') {
+        return dateB.getTime() - dateA.getTime(); // Most recent first for past events
+      }
+      return dateA.getTime() - dateB.getTime(); // Soonest first for upcoming/all
+    });
+
+    return filteredEventsList;
   }, [allEvents, filters, urlFilters]);
 
   // Lire les paramètres de l'URL au chargement
@@ -290,47 +314,81 @@ const Events = () => {
       {/* Filters & Stats */}
       <section className="py-8 px-4 sm:px-6 lg:px-8 bg-muted/30">
         <div className="container mx-auto">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+          {/* Time Filter Tabs */}
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-6">
+            <div className="flex bg-background rounded-lg p-1 shadow-sm">
+              <Button 
+                variant={filters.timeFilter === 'upcoming' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setFilters(prev => ({ ...prev, timeFilter: 'upcoming' }))}
+                className="rounded-md"
+              >
+                À venir ({allEvents.filter(e => new Date(e.starts_at) >= new Date()).length})
+              </Button>
+              <Button 
+                variant={filters.timeFilter === 'past' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setFilters(prev => ({ ...prev, timeFilter: 'past' }))}
+                className="rounded-md"
+              >
+                Passés ({allEvents.filter(e => new Date(e.starts_at) < new Date()).length})
+              </Button>
+              <Button 
+                variant={filters.timeFilter === 'all' ? 'default' : 'ghost'}
+                size="sm"
+                onClick={() => setFilters(prev => ({ ...prev, timeFilter: 'all' }))}
+                className="rounded-md"
+              >
+                Tous ({allEvents.length})
+              </Button>
+            </div>
+            
             <div className="flex items-center gap-4">
               <FilterDialog onFiltersChange={setFilters} />
               <div className="text-sm text-muted-foreground">
-                <span className="font-medium">{filteredEvents.length} événements</span> trouvés
+                <span className="font-medium">{filteredEvents.length} événements</span>
                 {displayedEvents.length < filteredEvents.length && (
                   <span className="ml-2 text-xs">({displayedEvents.length} affichés)</span>
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Calendar className="w-4 h-4 mr-2" />
-                Cette semaine: 24 événements
-              </div>
-              <div className="flex items-center text-sm text-muted-foreground">
-                <MapPin className="w-4 h-4 mr-2" />
-                Près de vous: 8 événements
-              </div>
-            </div>
           </div>
           
           {/* Affichage des filtres actifs */}
-          {(urlFilters.sport || urlFilters.location || urlFilters.keyword) && (
-            <div className="mt-6 flex flex-wrap gap-2">
+          {(urlFilters.sport || urlFilters.location || urlFilters.keyword || filters.sport || filters.location || filters.priceMin || filters.priceMax) && (
+            <div className="flex flex-wrap gap-2">
               <span className="text-sm text-muted-foreground">Filtres actifs:</span>
-              {urlFilters.sport && urlFilters.sport !== 'tous' && (
+              {(urlFilters.sport || filters.sport) && (
                 <Badge variant="secondary" className="text-xs">
-                  Sport: {urlFilters.sport}
+                  Sport: {urlFilters.sport || filters.sport}
                 </Badge>
               )}
-              {urlFilters.location && urlFilters.location !== 'toutes' && (
+              {(urlFilters.location || filters.location) && (
                 <Badge variant="secondary" className="text-xs">
-                  Région: {urlFilters.location}
+                  Région: {urlFilters.location || filters.location}
                 </Badge>
               )}
-              {urlFilters.keyword && (
+              {(urlFilters.keyword || filters.keyword) && (
                 <Badge variant="secondary" className="text-xs">
-                  Mot-clé: {urlFilters.keyword}
+                  Recherche: {urlFilters.keyword || filters.keyword}
                 </Badge>
               )}
+              {(filters.priceMin || filters.priceMax) && (
+                <Badge variant="secondary" className="text-xs">
+                  Prix: {filters.priceMin || '0'}€ - {filters.priceMax || '∞'}€
+                </Badge>
+              )}
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="h-6 px-2 text-xs"
+                onClick={() => {
+                  setFilters({ timeFilter: filters.timeFilter });
+                  setUrlFilters({});
+                }}
+              >
+                Effacer les filtres
+              </Button>
             </div>
           )}
         </div>
