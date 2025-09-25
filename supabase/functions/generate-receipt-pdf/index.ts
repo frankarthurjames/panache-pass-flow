@@ -74,8 +74,12 @@ serve(async (req) => {
       return sum + (item.unit_price_cents * item.qty);
     }, 0);
     
-    const platformTTC = order.platform_fee_cents ?? 0;
-    const totalTTC = order.total_cents ?? (ticketsTotal + platformTTC);
+    // Reconstruire les frais de plateforme si non stockés: total - billets
+    const declaredTotal = order.total_cents ?? 0;
+    const platformTTC = (typeof order.platform_fee_cents === 'number' && order.platform_fee_cents >= 0)
+      ? order.platform_fee_cents
+      : (declaredTotal > 0 ? Math.max(declaredTotal - ticketsTotal, 0) : 0);
+    const totalTTC = declaredTotal || (ticketsTotal + platformTTC);
     
     // Calculer HT en déduisant la TVA (prix TTC / (1 + taux TVA))
     const ticketsHT = Math.round(ticketsTotal / 1.2); // 20% TVA 

@@ -161,17 +161,31 @@ const PaymentSuccess = () => {
         )
         .join("");
 
-      // Prix des billets TTC (inclut déjà la TVA)
-      const ticketsTotal = orderData.order_items.reduce((sum, item) => 
-        sum + (item.unit_price_cents * item.qty), 0) / 100;
-      const fees = (orderData.platform_fee_cents ?? 0) / 100;
-      const totalTTC = orderData.total_cents / 100;
-      
-      // Calculer HT en déduisant la TVA (prix TTC / (1 + taux TVA))
-      const ticketsHT = ticketsTotal / 1.2; // 20% TVA
-      const feesHT = fees / 1.2;
-      const totalHT = ticketsHT + feesHT;
-      const tva = totalTTC - totalHT;
+      // Calcule en CENTIMES pour éviter les erreurs d'arrondi
+      const ticketsTotalCents = orderData.order_items.reduce(
+        (sum, item) => sum + item.unit_price_cents * item.qty,
+        0
+      );
+      const totalCents = orderData.total_cents;
+      // Si platform_fee_cents n'est pas stocké, on le reconstruit: total - billets
+      const platformTtcCents =
+        typeof orderData.platform_fee_cents === "number" && orderData.platform_fee_cents >= 0
+          ? orderData.platform_fee_cents
+          : Math.max(totalCents - ticketsTotalCents, 0);
+
+      // Déduire la TVA (20%) du TTC → HT
+      const ticketsHTCents = Math.round(ticketsTotalCents / 1.2);
+      const feesHTCents = Math.round(platformTtcCents / 1.2);
+      const totalHTCents = ticketsHTCents + feesHTCents;
+      const tvaCents = totalCents - totalHTCents;
+
+      // Valeurs en euros pour l'affichage
+      const ticketsHT = ticketsHTCents / 100;
+      const feesHT = feesHTCents / 100;
+      const totalHT = totalHTCents / 100;
+      const tva = tvaCents / 100;
+      const totalTTC = totalCents / 100;
+      const hasFees = platformTtcCents > 0;
 
       const html = `
 <!doctype html>
@@ -286,7 +300,7 @@ const PaymentSuccess = () => {
 
   <div class="totals">
     <div class="line"><span>Billets HT :</span><span>${ticketsHT.toFixed(2)}€</span></div>
-    ${fees ? `<div class="line"><span>Frais de plateforme HT :</span><span>${feesHT.toFixed(2)}€</span></div>` : ""}
+    ${hasFees ? `<div class="line"><span>Frais de plateforme HT :</span><span>${feesHT.toFixed(2)}€</span></div>` : ""}
     <div class="line"><span>Total HT :</span><span>${totalHT.toFixed(2)}€</span></div>
     <div class="line"><span>TVA (20%) :</span><span>${tva.toFixed(2)}€</span></div>
     <div class="line final"><span>Total TTC :</span><span>${totalTTC.toFixed(2)}€</span></div>
