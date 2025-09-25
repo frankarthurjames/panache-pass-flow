@@ -24,9 +24,10 @@ interface EventCheckoutProps {
   eventTitle: string;
   eventDate: string;
   ticketTypes: TicketType[];
+  registrations: any[];
 }
 
-const EventCheckout = ({ eventId, eventTitle, eventDate, ticketTypes }: EventCheckoutProps) => {
+const EventCheckout = ({ eventId, eventTitle, eventDate, ticketTypes, registrations }: EventCheckoutProps) => {
   const { user } = useAuth();
   const [selectedTickets, setSelectedTickets] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -73,7 +74,11 @@ const EventCheckout = ({ eventId, eventTitle, eventDate, ticketTypes }: EventChe
     const ticketType = ticketTypes.find(t => t.id === ticketId);
     if (!ticketType) return;
 
-    const maxAllowed = Math.min(ticketType.quantity, ticketType.max_per_order);
+    // Calculer les billets réellement disponibles (en tenant compte des ventes)
+    const soldCount = registrations.filter(r => r.ticket_type_id === ticketId).length;
+    const availableCount = Math.max(0, ticketType.quantity - soldCount);
+    
+    const maxAllowed = Math.min(availableCount, ticketType.max_per_order);
     const newQuantity = Math.max(0, Math.min(quantity, maxAllowed));
     
     setSelectedTickets(prev => ({
@@ -200,6 +205,8 @@ const EventCheckout = ({ eventId, eventTitle, eventDate, ticketTypes }: EventChe
           {ticketTypes.map((ticketType) => {
             const selectedQty = selectedTickets[ticketType.id] || 0;
             const isAvailable = ticketType.quantity > 0;
+            const soldCount = registrations.filter(r => r.ticket_type_id === ticketType.id).length;
+            const availableCount = Math.max(0, ticketType.quantity - soldCount);
             
             return (
               <div key={ticketType.id} className="space-y-2">
@@ -207,7 +214,7 @@ const EventCheckout = ({ eventId, eventTitle, eventDate, ticketTypes }: EventChe
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
                       <span className="font-medium">{ticketType.name}</span>
-                      {!isAvailable && (
+                      {availableCount === 0 && (
                         <Badge variant="secondary">Épuisé</Badge>
                       )}
                     </div>
@@ -219,11 +226,11 @@ const EventCheckout = ({ eventId, eventTitle, eventDate, ticketTypes }: EventChe
                       )}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {ticketType.quantity} disponible{ticketType.quantity > 1 ? 's' : ''}
+                      {availableCount} disponible{availableCount > 1 ? 's' : ''}
                     </div>
                   </div>
                   
-                  {isAvailable && stripeStatus.charges_enabled && (
+                  {availableCount > 0 && stripeStatus.charges_enabled && (
                     <div className="flex items-center gap-2">
                       <Button
                         variant="outline"
@@ -241,14 +248,14 @@ const EventCheckout = ({ eventId, eventTitle, eventDate, ticketTypes }: EventChe
                         onChange={(e) => updateTicketQuantity(ticketType.id, parseInt(e.target.value) || 0)}
                         className="w-16 h-8 text-center"
                         min="0"
-                        max={Math.min(ticketType.quantity, ticketType.max_per_order)}
+                        max={Math.min(availableCount, ticketType.max_per_order)}
                       />
                       
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={() => updateTicketQuantity(ticketType.id, selectedQty + 1)}
-                        disabled={selectedQty >= Math.min(ticketType.quantity, ticketType.max_per_order)}
+                        disabled={selectedQty >= Math.min(availableCount, ticketType.max_per_order)}
                         className="h-8 w-8 p-0"
                       >
                         <Plus className="h-3 w-3" />

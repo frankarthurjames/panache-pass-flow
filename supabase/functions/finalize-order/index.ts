@@ -108,6 +108,57 @@ serve(async (req) => {
     if (itemsErr) throw itemsErr;
     if (!items || items.length === 0) throw new Error("Aucun article dans la commande");
 
+    // Vérification de sécurité avant création des registrations
+    console.log("[FINALIZE-ORDER] Checking final ticket availability");
+    
+    // Récupérer les informations de l'événement et des types de billets
+    const { data: eventDetails, error: eventErr } = await supabase
+      .from("events")
+      .select("capacity")
+      .eq("id", order.event_id)
+      .single();
+    if (eventErr) throw eventErr;
+
+    const ticketTypeIds = items.map(item => item.ticket_type_id);
+    const { data: ticketTypes, error: ticketErr } = await supabase
+      .from("ticket_types")
+      .select("id, quantity")
+      .in("id", ticketTypeIds);
+    if (ticketErr) throw ticketErr;
+
+    // Compter les billets déjà vendus (registrations existantes)
+    const { data: existingRegs, error: existingErr } = await supabase
+      .from("registrations")
+      .select("ticket_type_id")
+      .eq("event_id", order.event_id);
+    if (existingErr) throw existingErr;
+
+    const soldCount: { [key: string]: number } = {};
+    existingRegs.forEach(reg => {
+      soldCount[reg.ticket_type_id] = (soldCount[reg.ticket_type_id] || 0) + 1;
+    });
+
+    // Vérifier la disponibilité pour chaque type de billet
+    for (const item of items) {
+      const ticketType = ticketTypes.find(tt => tt.id === item.ticket_type_id);
+      if (!ticketType) throw new Error(`Type de billet introuvable: ${item.ticket_type_id}`);
+      
+      const currentSold = soldCount[item.ticket_type_id] || 0;
+      if (currentSold + item.qty > ticketType.quantity) {
+        throw new Error(`Plus assez de billets disponibles. Type: ${item.ticket_type_id}`);
+      }
+    }
+
+    // Vérifier la capacité globale de l'événement
+    if (eventDetails.capacity) {
+      const totalSold = Object.values(soldCount).reduce((sum: number, count: number) => sum + count, 0);
+      const totalRequested = items.reduce((sum: number, item: any) => sum + item.qty, 0);
+      
+      if (totalSold + totalRequested > eventDetails.capacity) {
+        throw new Error(`Capacité de l'événement dépassée`);
+      }
+    }
+
     // Create registrations (service role bypasses RLS)
     const registrations: any[] = [];
     for (const item of items) {

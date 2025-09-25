@@ -128,13 +128,60 @@ serve(async (req) => {
     // Récupérer les détails des types de tickets pour Stripe
     const { data: ticketTypesData, error: ticketTypesError } = await supabaseClient
       .from('ticket_types')
-      .select('id, name, price_cents')
+      .select('id, name, price_cents, quantity')
       .in('id', lineItems.map((item: any) => item.ticket_type_id));
 
     if (ticketTypesError) {
       console.error("Error fetching ticket types:", ticketTypesError);
       throw new Error("Failed to fetch ticket types");
     }
+
+    // Vérifier la disponibilité des billets
+    console.log("Checking ticket availability");
+    
+    // Récupérer les billets déjà vendus (registrations existantes)
+    const { data: existingRegistrations, error: regError } = await supabaseClient
+      .from('registrations')
+      .select('ticket_type_id')
+      .eq('event_id', eventId);
+    
+    if (regError) {
+      console.error("Error fetching existing registrations:", regError);
+      throw new Error("Failed to check ticket availability");
+    }
+
+    // Compter les billets vendus par type
+    const soldTicketsCount: { [key: string]: number } = {};
+    existingRegistrations.forEach(reg => {
+      soldTicketsCount[reg.ticket_type_id] = (soldTicketsCount[reg.ticket_type_id] || 0) + 1;
+    });
+
+    // Vérifier pour chaque type de billet demandé
+    for (const item of lineItems) {
+      const ticketType = ticketTypesData.find(t => t.id === item.ticket_type_id);
+      if (!ticketType) {
+        throw new Error(`Type de billet introuvable: ${item.ticket_type_id}`);
+      }
+      
+      const soldCount = soldTicketsCount[item.ticket_type_id] || 0;
+      const availableCount = ticketType.quantity - soldCount;
+      
+      if (item.quantity > availableCount) {
+        throw new Error(`Plus assez de billets disponibles pour "${ticketType.name}". Disponible: ${availableCount}, Demandé: ${item.quantity}`);
+      }
+    }
+
+    // Vérifier la capacité globale de l'événement si définie
+    if (eventData.capacity) {
+      const totalSoldTickets = Object.values(soldTicketsCount).reduce((sum: number, count: number) => sum + count, 0);
+      const totalRequestedTickets = lineItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
+      
+      if (totalSoldTickets + totalRequestedTickets > eventData.capacity) {
+        throw new Error(`Capacité de l'événement dépassée. Capacité: ${eventData.capacity}, Billets vendus: ${totalSoldTickets}, Demandé: ${totalRequestedTickets}`);
+      }
+    }
+
+    console.log("Ticket availability check passed");
 
     // Préparer les line items pour Stripe
     const stripeLineItems = lineItems.map((item: any) => {

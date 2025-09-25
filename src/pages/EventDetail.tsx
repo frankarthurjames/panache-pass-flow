@@ -271,9 +271,16 @@ const EventDetail = () => {
 
   // Fonctions de gestion des tickets
   const updateTicketQuantity = (ticketId: string, quantity: number) => {
+    const ticket = ticketTypes.find(t => t.id === ticketId);
+    if (!ticket) return;
+
+    // Calculer les billets disponibles en tenant compte des ventes
+    const availableCount = getAvailableTickets(ticket);
+    const maxAllowed = Math.min(availableCount, ticket.max_per_order);
+    
     setSelectedTickets(prev => ({
       ...prev,
-      [ticketId]: Math.max(0, quantity)
+      [ticketId]: Math.max(0, Math.min(quantity, maxAllowed))
     }));
   };
 
