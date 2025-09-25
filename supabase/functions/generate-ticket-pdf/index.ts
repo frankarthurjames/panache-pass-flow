@@ -120,20 +120,25 @@ serve(async (req) => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
 
-    // Toujours utiliser le logo Panache
+    // Logo Panache - utiliser le logo depuis les assets publics
     try {
-      // Utiliser le logo Panache depuis le storage public
-      const logoResponse = await fetch(panacheLogo);
+      // Récupérer le logo depuis le public folder
+      const logoUrl = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/event-images/panache-logo-text.png`;
+      const logoResponse = await fetch(logoUrl);
+      
       if (logoResponse.ok) {
         const logoBuffer = await logoResponse.arrayBuffer();
         const logoBase64 = btoa(String.fromCharCode(...new Uint8Array(logoBuffer)));
         const logoDataUrl = `data:image/png;base64,${logoBase64}`;
         // @ts-ignore
         doc.addImage(logoDataUrl, "PNG", leftColX, titleY - 2, 35, 12);
+        console.log("Logo loaded successfully");
       } else {
+        console.log("Logo not found, using text fallback");
         doc.text("Panache Esport", leftColX, titleY + 6);
       }
-    } catch {
+    } catch (error) {
+      console.log("Error loading logo:", error);
       doc.text("Panache Esport", leftColX, titleY + 6);
     }
 
