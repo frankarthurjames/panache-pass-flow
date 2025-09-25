@@ -76,16 +76,27 @@ serve(async (req) => {
         <meta charset="UTF-8">
         <title>Reçu - ${event.title}</title>
         <style>
+          :root{
+            --accent: hsl(25 95% 55%);     /* primary */
+            --accent-hover: hsl(25 95% 45%); /* primary darker */
+            --text: hsl(224 71% 4%);       /* foreground */
+            --sub: hsl(220 9% 46%);        /* muted-foreground */
+            --line: hsl(220 13% 91%);      /* border */
+            --soft: hsl(25 95% 95%);       /* primary/10 */
+            --success-bg: hsl(142 76% 90%); /* success background */
+            --success-text: hsl(142 76% 20%); /* success text */
+          }
+          * { box-sizing: border-box; }
           body {
-            font-family: 'Arial', sans-serif;
+            font-family: Arial, Helvetica, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 32px;
             background: white;
-            color: #333;
+            color: var(--text);
           }
           .header {
             text-align: center;
-            border-bottom: 2px solid #3b82f6;
+            border-bottom: 2px solid var(--accent);
             padding-bottom: 20px;
             margin-bottom: 30px;
           }
@@ -95,89 +106,103 @@ serve(async (req) => {
             display: block;
           }
           .receipt-title {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 10px;
+            font-size: 22px;
+            font-weight: 700;
+            margin-top: 8px;
+            color: var(--text);
           }
           .receipt-info {
             display: flex;
             justify-content: space-between;
             margin-bottom: 30px;
             flex-wrap: wrap;
+            gap: 24px;
           }
           .info-section {
             flex: 1;
-            min-width: 200px;
-            margin: 10px;
+            min-width: 240px;
           }
           .info-title {
-            font-weight: bold;
-            color: #3b82f6;
-            margin-bottom: 5px;
+            font-size: 12px;
+            color: var(--accent);
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+          }
+          .info-value {
+            font-size: 14px;
+            color: var(--text);
+            margin-bottom: 4px;
           }
           .event-details {
-            background: #f8fafc;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
+            background: var(--soft);
+            padding: 18px;
+            border-radius: 10px;
+            margin-bottom: 24px;
+            border: 1px solid hsl(25 95% 85%);
           }
           .event-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 10px;
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: var(--text);
           }
           .event-info {
             display: flex;
-            gap: 20px;
+            gap: 16px;
             flex-wrap: wrap;
           }
           .event-info div {
-            flex: 1;
-            min-width: 150px;
+            min-width: 180px;
+            font-size: 14px;
+            color: var(--text);
           }
           .tickets-table {
             width: 100%;
             border-collapse: collapse;
-            margin-bottom: 30px;
+            margin: 10px 0 24px;
           }
           .tickets-table th,
           .tickets-table td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
+            padding: 12px 8px;
+            border-bottom: 1px solid var(--line);
+            font-size: 14px;
           }
           .tickets-table th {
-            background: #f8fafc;
-            font-weight: bold;
-            color: #3b82f6;
+            text-align: left;
+            background: hsl(220 14% 96%);
+            color: var(--accent);
+            font-weight: 700;
           }
           .tickets-table .text-right {
             text-align: right;
           }
           .total-section {
-            border-top: 2px solid #3b82f6;
-            padding-top: 20px;
-            margin-top: 20px;
+            margin-top: 8px;
+            padding-top: 16px;
+            border-top: 2px solid var(--accent);
           }
           .total-line {
             display: flex;
             justify-content: space-between;
-            margin: 5px 0;
+            margin: 6px 0;
+            font-size: 14px;
           }
           .total-final {
+            font-weight: 800;
             font-size: 18px;
-            font-weight: bold;
-            color: #3b82f6;
-            border-top: 1px solid #e2e8f0;
+            color: var(--accent);
+            border-top: 1px solid var(--line);
             padding-top: 10px;
             margin-top: 10px;
           }
           .footer {
             text-align: center;
-            margin-top: 40px;
-            padding-top: 20px;
-            border-top: 1px solid #e2e8f0;
-            color: #64748b;
+            margin-top: 36px;
+            padding-top: 18px;
+            border-top: 1px solid var(--line);
+            color: var(--sub);
             font-size: 12px;
           }
           .status-badge {
@@ -189,8 +214,12 @@ serve(async (req) => {
             text-transform: uppercase;
           }
           .status-paid {
-            background: #dcfce7;
-            color: #166534;
+            background: var(--success-bg);
+            color: var(--success-text);
+          }
+          @media print {
+            body { padding: 0 16px; }
+            .header { border-bottom: 1px solid var(--line); }
           }
         </style>
       </head>
@@ -202,18 +231,17 @@ serve(async (req) => {
 
         <div class="receipt-info">
           <div class="info-section">
-            <div class="info-title">Informations de commande</div>
-            <div>Commande #${order.id.slice(-8).toUpperCase()}</div>
-            <div>Date: ${orderDate.toLocaleDateString('fr-FR')}</div>
-            <div>Heure: ${orderDate.toLocaleTimeString('fr-FR')}</div>
-            <div>
+            <div class="info-title">Commande</div>
+            <div class="info-value">#${order.id.slice(-8).toUpperCase()}</div>
+            <div class="info-value">Le ${orderDate.toLocaleDateString('fr-FR')} à ${orderDate.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'})}</div>
+            <div class="info-value" style="margin-top:6px; font-weight:700; color:var(--accent)">
               <span class="status-badge status-paid">Payé</span>
             </div>
           </div>
           <div class="info-section">
             <div class="info-title">Client</div>
-            <div>${user.display_name || 'Client'}</div>
-            <div>${user.email}</div>
+            <div class="info-value">${user?.display_name || 'Client'}</div>
+            ${user?.email ? `<div class="info-value">${user.email}</div>` : ''}
           </div>
         </div>
 
@@ -238,13 +266,14 @@ serve(async (req) => {
             </div>
             <div>
               <strong>Lieu:</strong><br>
-              ${event.venue || 'À confirmer'}<br>
-              ${event.city}
+              ${[event.venue, event.city].filter(Boolean).join(', ') || 'À confirmer'}
             </div>
+            ${organization?.name ? `
             <div>
               <strong>Organisateur:</strong><br>
               ${organization.name}
             </div>
+            ` : ''}
           </div>
         </div>
 
@@ -271,25 +300,36 @@ serve(async (req) => {
 
         <div class="total-section">
           <div class="total-line">
-            <span>Sous-total:</span>
+            <span>Sous-total HT:</span>
             <span>${((order.subtotal_cents || order.total_cents) / 100).toFixed(2)}€</span>
           </div>
           ${order.platform_fee_cents ? `
             <div class="total-line">
-              <span>Frais de plateforme (2% + 0,50€/billet):</span>
+              <span>Frais de plateforme HT:</span>
               <span>${(order.platform_fee_cents / 100).toFixed(2)}€</span>
             </div>
           ` : ''}
+          <div class="total-line">
+            <span>Total HT:</span>
+            <span>${(((order.subtotal_cents || order.total_cents) + (order.platform_fee_cents || 0)) / 100).toFixed(2)}€</span>
+          </div>
+          <div class="total-line">
+            <span>TVA (20%):</span>
+            <span>${((((order.subtotal_cents || order.total_cents) + (order.platform_fee_cents || 0)) * 0.20) / 100).toFixed(2)}€</span>
+          </div>
           <div class="total-line total-final">
-            <span>Total payé:</span>
+            <span>Total TTC:</span>
             <span>${(order.total_cents / 100).toFixed(2)}€</span>
           </div>
         </div>
 
         <div class="footer">
-          <p>Merci d'avoir choisi Panache pour vos événements sportifs !</p>
-          <p>Ce reçu confirme votre inscription à l'événement. Conservez-le précieusement.</p>
-          <p>Pour toute question, contactez l'organisateur ou notre support client.</p>
+          <p>Merci d'avoir choisi ${organization?.name || 'Panache'}. Ce reçu confirme votre inscription à l'événement.</p>
+          <p style="margin-top: 12px; color: var(--sub); font-size: 10px; line-height: 1.5;">
+            Ce document est généré automatiquement. Conservez-le. Les montants indiqués sont fournis à titre informatif et peuvent
+            inclure des frais de plateforme. Pour toute question, contactez l'organisateur ou le support.
+            <br>Réf. commande: ${order.id}.
+          </p>
         </div>
       </body>
       </html>
