@@ -137,14 +137,11 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden">
+          <div className="flex items-center justify-center mb-6">
+            <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden">
               <img src={panacheLogo} alt="Panache" className="w-full h-full object-contain" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
-            Panache
-          </CardTitle>
           <CardDescription>
             Votre plateforme de billetterie sportive
           </CardDescription>
