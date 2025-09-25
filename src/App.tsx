@@ -16,6 +16,8 @@ import NotFound from "./pages/NotFound";
 import FAQ from "./pages/FAQ";
 import Terms from "./pages/legal/Terms";
 import Privacy from "./pages/legal/Privacy";
+import Contact from "./pages/Contact";
+import Mentions from "./pages/legal/Mentions";
 import DashboardLayout from "./layouts/DashboardLayout";
 import Overview from "./pages/dashboard/Overview";
 import Organizations from "./pages/dashboard/Organizations";
@@ -50,8 +52,10 @@ const App = () => (
             <Route path="/events" element={<PublicRoute allowAuthenticated><Events /></PublicRoute>} />
             <Route path="/events/:id" element={<PublicRoute allowAuthenticated><EventDetail /></PublicRoute>} />
             <Route path="/faq" element={<PublicRoute allowAuthenticated><FAQ /></PublicRoute>} />
+            <Route path="/contact" element={<PublicRoute allowAuthenticated><Contact /></PublicRoute>} />
             <Route path="/legal/terms" element={<PublicRoute allowAuthenticated><Terms /></PublicRoute>} />
             <Route path="/legal/privacy" element={<PublicRoute allowAuthenticated><Privacy /></PublicRoute>} />
+            <Route path="/legal/mentions" element={<PublicRoute allowAuthenticated><Mentions /></PublicRoute>} />
             
             {/* Protected Routes */}
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
