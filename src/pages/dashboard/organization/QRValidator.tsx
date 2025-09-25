@@ -40,16 +40,13 @@ const QRValidator = () => {
         return;
       }
 
-      const response = await fetch(`https://wlxbydzshqijlfejqafp.supabase.co/functions/v1/validate-ticket-qr`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ qrData })
+      const { data: result, error: functionError } = await supabase.functions.invoke('validate-ticket-qr', {
+        body: { qrData }
       });
 
-      const result = await response.json();
+      if (functionError) {
+        throw new Error(functionError.message || 'Erreur lors de la validation');
+      }
       
       if (result.success && result.valid) {
         setValidationResult(result);
