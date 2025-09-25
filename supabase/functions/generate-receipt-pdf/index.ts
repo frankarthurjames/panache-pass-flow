@@ -299,26 +299,18 @@ serve(async (req) => {
         </table>
 
         <div class="total-section">
-          <div class="total-line">
-            <span>Sous-total HT:</span>
-            <span>${((order.subtotal_cents || order.total_cents) / 100).toFixed(2)}€</span>
-          </div>
           ${order.platform_fee_cents ? `
             <div class="total-line">
-              <span>Frais de plateforme HT:</span>
+              <span>Prix des billets:</span>
+              <span>${((order.subtotal_cents || order.total_cents) / 100).toFixed(2)}€</span>
+            </div>
+            <div class="total-line">
+              <span>Frais de plateforme:</span>
               <span>${(order.platform_fee_cents / 100).toFixed(2)}€</span>
             </div>
           ` : ''}
-          <div class="total-line">
-            <span>Total HT:</span>
-            <span>${(((order.subtotal_cents || order.total_cents) + (order.platform_fee_cents || 0)) / 100).toFixed(2)}€</span>
-          </div>
-          <div class="total-line">
-            <span>TVA (20%):</span>
-            <span>${((((order.subtotal_cents || order.total_cents) + (order.platform_fee_cents || 0)) * 0.20) / 100).toFixed(2)}€</span>
-          </div>
           <div class="total-line total-final">
-            <span>Total TTC:</span>
+            <span>Total payé:</span>
             <span>${(order.total_cents / 100).toFixed(2)}€</span>
           </div>
         </div>
@@ -326,8 +318,8 @@ serve(async (req) => {
         <div class="footer">
           <p>Merci d'avoir choisi ${organization?.name || 'Panache'}. Ce reçu confirme votre inscription à l'événement.</p>
           <p style="margin-top: 12px; color: var(--sub); font-size: 10px; line-height: 1.5;">
-            Ce document est généré automatiquement. Conservez-le. Les montants indiqués sont fournis à titre informatif et peuvent
-            inclure des frais de plateforme. Pour toute question, contactez l'organisateur ou le support.
+            Ce document est généré automatiquement. Conservez-le. Tous les prix indiqués sont TTC (TVA incluse).
+            Les frais de plateforme sont inclus dans le total payé. Pour toute question, contactez l'organisateur ou le support.
             <br>Réf. commande: ${order.id}.
           </p>
         </div>
