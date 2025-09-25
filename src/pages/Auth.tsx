@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, Lock, User } from "lucide-react";
-import panacheLogo from "@/assets/panache-logo.png";
+import panacheLogoText from "@/assets/panache-logo-text.png";
 
 const Auth = () => {
   const [searchParams] = useSearchParams();
@@ -139,7 +139,7 @@ const Auth = () => {
         <CardHeader className="text-center">
           <div className="flex items-center justify-center mb-6">
             <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden">
-              <img src={panacheLogo} alt="Panache" className="w-full h-full object-contain" />
+              <img src={panacheLogoText} alt="Panache" className="w-full h-full object-contain" />
             </div>
           </div>
           <CardDescription>
