@@ -9,3 +9,4 @@ COMMENT ON COLUMN public.orders.platform_fee_cents IS 'Frais de plateforme HT en
 COMMENT ON COLUMN public.orders.total_ht_cents IS 'Total HT (billets + frais plateforme) en centimes';
 COMMENT ON COLUMN public.orders.tva_cents IS 'TVA (20%) en centimes';
 COMMENT ON COLUMN public.orders.total_cents IS 'Total TTC en centimes';
+

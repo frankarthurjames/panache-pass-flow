@@ -25,3 +25,4 @@ CREATE POLICY "Service role can delete receipts"
 ON storage.objects
 FOR DELETE
 USING (bucket_id = 'receipts');
+

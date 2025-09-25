@@ -22,9 +22,9 @@ serve(async (req) => {
     const { registrationId, pdfUrl } = await req.json();
     console.log("Registration ID:", registrationId, "PDF URL:", pdfUrl);
 
-    // Récupérer les données de la registration
+    // Récupération registration + relations
     const { data: registration, error: regError } = await supabaseClient
-      .from('registrations')
+      .from("registrations")
       .select(`
         *,
         events (
@@ -52,7 +52,7 @@ serve(async (req) => {
           total_cents
         )
       `)
-      .eq('id', registrationId)
+      .eq("id", registrationId)
       .single();
 
     if (regError || !registration) {
@@ -61,126 +61,288 @@ serve(async (req) => {
 
     console.log("Registration data loaded for email");
 
-    // Préparer les données pour l'email
+    // Données email
     const startDate = new Date(registration.events.starts_at);
-    const ticketPrice = registration.ticket_types?.price_cents ? (registration.ticket_types.price_cents / 100) : 0;
-    const totalAmount = registration.orders?.total_cents ? (registration.orders.total_cents / 100) : ticketPrice;
+    const ticketPrice = registration.ticket_types?.price_cents
+      ? registration.ticket_types.price_cents / 100
+      : 0;
+    const totalAmount = registration.orders?.total_cents
+      ? registration.orders.total_cents / 100
+      : ticketPrice;
 
-    // Envoyer l'email via Brevo
+    const orgName = registration.events.organizations?.name ?? "Panache Esport";
+    const orgLogo = registration.events.organizations?.logo_url ?? "";
+
+    // Envoi via Brevo
     const brevoApiKey = Deno.env.get("BREVO_API_KEY");
     if (!brevoApiKey) {
       throw new Error("BREVO_API_KEY not configured");
     }
 
+    // Couleurs (orange)
+    const brand = {
+      bg: "#0B0B0C",            // fond global très sombre pour encadrer
+      card: "#FFFFFF",          // cartes / blocs
+      text: "#0F172A",          // slate-900
+      subtext: "#475569",       // slate-600
+      divider: "#E2E8F0",       // slate-200
+      accent: "#F97316",        // orange-500
+      accentDark: "#EA580C",    // orange-600 (hover)
+      softBg: "#FFF7ED"         // orange-50 (fond doux de section)
+    };
+
+    const preheader = `Votre billet pour ${registration.events.title} est prêt.`;
+
+    const html = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Votre billet – ${registration.events.title}</title>
+  <!-- Preheader (masqué) -->
+  <style>
+    .preheader { display:none!important; visibility:hidden; opacity:0; color:transparent; height:0; width:0; overflow:hidden; }
+    @media (prefers-color-scheme: dark) {
+      .dark-bg { background:${brand.bg} !important; }
+      .card { background:#111827 !important; color:#F9FAFB !important; }
+      .text { color:#F3F4F6 !important; }
+      .subtext { color:#D1D5DB !important; }
+      .divider { border-color:#374151 !important; }
+      .btn { color:#111827 !important; }
+    }
+  </style>
+</head>
+<body style="margin:0; padding:0; background:${brand.bg};">
+  <span class="preheader">${preheader}</span>
+  <table role="presentation" cellpadding="0" cellspacing="0" width="100%" class="dark-bg" style="background:${brand.bg};">
+    <tr>
+      <td align="center" style="padding:24px 12px;">
+        <!-- Container -->
+        <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:640px;">
+          <!-- Header -->
+          <tr>
+            <td style="padding:16px 20px;">
+              <table role="presentation" width="100%">
+                <tr>
+                  <td align="left" style="vertical-align:middle;">
+                    ${orgLogo
+                      ? `<img src="${orgLogo}" alt="${orgName}" height="36" style="display:block; border:0; outline:none; text-decoration:none; height:36px;">`
+                      : `<div style="font-family:Arial,Helvetica,sans-serif;font-size:18px;font-weight:700;color:#FFFFFF;">${orgName}</div>`
+                    }
+                  </td>
+                  <td align="right" style="vertical-align:middle;">
+                    <span style="font-family:Arial,Helvetica,sans-serif; font-size:12px; color:#CBD5E1;">Confirmation de billet</span>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Hero -->
+          <tr>
+            <td style="padding:0 20px;">
+              <table role="presentation" width="100%" style="border-radius:16px; overflow:hidden;">
+                <tr>
+                  <td bgcolor="${brand.accent}" style="background:${brand.accent}; padding:32px 28px; text-align:center;">
+                    <div style="font-family:Arial,Helvetica,sans-serif; color:#FFFFFF; font-size:26px; line-height:1.25; font-weight:800; letter-spacing:0.2px;">
+                      🎫 Votre billet est prêt
+                    </div>
+                    <div style="font-family:Arial,Helvetica,sans-serif; color:#FFE4D5; font-size:14px; margin-top:8px;">
+                      ${orgName} × Panache Esport
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td bgcolor="#FFFFFF" class="card" style="background:${brand.card}; padding:28px;">
+                    <div style="font-family:Arial,Helvetica,sans-serif; color:${brand.text}; font-size:20px; font-weight:700; margin:0 0 8px 0;">
+                      ${registration.events.title}
+                    </div>
+                    <div style="font-family:Arial,Helvetica,sans-serif; color:${brand.subtext}; font-size:14px; margin:0 0 16px 0;">
+                      Votre inscription a bien été enregistrée.
+                    </div>
+
+                    <!-- Event details -->
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:separate; border-spacing:0; background:${brand.softBg}; border-radius:12px;">
+                      <tr>
+                        <td style="padding:18px 20px;">
+                          <table role="presentation" width="100%">
+                            <tr>
+                              <td style="font-family:Arial,Helvetica,sans-serif; font-size:14px; color:${brand.text};">
+                                <strong style="display:inline-block; min-width:84px;">Date</strong>
+                                ${startDate.toLocaleDateString('fr-FR', { weekday:'long', year:'numeric', month:'long', day:'numeric' })}
+                              </td>
+                            </tr>
+                            <tr>
+                              <td style="height:10px;"></td>
+                            </tr>
+                            <tr>
+                              <td style="font-family:Arial,Helvetica,sans-serif; font-size:14px; color:${brand.text};">
+                                <strong style="display:inline-block; min-width:84px;">Heure</strong>
+                                ${startDate.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' })}
+                              </td>
+                            </tr>
+                            ${registration.events.venue ? `
+                            <tr><td style="height:10px;"></td></tr>
+                            <tr>
+                              <td style="font-family:Arial,Helvetica,sans-serif; font-size:14px; color:${brand.text};">
+                                <strong style="display:inline-block; min-width:84px;">Lieu</strong>
+                                ${registration.events.venue}
+                              </td>
+                            </tr>` : ``}
+                            ${registration.events.city ? `
+                            <tr><td style="height:10px;"></td></tr>
+                            <tr>
+                              <td style="font-family:Arial,Helvetica,sans-serif; font-size:14px; color:${brand.text};">
+                                <strong style="display:inline-block; min-width:84px;">Ville</strong>
+                                ${registration.events.city}
+                              </td>
+                            </tr>` : ``}
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Spacer -->
+                    <div style="height:16px;"></div>
+
+                    <!-- Ticket block -->
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border:1px solid ${brand.divider}; border-radius:12px;">
+                      <tr>
+                        <td style="padding:18px 20px;">
+                          <table role="presentation" width="100%">
+                            <tr>
+                              <td style="font-family:Arial,Helvetica,sans-serif; font-size:16px; font-weight:700; color:${brand.text};">
+                                Détails du billet
+                              </td>
+                            </tr>
+                            <tr><td style="height:8px;"></td></tr>
+                            <tr>
+                              <td style="font-family:Arial,Helvetica,sans-serif; font-size:14px; color:${brand.text};">
+                                <strong>Participant :</strong> ${registration.users.display_name || registration.users.email}
+                              </td>
+                            </tr>
+                            ${registration.ticket_types ? `
+                            <tr><td style="height:6px;"></td></tr>
+                            <tr>
+                              <td style="font-family:Arial,Helvetica,sans-serif; font-size:14px; color:${brand.text};">
+                                <strong>Type :</strong> ${registration.ticket_types.name}
+                              </td>
+                            </tr>` : ``}
+                            <tr><td style="height:6px;"></td></tr>
+                            <tr>
+                              <td style="font-family:Arial,Helvetica,sans-serif; font-size:14px; color:${brand.text};">
+                                <strong>Prix :</strong> ${ticketPrice.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${registration.ticket_types?.currency ?? "EUR"}
+                              </td>
+                            </tr>
+                            <tr><td style="height:6px;"></td></tr>
+                            <tr>
+                              <td style="font-family:Arial,Helvetica,sans-serif; font-size:14px; color:${brand.text};">
+                                <strong>N° billet :</strong> ${registration.id}
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- CTA -->
+                    <div style="text-align:center; padding:24px 0 8px;">
+                      <a href="${pdfUrl}"
+                         style="background:${brand.accent}; color:#111827; text-decoration:none; display:inline-block; padding:14px 22px; border-radius:10px; font-family:Arial,Helvetica,sans-serif; font-weight:800; font-size:15px; letter-spacing:0.2px;"
+                         class="btn">
+                        📄 Télécharger mon billet (PDF)
+                      </a>
+                    </div>
+
+                    <!-- Note grise (remplace l'ancien bloc jaune) -->
+                    <div style="margin-top:14px; font-family:Arial,Helvetica,sans-serif; font-size:12px; color:${brand.subtext}; line-height:1.5; text-align:center;">
+                      Présentez ce billet (imprimé ou sur mobile) à l'entrée.<br>
+                      Le QR code du PDF sera scanné pour valider l'accès.
+                    </div>
+
+                    <!-- Divider -->
+                    <div style="height:24px;"></div>
+                    <div style="border-top:1px solid ${brand.divider};"></div>
+
+                    <!-- Footer -->
+                    <div style="font-family:Arial,Helvetica,sans-serif; color:${brand.subtext}; font-size:12px; text-align:center; padding-top:16px;">
+                      Merci d'avoir choisi Panache Esport.<br>
+                      Besoin d'aide ? Répondez directement à cet e-mail.
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <tr><td style="height:24px;"></td></tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `;
+
+    const safeTitle = String(registration.events.title || "evenement")
+      .replace(/[^a-zA-Z0-9-_]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+
     const emailData = {
       sender: {
         name: "Panache Esport",
-        email: "noreply@panache-esport.com"
+        email: "noreply@panache-esport.com",
       },
       to: [
         {
           email: registration.users.email,
-          name: registration.users.display_name || registration.users.email
-        }
+          name: registration.users.display_name || registration.users.email,
+        },
       ],
       subject: `Votre billet pour ${registration.events.title}`,
-      htmlContent: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Votre billet</title>
-        </head>
-        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="margin: 0; font-size: 28px;">🎫 Votre billet est prêt !</h1>
-            <p style="margin: 10px 0 0 0; font-size: 16px; opacity: 0.9;">Confirmation de votre inscription</p>
-          </div>
-          
-          <div style="background: #f8fafc; padding: 30px; border-radius: 0 0 10px 10px;">
-            <h2 style="color: #1e293b; margin-top: 0;">${registration.events.title}</h2>
-            
-            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
-              <h3 style="margin-top: 0; color: #3b82f6;">📅 Détails de l'événement</h3>
-              <p><strong>Date :</strong> ${startDate.toLocaleDateString('fr-FR', { 
-                weekday: 'long', 
-                year: 'numeric', 
-                month: 'long', 
-                day: 'numeric' 
-              })}</p>
-              <p><strong>Heure :</strong> ${startDate.toLocaleTimeString('fr-FR', { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-              })}</p>
-              ${registration.events.venue ? `<p><strong>Lieu :</strong> ${registration.events.venue}</p>` : ''}
-              ${registration.events.city ? `<p><strong>Ville :</strong> ${registration.events.city}</p>` : ''}
-            </div>
-
-            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
-              <h3 style="margin-top: 0; color: #10b981;">🎫 Votre billet</h3>
-              <p><strong>Participant :</strong> ${registration.users.display_name || registration.users.email}</p>
-              ${registration.ticket_types ? `<p><strong>Type :</strong> ${registration.ticket_types.name}</p>` : ''}
-              <p><strong>Prix :</strong> ${ticketPrice}€</p>
-              <p><strong>Numéro :</strong> ${registration.id}</p>
-            </div>
-
-            <div style="background: #fef3c7; border: 1px solid #f59e0b; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="margin-top: 0; color: #d97706;">⚠️ Important</h3>
-              <p>Présentez ce billet (imprimé ou sur votre téléphone) à l'entrée de l'événement. Vous pouvez également présenter le QR code qui sera scanné.</p>
-              <p>Votre billet PDF est disponible en pièce jointe de cet email.</p>
-            </div>
-
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${pdfUrl}" style="background: #3b82f6; color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">📄 Télécharger mon billet</a>
-            </div>
-
-            <div style="border-top: 1px solid #e2e8f0; padding-top: 20px; margin-top: 30px; text-align: center; color: #64748b;">
-              <p>Merci d'avoir choisi Panache Esport !</p>
-              <p style="font-size: 14px;">En cas de question, n'hésitez pas à nous contacter.</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `,
+      htmlContent: html,
       attachment: [
         {
-          name: `billet-${registration.events.title.replace(/[^a-zA-Z0-9]/g, '-')}.pdf`,
-          url: pdfUrl
-        }
-      ]
+          name: `billet-${safeTitle}.pdf`,
+          url: pdfUrl,
+        },
+      ],
     };
 
     const emailResponse = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: {
-        "Accept": "application/json",
+        Accept: "application/json",
         "Content-Type": "application/json",
-        "api-key": brevoApiKey
+        "api-key": brevoApiKey,
       },
-      body: JSON.stringify(emailData)
+      body: JSON.stringify(emailData),
     });
 
     if (!emailResponse.ok) {
       const errorData = await emailResponse.json();
       console.error("Brevo API error:", errorData);
-      throw new Error(`Failed to send email: ${errorData.message || 'Unknown error'}`);
+      throw new Error(`Failed to send email: ${errorData.message || "Unknown error"}`);
     }
 
     const result = await emailResponse.json();
     console.log("Email sent successfully:", result);
 
-    return new Response(JSON.stringify({
-      success: true,
-      messageId: result.messageId
-    }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 200,
-    });
-
+    return new Response(
+      JSON.stringify({
+        success: true,
+        messageId: result.messageId,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
   } catch (error) {
     console.error("Error sending ticket email:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    return new Response(JSON.stringify({ error: (error as Error).message }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 500,
     });

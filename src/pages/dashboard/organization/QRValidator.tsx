@@ -18,9 +18,11 @@ const QRValidator = () => {
   const [scanHistory, setScanHistory] = useState<any[]>([]);
   const [isScanning, setIsScanning] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [detectionActive, setDetectionActive] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const detectionIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleQRScan = async () => {
     if (!qrData.trim()) {
@@ -51,7 +53,7 @@ const QRValidator = () => {
       
       if (result.success && result.valid) {
         setValidationResult(result);
-        setScanHistory(prev => [result, ...prev.slice(0, 9)]); // Garder les 10 derniers
+        setScanHistory(prev => [result, ...prev.slice(0, 9)]);
         toast.success(result.message);
       } else {
         setValidationResult({ valid: false, error: result.error });
@@ -79,56 +81,130 @@ const QRValidator = () => {
 
   const startCamera = async () => {
     try {
-      const mediaStream = await navigator.mediaDevices.getUserMedia({ 
-        video: { facingMode: 'environment' } // Caméra arrière pour mobile
-      });
+      console.log("Démarrage de la caméra...");
+      
+      // Vérifier si getUserMedia est supporté
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        toast.error("Votre navigateur ne supporte pas l'accès à la caméra");
+        return;
+      }
+      
+      // Arrêter la caméra existante si elle existe
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        setStream(null);
+      }
+      
+      // Configuration simplifiée de la caméra
+      const constraints = {
+        video: {
+          width: { ideal: 640 },
+          height: { ideal: 480 },
+          facingMode: 'environment'
+        }
+      };
+      
+      console.log("Demande d'accès à la caméra avec contraintes:", constraints);
+      const mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+      console.log("Stream obtenu:", mediaStream);
+      
       setStream(mediaStream);
       setIsScanning(true);
       
-      if (videoRef.current) {
-        videoRef.current.srcObject = mediaStream;
-        videoRef.current.play();
-      }
+      // Attendre que le composant soit mis à jour
+      setTimeout(() => {
+        if (videoRef.current) {
+          console.log("Configuration de l'élément vidéo...");
+          videoRef.current.srcObject = mediaStream;
+          
+          // Événements de la vidéo
+          videoRef.current.onloadedmetadata = () => {
+            console.log("Métadonnées chargées, dimensions:", videoRef.current?.videoWidth, "x", videoRef.current?.videoHeight);
+          };
+          
+          videoRef.current.oncanplay = () => {
+            console.log("Vidéo prête à être lue");
+            setDetectionActive(true);
+            startQRDetection();
+          };
+          
+          videoRef.current.onplay = () => {
+            console.log("Vidéo en cours de lecture");
+          };
+          
+          videoRef.current.onerror = (error) => {
+            console.error("Erreur vidéo:", error);
+            toast.error("Erreur lors de l'affichage de la caméra");
+          };
+          
+          // Forcer le démarrage
+          videoRef.current.play().catch(playError => {
+            console.error("Erreur play:", playError);
+            // Essayer avec muted
+            if (videoRef.current) {
+              videoRef.current.muted = true;
+              videoRef.current.play().catch(e => console.error("Erreur play muted:", e));
+            }
+          });
+        } else {
+          console.error("Référence vidéo non disponible");
+        }
+      }, 100);
       
-      // Démarrer la détection de QR code
-      startQRDetection();
     } catch (error) {
       console.error('Error accessing camera:', error);
-      toast.error("Impossible d'accéder à la caméra");
+      if (error.name === 'NotAllowedError') {
+        toast.error("Permission de caméra refusée. Veuillez autoriser l'accès à la caméra.");
+      } else if (error.name === 'NotFoundError') {
+        toast.error("Aucune caméra trouvée sur cet appareil.");
+      } else if (error.name === 'NotReadableError') {
+        toast.error("La caméra est utilisée par une autre application.");
+      } else {
+        toast.error(`Erreur caméra: ${error.message}`);
+      }
     }
   };
 
   const stopCamera = () => {
+    console.log("Arrêt de la caméra...");
+    if (detectionIntervalRef.current) {
+      clearInterval(detectionIntervalRef.current);
+      detectionIntervalRef.current = null;
+    }
+    
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
     }
     setIsScanning(false);
+    setDetectionActive(false);
   };
 
   const startQRDetection = () => {
+    if (detectionIntervalRef.current) {
+      clearInterval(detectionIntervalRef.current);
+    }
+
     const detectQR = () => {
-      if (!videoRef.current || !canvasRef.current || !isScanning) return;
+      if (!videoRef.current || !canvasRef.current || !isScanning || !detectionActive) return;
 
       const video = videoRef.current;
       const canvas = canvasRef.current;
       const context = canvas.getContext('2d');
 
       if (!context || video.readyState !== video.HAVE_ENOUGH_DATA) {
-        setTimeout(detectQR, 100);
         return;
       }
 
-      // Dessiner l'image de la vidéo sur le canvas
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      // Obtenir les données de l'image
       const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
       
-      // Détection QR code avec jsQR
-      const code = jsQR(imageData.data, imageData.width, imageData.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: "dontInvert"
+      });
       
       if (code) {
         console.log("QR Code détecté:", code.data);
@@ -136,18 +212,14 @@ const QRValidator = () => {
         stopCamera();
         toast.success("QR Code détecté ! Validation en cours...");
         
-        // Auto-valider le QR code détecté
         setTimeout(() => {
           handleQRScan();
         }, 500);
         return;
       }
-
-      // Continuer la détection
-      setTimeout(detectQR, 100);
     };
 
-    detectQR();
+    detectionIntervalRef.current = setInterval(detectQR, 200);
   };
 
   const captureQR = () => {
@@ -163,19 +235,17 @@ const QRValidator = () => {
     canvas.height = video.videoHeight;
     context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    // Convertir en base64 pour traitement
     const imageData = canvas.toDataURL('image/png');
-    
-    // Ici vous pourriez envoyer l'image à un service de reconnaissance QR
-    // Pour cette démo, on simule une détection
     toast.info("QR code détecté ! (Fonctionnalité de détection automatique en développement)");
   };
 
-  // Nettoyer la caméra quand le composant se démonte
   useEffect(() => {
     return () => {
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
+      }
+      if (detectionIntervalRef.current) {
+        clearInterval(detectionIntervalRef.current);
       }
     };
   }, [stream]);
@@ -230,7 +300,6 @@ const QRValidator = () => {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        {/* Scanner Section */}
         <div className="space-y-6">
           <Card>
             <CardHeader>
@@ -266,7 +335,6 @@ const QRValidator = () => {
                   </Button>
                 </div>
 
-                {/* Section Caméra */}
                 <div className="space-y-3">
                   <div className="flex gap-2">
                     {!isScanning ? (
@@ -299,29 +367,58 @@ const QRValidator = () => {
                         Capturer QR
                       </Button>
                     )}
+                    
+                    <Button
+                      onClick={() => {
+                        console.log("État actuel:");
+                        console.log("- isScanning:", isScanning);
+                        console.log("- stream:", stream);
+                        console.log("- videoRef.current:", videoRef.current);
+                        console.log("- videoRef.current?.srcObject:", videoRef.current?.srcObject);
+                        console.log("- videoRef.current?.readyState:", videoRef.current?.readyState);
+                        console.log("- videoRef.current?.videoWidth:", videoRef.current?.videoWidth);
+                        console.log("- videoRef.current?.videoHeight:", videoRef.current?.videoHeight);
+                        toast.info("Informations de débogage dans la console");
+                      }}
+                      variant="outline"
+                      size="sm"
+                    >
+                      Debug
+                    </Button>
                   </div>
 
-                  {/* Aperçu de la caméra */}
                   {isScanning && (
                     <div className="relative">
                       <video
                         ref={videoRef}
-                        className="w-full h-64 object-cover rounded-lg border"
+                        className="w-full h-64 object-cover rounded-lg border bg-gray-200"
                         autoPlay
                         playsInline
                         muted
+                        style={{ 
+                          minHeight: '256px',
+                          backgroundColor: '#f3f4f6'
+                        }}
+                        onLoadStart={() => console.log("Vidéo commence à charger")}
+                        onLoadedData={() => console.log("Données vidéo chargées")}
+                        onCanPlay={() => console.log("Vidéo peut être lue")}
+                        onPlay={() => console.log("Vidéo en cours de lecture")}
+                        onError={(e) => console.error("Erreur vidéo:", e)}
                       />
                       <canvas
                         ref={canvasRef}
                         className="hidden"
                       />
-                      <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                         <div className="w-48 h-48 border-2 border-white border-dashed rounded-lg flex items-center justify-center">
                           <QrCode className="w-16 h-16 text-white opacity-50" />
                         </div>
                       </div>
                       <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-sm">
-                        🔍 Recherche de QR code...
+                        {detectionActive ? "🔍 Recherche de QR code..." : "⏳ Initialisation..."}
+                      </div>
+                      <div className="absolute bottom-2 left-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs text-center">
+                        Positionnez le QR code dans le cadre pour une détection automatique
                       </div>
                     </div>
                   )}
@@ -338,7 +435,6 @@ const QRValidator = () => {
             </CardContent>
           </Card>
 
-          {/* Result */}
           {validationResult && (
             <Card className={validationResult.valid ? 'border-green-200' : 'border-red-200'}>
               <CardHeader>
@@ -400,7 +496,6 @@ const QRValidator = () => {
           )}
         </div>
 
-        {/* History Section */}
         <div className="space-y-6">
           <Card>
             <CardHeader>

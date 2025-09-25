@@ -63,3 +63,4 @@ I've updated all your Stripe Edge Functions to:
 3. Test the Stripe integration again
 
 The functions should now work properly once the environment variables are configured.
+

@@ -20,3 +20,4 @@ WHERE subtotal_cents IS NULL OR platform_fee_cents IS NULL;
 COMMENT ON COLUMN public.orders.subtotal_cents IS 'Montant des billets avant frais de plateforme (en centimes)';
 COMMENT ON COLUMN public.orders.platform_fee_cents IS 'Frais de plateforme (2% + 0,50€ par billet) en centimes';
 COMMENT ON COLUMN public.orders.total_cents IS 'Montant total payé par le client (subtotal + frais de plateforme) en centimes';
+
