@@ -96,41 +96,73 @@ serve(async (req) => {
       throw new Error("Événement non disponible");
     }
 
-    // VÉRIFIER SI LE BILLET A DÉJÀ ÉTÉ VALIDÉ
-    const { data: existingValidation, error: validationCheckError } = await supabaseClient
-      .from('ticket_validations')
-      .select('id, validated_at, status')
-      .eq('registration_id', registrationId)
-      .maybeSingle();
-
-    if (validationCheckError) {
-      console.log("Error checking existing validation:", validationCheckError);
-    }
-
-    if (existingValidation) {
-      throw new Error(`Billet déjà validé le ${new Date(existingValidation.validated_at).toLocaleDateString('fr-FR')} à ${new Date(existingValidation.validated_at).toLocaleTimeString('fr-FR')}`);
-    }
-
     // Vérifier les dates de l'événement
     const now = new Date();
     const eventStart = new Date(registration.events.starts_at);
     const eventEnd = new Date(registration.events.ends_at);
 
+    // Calculer si l'événement dure plusieurs jours (plus de 20 heures)
+    const eventDurationHours = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60 * 60);
+    const isMultiDayEvent = eventDurationHours > 20;
+
+    console.log(`Event duration: ${eventDurationHours} hours, is multi-day: ${isMultiDayEvent}`);
+
+    // VÉRIFIER LES VALIDATIONS EXISTANTES
+    const { data: existingValidations, error: validationCheckError } = await supabaseClient
+      .from('ticket_validations')
+      .select('id, validated_at, status')
+      .eq('registration_id', registrationId)
+      .order('validated_at', { ascending: false });
+
+    if (validationCheckError) {
+      console.log("Error checking existing validations:", validationCheckError);
+    }
+
+    // Vérifier s'il y a déjà une validation aujourd'hui
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const validationToday = existingValidations?.find(v => {
+      const validationDate = new Date(v.validated_at);
+      return validationDate >= todayStart && validationDate <= todayEnd;
+    });
+
+    // Logique de validation selon le type d'événement
+    if (validationToday) {
+      if (isMultiDayEvent) {
+        // Pour les événements multi-jours : mettre à jour la dernière validation du jour
+        const lastValidationTime = new Date(validationToday.validated_at).toLocaleTimeString('fr-FR');
+        throw new Error(`Billet déjà scanné aujourd'hui à ${lastValidationTime}. Pour les événements multi-jours, un seul scan par jour est autorisé.`);
+      } else {
+        // Pour les événements d'un jour : refuser complètement
+        const validationDate = new Date(validationToday.validated_at);
+        throw new Error(`Billet déjà validé le ${validationDate.toLocaleDateString('fr-FR')} à ${validationDate.toLocaleTimeString('fr-FR')}`);
+      }
+    }
+
+    // Déterminer le statut de validation
     let validationStatus = 'valid';
     let message = 'Billet valide';
 
     if (now < eventStart) {
       validationStatus = 'upcoming';
-      message = 'Billet valide - Événement à venir';
+      message = isMultiDayEvent ? 
+        'Billet valide - Événement multi-jours à venir' : 
+        'Billet valide - Événement à venir';
     } else if (now > eventEnd) {
       validationStatus = 'expired';
       message = 'Billet expiré - Événement terminé';
     } else {
       validationStatus = 'active';
-      message = 'Billet valide - Événement en cours';
+      const dayNumber = existingValidations ? existingValidations.length + 1 : 1;
+      message = isMultiDayEvent ? 
+        `Billet valide - Jour ${dayNumber} de l'événement` : 
+        'Billet valide - Événement en cours';
     }
 
-    // Enregistrer la validation OBLIGATOIRE pour éviter les doublons
+    // Enregistrer la nouvelle validation
     const { error: validationError } = await supabaseClient
       .from('ticket_validations')
       .insert({
