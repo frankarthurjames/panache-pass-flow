@@ -17,8 +17,8 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [popularEvents, setPopularEvents] = useState<any[]>([]);
   const [stats, setStats] = useState({
-    totalEvents: 0,
-    totalTickets: 0,
+    totalEvents: 250,
+    totalTickets: 15000,
     satisfaction: 98
   });
   const [loading, setLoading] = useState(true);
@@ -94,20 +94,11 @@ const Index = () => {
           setPopularEvents(formattedEvents);
         }
 
-        // Récupérer les statistiques globales
-        const { count: totalEvents } = await supabase
-          .from('events')
-          .select('*', { count: 'exact', head: true })
-          .eq('status', 'published');
-
-        const { count: totalRegistrations } = await supabase
-          .from('registrations')
-          .select('*', { count: 'exact', head: true });
-
+        // Stats fixées pour la communication
         setStats({
-          totalEvents: totalEvents || 0,
-          totalTickets: totalRegistrations || 0,
-          satisfaction: 98 // Garde cette valeur fixe pour l'instant
+          totalEvents: 250,
+          totalTickets: 15000,
+          satisfaction: 98
         });
 
       } catch (err) {
