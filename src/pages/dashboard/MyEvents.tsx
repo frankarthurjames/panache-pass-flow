@@ -90,11 +90,35 @@ const MyEvents = () => {
           return acc;
         }, {}) || {};
 
-        // Convertir en format pour l'affichage
+        // Convertir en format pour l'affichage et trier par statut d'événement
         const eventsList = Object.values(groupedRegistrations).map((eventGroup: any) => ({
           event: eventGroup.event,
           orders: Object.values(eventGroup.orders)
         }));
+
+        // Trier les événements : à venir/en cours en premier, puis passés
+        // Et dans chaque catégorie, trier par date d'événement (plus proche en premier pour à venir, plus récent pour passés)
+        eventsList.sort((a: any, b: any) => {
+          const now = new Date();
+          const dateA = new Date(a.event.starts_at);
+          const dateB = new Date(b.event.starts_at);
+          
+          const isAUpcoming = dateA >= now;
+          const isBUpcoming = dateB >= now;
+          
+          // Si l'un est à venir et l'autre passé, prioriser celui à venir
+          if (isAUpcoming && !isBUpcoming) return -1;
+          if (!isAUpcoming && isBUpcoming) return 1;
+          
+          // Si les deux sont dans la même catégorie
+          if (isAUpcoming && isBUpcoming) {
+            // Pour les événements à venir, trier par date croissante (plus proche en premier)
+            return dateA.getTime() - dateB.getTime();
+          } else {
+            // Pour les événements passés, trier par date décroissante (plus récent en premier)
+            return dateB.getTime() - dateA.getTime();
+          }
+        });
 
         setRegistrations(eventsList);
       } catch (error) {
