@@ -17,12 +17,11 @@ interface Filters {
   priceMax?: string;
   date?: string;
   keyword?: string;
-  timeFilter?: 'upcoming' | 'past' | 'all';
 }
 
 const Events = () => {
   const [searchParams] = useSearchParams();
-  const [filters, setFilters] = useState<Filters>({ timeFilter: 'upcoming' });
+  const [filters, setFilters] = useState<Filters>({});
   const [urlFilters, setUrlFilters] = useState<Filters>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
@@ -114,11 +113,8 @@ const Events = () => {
     let filteredEventsList = allEvents.filter(event => {
       const eventDate = new Date(event.starts_at);
       
-      // Filter by time (upcoming, past, all)
-      if (combinedFilters.timeFilter === 'upcoming' && eventDate < now) {
-        return false;
-      }
-      if (combinedFilters.timeFilter === 'past' && eventDate >= now) {
+      // Afficher uniquement les événements à venir ou en cours
+      if (eventDate < now) {
         return false;
       }
       
@@ -179,15 +175,11 @@ const Events = () => {
       return true;
     });
 
-    // Sort events: upcoming events first (by date), then past events (most recent first)
+    // Sort events: événements les plus proches en premier
     filteredEventsList.sort((a, b) => {
       const dateA = new Date(a.starts_at);
       const dateB = new Date(b.starts_at);
-      
-      if (combinedFilters.timeFilter === 'past') {
-        return dateB.getTime() - dateA.getTime(); // Most recent first for past events
-      }
-      return dateA.getTime() - dateB.getTime(); // Soonest first for upcoming/all
+      return dateA.getTime() - dateB.getTime();
     });
 
     return filteredEventsList;
@@ -314,33 +306,9 @@ const Events = () => {
       {/* Filters & Stats */}
       <section className="py-8 px-4 sm:px-6 lg:px-8 bg-muted/30">
         <div className="container mx-auto">
-          {/* Time Filter Tabs */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6 mb-6">
-            <div className="flex bg-background rounded-lg p-1 shadow-sm">
-              <Button 
-                variant={filters.timeFilter === 'upcoming' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setFilters(prev => ({ ...prev, timeFilter: 'upcoming' }))}
-                className="rounded-md"
-              >
-                À venir ({allEvents.filter(e => new Date(e.starts_at) >= new Date()).length})
-              </Button>
-              <Button 
-                variant={filters.timeFilter === 'past' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setFilters(prev => ({ ...prev, timeFilter: 'past' }))}
-                className="rounded-md"
-              >
-                Passés ({allEvents.filter(e => new Date(e.starts_at) < new Date()).length})
-              </Button>
-              <Button 
-                variant={filters.timeFilter === 'all' ? 'default' : 'ghost'}
-                size="sm"
-                onClick={() => setFilters(prev => ({ ...prev, timeFilter: 'all' }))}
-                className="rounded-md"
-              >
-                Tous ({allEvents.length})
-              </Button>
+            <div className="flex items-center gap-4">
+              <h2 className="text-lg font-semibold">Événements à venir</h2>
             </div>
             
             <div className="flex items-center gap-4">
@@ -383,7 +351,7 @@ const Events = () => {
                 size="sm" 
                 className="h-6 px-2 text-xs"
                 onClick={() => {
-                  setFilters({ timeFilter: filters.timeFilter });
+                  setFilters({});
                   setUrlFilters({});
                 }}
               >
