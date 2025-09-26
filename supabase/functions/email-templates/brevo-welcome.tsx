@@ -1,15 +1,3 @@
-import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Link,
-  Preview,
-  Section,
-  Text,
-  Img,
-} from 'npm:@react-email/components@0.0.22'
 import * as React from 'npm:react@18.3.1'
 
 interface WelcomeEmailProps {
@@ -22,257 +10,190 @@ export const WelcomeEmail = ({
   userName,
   organizationName,
   loginUrl,
-}: WelcomeEmailProps) => (
-  <Html>
-    <Head />
-    <Preview>Bienvenue sur Panache - Votre plateforme d'événements sportifs</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        {/* Header with Panache branding */}
-        <Section style={header}>
-          <div style={logoContainer}>
-            <img src="https://wlxbydzshqijlfejqafp.supabase.co/storage/v1/object/public/event-images/panache-logo-text.png" alt="Panache" style={logoImage} />
-          </div>
-        </Section>
+}: WelcomeEmailProps) => {
+  // Couleurs brand Panache (orange)
+  const brand = {
+    bg: "#0B0B0C",            // fond global très sombre pour encadrer
+    card: "#FFFFFF",          // cartes / blocs
+    text: "#0F172A",          // slate-900
+    subtext: "#475569",       // slate-600
+    divider: "#E2E8F0",       // slate-200
+    accent: "#F97316",        // orange-500
+    accentDark: "#EA580C",    // orange-600 (hover)
+    softBg: "#FFF7ED"         // orange-50 (fond doux de section)
+  };
 
-        {/* Welcome message */}
-        <Section style={content}>
-          <Heading style={h1}>Bienvenue {userName} !</Heading>
-          
-          <Text style={text}>
-            Félicitations ! Votre compte sur <strong>Panache</strong> a été créé avec succès.
-          </Text>
+  const preheader = `Bienvenue sur Panache ${userName} !`;
 
-          <Text style={text}>
-            Vous pouvez maintenant créer et gérer vos événements sportifs, 
-            vendre des billets et analyser vos performances.
-          </Text>
+  return (
+    <html lang="fr">
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Bienvenue sur Panache !</title>
+        <style>
+          {`.preheader { display:none!important; visibility:hidden; opacity:0; color:transparent; height:0; width:0; overflow:hidden; }
+          @media (prefers-color-scheme: dark) {
+            .dark-bg { background:${brand.bg} !important; }
+            .card { background:#111827 !important; color:#F9FAFB !important; }
+            .text { color:#F3F4F6 !important; }
+            .subtext { color:#D1D5DB !important; }
+            .divider { border-color:#374151 !important; }
+            .btn { color:#111827 !important; }
+          }`}
+        </style>
+      </head>
+      <body style={{margin:0, padding:0, background:brand.bg}}>
+        <span className="preheader">{preheader}</span>
+        <table role="presentation" cellPadding="0" cellSpacing="0" width="100%" className="dark-bg" style={{background:brand.bg}}>
+          <tr>
+            <td align="center" style={{padding:"24px 12px"}}>
+              {/* Container */}
+              <table role="presentation" cellPadding="0" cellSpacing="0" width="100%" style={{maxWidth:"640px"}}>
+                {/* Header */}
+                <tr>
+                  <td style={{padding:"16px 20px"}}>
+                    <table role="presentation" width="100%">
+                      <tr>
+                        <td align="left" style={{verticalAlign:"middle"}}>
+                          <img src="https://wlxbydzshqijlfejqafp.supabase.co/storage/v1/object/public/event-images/panache-logo-text.png" alt="Panache" height="36" style={{display:"block", border:0, outline:"none", textDecoration:"none", height:"36px"}} />
+                        </td>
+                        <td align="right" style={{verticalAlign:"middle"}}>
+                          <span style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"12px", color:"#CBD5E1"}}>Bienvenue</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
 
-          {organizationName && (
-            <div style={organizationCard}>
-              <Text style={organizationTitle}>Organisation :</Text>
-              <Text style={organizationName}>{organizationName}</Text>
-            </div>
-          )}
+                {/* Hero */}
+                <tr>
+                  <td style={{padding:"0 20px"}}>
+                    <table role="presentation" width="100%" style={{borderRadius:"16px", overflow:"hidden"}}>
+                      <tr>
+                        <td style={{background:brand.accent, padding:"32px 28px", textAlign:"center"}}>
+                          <div style={{fontFamily:"Arial,Helvetica,sans-serif", color:"#FFFFFF", fontSize:"26px", lineHeight:"1.25", fontWeight:"800", letterSpacing:"0.2px"}}>
+                            🎉 Bienvenue sur Panache !
+                          </div>
+                          <div style={{fontFamily:"Arial,Helvetica,sans-serif", color:"#FFE4D5", fontSize:"14px", marginTop:"8px"}}>
+                            Votre plateforme d'événements sportifs
+                          </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="card" style={{background:brand.card, padding:"28px"}}>
+                          <div style={{fontFamily:"Arial,Helvetica,sans-serif", color:brand.text, fontSize:"20px", fontWeight:"700", margin:"0 0 8px 0"}}>
+                            Bonjour {userName},
+                          </div>
+                          <div style={{fontFamily:"Arial,Helvetica,sans-serif", color:brand.subtext, fontSize:"14px", margin:"0 0 16px 0"}}>
+                            Félicitations ! Votre compte a été créé avec succès.
+                          </div>
 
-          {/* CTA Button */}
-          <Section style={buttonContainer}>
-            <Link href={loginUrl} style={button}>
-              Accéder à mon dashboard
-            </Link>
-          </Section>
+                          {/* Organization card */}
+                          {organizationName && (
+                            <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" style={{borderCollapse:"separate", borderSpacing:"0", background:brand.softBg, borderRadius:"12px", margin:"16px 0"}}>
+                              <tr>
+                                <td style={{padding:"18px 20px", textAlign:"center"}}>
+                                  <div style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"14px", color:brand.accent, fontWeight:"700", marginBottom:"4px"}}>
+                                    ORGANISATION
+                                  </div>
+                                  <div style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"18px", color:brand.text, fontWeight:"700"}}>
+                                    {organizationName}
+                                  </div>
+                                </td>
+                              </tr>
+                            </table>
+                          )}
 
-          {/* Features list */}
-          <Section style={featuresSection}>
-            <Heading style={featuresTitle}>Découvrez vos fonctionnalités :</Heading>
-            <div style={featureItem}>
-              <span style={featureIcon}>🎾</span>
-              <Text style={featureText}>Créez des événements sportifs en quelques clics</Text>
-            </div>
-            <div style={featureItem}>
-              <span style={featureIcon}>🎫</span>
-              <Text style={featureText}>Vendez des billets avec Stripe intégré</Text>
-            </div>
-            <div style={featureItem}>
-              <span style={featureIcon}>📊</span>
-              <Text style={featureText}>Analysez vos performances et revenus</Text>
-            </div>
-            <div style={featureItem}>
-              <span style={featureIcon}>👥</span>
-              <Text style={featureText}>Gérez vos participants et équipes</Text>
-            </div>
-          </Section>
+                          {/* Features */}
+                          <div style={{margin:"20px 0"}}>
+                            <div style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"16px", fontWeight:"700", color:brand.text, marginBottom:"12px"}}>
+                              Découvrez vos fonctionnalités :
+                            </div>
+                            
+                            <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" style={{border:`1px solid ${brand.divider}`, borderRadius:"12px"}}>
+                              <tr>
+                                <td style={{padding:"16px 20px"}}>
+                                  <table role="presentation" width="100%">
+                                    <tr>
+                                      <td style={{width:"30px", verticalAlign:"top", paddingTop:"2px"}}>
+                                        <span style={{fontSize:"18px"}}>🎾</span>
+                                      </td>
+                                      <td style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"14px", color:brand.text}}>
+                                        <strong>Créez des événements</strong> sportifs en quelques clics
+                                      </td>
+                                    </tr>
+                                    <tr><td colSpan={2} style={{height:"10px"}}></td></tr>
+                                    <tr>
+                                      <td style={{width:"30px", verticalAlign:"top", paddingTop:"2px"}}>
+                                        <span style={{fontSize:"18px"}}>🎫</span>
+                                      </td>
+                                      <td style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"14px", color:brand.text}}>
+                                        <strong>Vendez des billets</strong> avec Stripe intégré
+                                      </td>
+                                    </tr>
+                                    <tr><td colSpan={2} style={{height:"10px"}}></td></tr>
+                                    <tr>
+                                      <td style={{width:"30px", verticalAlign:"top", paddingTop:"2px"}}>
+                                        <span style={{fontSize:"18px"}}>📊</span>
+                                      </td>
+                                      <td style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"14px", color:brand.text}}>
+                                        <strong>Analysez vos performances</strong> et revenus
+                                      </td>
+                                    </tr>
+                                    <tr><td colSpan={2} style={{height:"10px"}}></td></tr>
+                                    <tr>
+                                      <td style={{width:"30px", verticalAlign:"top", paddingTop:"2px"}}>
+                                        <span style={{fontSize:"18px"}}>👥</span>
+                                      </td>
+                                      <td style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"14px", color:brand.text}}>
+                                        <strong>Gérez vos participants</strong> et équipes
+                                      </td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                            </table>
+                          </div>
 
-          <Text style={helpText}>
-            Besoin d'aide ? Consultez notre <Link href="#" style={link}>guide de démarrage</Link> ou 
-            contactez notre équipe support.
-          </Text>
-        </Section>
+                          {/* CTA */}
+                          <div style={{textAlign:"center", padding:"24px 0 8px"}}>
+                            <a href={loginUrl}
+                               style={{background:brand.accent, color:"#111827", textDecoration:"none", display:"inline-block", padding:"14px 22px", borderRadius:"10px", fontFamily:"Arial,Helvetica,sans-serif", fontWeight:"800", fontSize:"15px", letterSpacing:"0.2px"}}
+                               className="btn">
+                              🚀 Accéder à mon dashboard
+                            </a>
+                          </div>
 
-        {/* Footer */}
-        <Section style={footer}>
-          <Text style={footerText}>
-            Cet email a été envoyé par Panache - La plateforme des événements sportifs
-          </Text>
-          <div style={footerLinks}>
-            <Link href="#" style={footerLink}>Centre d'aide</Link>
-            <span style={separator}>•</span>
-            <Link href="#" style={footerLink}>Politique de confidentialité</Link>
-            <span style={separator}>•</span>
-            <Link href="#" style={footerLink}>Se désabonner</Link>
-          </div>
-        </Section>
-      </Container>
-    </Body>
-  </Html>
-)
+                          {/* Help text */}
+                          <div style={{marginTop:"14px", fontFamily:"Arial,Helvetica,sans-serif", fontSize:"12px", color:brand.subtext, lineHeight:"1.5", textAlign:"center"}}>
+                            Besoin d'aide ? Consultez notre guide de démarrage ou<br/>
+                            contactez notre équipe support.
+                          </div>
+
+                          {/* Divider */}
+                          <div style={{height:"24px"}}></div>
+                          <div style={{borderTop:`1px solid ${brand.divider}`}}></div>
+
+                          {/* Footer */}
+                          <div style={{fontFamily:"Arial,Helvetica,sans-serif", color:brand.subtext, fontSize:"12px", textAlign:"center", paddingTop:"16px"}}>
+                            Cet email a été envoyé par Panache Esport.<br/>
+                            Centre d'aide • Politique de confidentialité • Se désabonner
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <tr><td style={{height:"24px"}}></td></tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+    </html>
+  );
+}
 
 export default WelcomeEmail
-
-// Styles using Panache design system colors
-const main = {
-  backgroundColor: 'hsl(210, 20%, 98%)',
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
-}
-
-const container = {
-  margin: '0 auto',
-  padding: '20px 0 48px',
-  maxWidth: '600px',
-}
-
-const header = {
-  padding: '32px 0',
-  textAlign: 'center' as const,
-  borderBottom: '1px solid hsl(220, 13%, 91%)',
-}
-
-const logoContainer = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-}
-
-const logoImage = {
-  height: '48px',
-  width: 'auto',
-}
-
-const content = {
-  padding: '32px 24px',
-}
-
-const h1 = {
-  color: 'hsl(224, 71%, 4%)',
-  fontSize: '28px',
-  fontWeight: 'bold',
-  margin: '0 0 24px',
-  textAlign: 'center' as const,
-}
-
-const text = {
-  color: 'hsl(220, 9%, 46%)',
-  fontSize: '16px',
-  lineHeight: '24px',
-  margin: '16px 0',
-}
-
-const organizationCard = {
-  backgroundColor: 'hsl(25, 95%, 95%)',
-  border: '2px solid hsl(25, 95%, 85%)',
-  borderRadius: '12px',
-  padding: '20px',
-  margin: '24px 0',
-  textAlign: 'center' as const,
-}
-
-const organizationTitle = {
-  color: 'hsl(25, 95%, 40%)',
-  fontSize: '14px',
-  fontWeight: 'bold',
-  margin: '0 0 8px',
-  textTransform: 'uppercase' as const,
-  letterSpacing: '1px',
-}
-
-const organizationName = {
-  color: 'hsl(25, 95%, 30%)',
-  fontSize: '20px',
-  fontWeight: 'bold',
-  margin: '0',
-}
-
-const buttonContainer = {
-  textAlign: 'center' as const,
-  margin: '32px 0',
-}
-
-const button = {
-  backgroundColor: 'hsl(25, 95%, 55%)',
-  borderRadius: '8px',
-  color: '#ffffff',
-  fontSize: '16px',
-  fontWeight: 'bold',
-  textDecoration: 'none',
-  textAlign: 'center' as const,
-  display: 'inline-block',
-  padding: '16px 32px',
-  boxShadow: '0 4px 30px -4px hsl(25, 95%, 55%, 0.25)',
-}
-
-const featuresSection = {
-  margin: '32px 0',
-  padding: '24px',
-  backgroundColor: 'hsl(220, 14%, 96%)',
-  borderRadius: '12px',
-}
-
-const featuresTitle = {
-  color: 'hsl(224, 71%, 4%)',
-  fontSize: '18px',
-  fontWeight: 'bold',
-  margin: '0 0 20px',
-}
-
-const featureItem = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '12px',
-  margin: '12px 0',
-}
-
-const featureIcon = {
-  fontSize: '20px',
-  width: '24px',
-  textAlign: 'center' as const,
-}
-
-const featureText = {
-  color: 'hsl(220, 9%, 46%)',
-  fontSize: '14px',
-  margin: '0',
-  lineHeight: '20px',
-}
-
-const helpText = {
-  color: 'hsl(220, 9%, 46%)',
-  fontSize: '14px',
-  lineHeight: '20px',
-  margin: '24px 0',
-  textAlign: 'center' as const,
-}
-
-const footer = {
-  padding: '24px 0',
-  borderTop: '1px solid hsl(220, 13%, 91%)',
-  textAlign: 'center' as const,
-}
-
-const footerText = {
-  color: 'hsl(220, 9%, 46%)',
-  fontSize: '12px',
-  margin: '0 0 16px',
-}
-
-const footerLinks = {
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  gap: '8px',
-}
-
-const footerLink = {
-  color: 'hsl(25, 95%, 55%)',
-  fontSize: '12px',
-  textDecoration: 'none',
-}
-
-const separator = {
-  color: 'hsl(220, 9%, 46%)',
-  fontSize: '12px',
-}
-
-const link = {
-  color: 'hsl(25, 95%, 55%)',
-  textDecoration: 'none',
-}

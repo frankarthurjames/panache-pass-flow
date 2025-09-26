@@ -1,15 +1,3 @@
-import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Link,
-  Preview,
-  Section,
-  Text,
-  Hr,
-} from 'npm:@react-email/components@0.0.22'
 import * as React from 'npm:react@18.3.1'
 
 interface EventConfirmationEmailProps {
@@ -36,276 +24,209 @@ export const EventConfirmationEmail = ({
   ticketTypes,
   totalAmount,
   qrCodeUrl,
-}: EventConfirmationEmailProps) => (
-  <Html>
-    <Head />
-    <Preview>Votre billet pour {eventTitle} est prêt !</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        {/* Header simple avec logo */}
-        <Section style={header}>
-          <img src="https://wlxbydzshqijlfejqafp.supabase.co/storage/v1/object/public/event-images/panache-logo-text.png" alt="Panache" style={logoImage} />
-        </Section>
+}: EventConfirmationEmailProps) => {
+  // Couleurs brand Panache (orange)
+  const brand = {
+    bg: "#0B0B0C",            // fond global très sombre pour encadrer
+    card: "#FFFFFF",          // cartes / blocs
+    text: "#0F172A",          // slate-900
+    subtext: "#475569",       // slate-600
+    divider: "#E2E8F0",       // slate-200
+    accent: "#F97316",        // orange-500
+    accentDark: "#EA580C",    // orange-600 (hover)
+    softBg: "#FFF7ED"         // orange-50 (fond doux de section)
+  };
 
-        {/* Contenu principal */}
-        <Section style={content}>
-          <Heading style={h1}>Bonjour {userName},</Heading>
-          
-          <Text style={text}>
-            Votre inscription à <strong>{eventTitle}</strong> a été confirmée avec succès.
-          </Text>
+  const preheader = `Votre billet pour ${eventTitle} est prêt !`;
 
-          {/* Résumé simple */}
-          <div style={summaryCard}>
-            <Text style={summaryTitle}>{eventTitle}</Text>
-            <Text style={summaryDate}>{eventDate}</Text>
-            <Text style={summaryLocation}>{eventVenue}, {eventCity}</Text>
-          </div>
+  return (
+    <html lang="fr">
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Votre billet pour {eventTitle}</title>
+        <style>
+          {`.preheader { display:none!important; visibility:hidden; opacity:0; color:transparent; height:0; width:0; overflow:hidden; }
+          @media (prefers-color-scheme: dark) {
+            .dark-bg { background:${brand.bg} !important; }
+            .card { background:#111827 !important; color:#F9FAFB !important; }
+            .text { color:#F3F4F6 !important; }
+            .subtext { color:#D1D5DB !important; }
+            .divider { border-color:#374151 !important; }
+            .btn { color:#111827 !important; }
+          }`}
+        </style>
+      </head>
+      <body style={{margin:0, padding:0, background:brand.bg}}>
+        <span className="preheader">{preheader}</span>
+        <table role="presentation" cellPadding="0" cellSpacing="0" width="100%" className="dark-bg" style={{background:brand.bg}}>
+          <tr>
+            <td align="center" style={{padding:"24px 12px"}}>
+              {/* Container */}
+              <table role="presentation" cellPadding="0" cellSpacing="0" width="100%" style={{maxWidth:"640px"}}>
+                {/* Header */}
+                <tr>
+                  <td style={{padding:"16px 20px"}}>
+                    <table role="presentation" width="100%">
+                      <tr>
+                        <td align="left" style={{verticalAlign:"middle"}}>
+                          <img src="https://wlxbydzshqijlfejqafp.supabase.co/storage/v1/object/public/event-images/panache-logo-text.png" alt="Panache" height="36" style={{display:"block", border:0, outline:"none", textDecoration:"none", height:"36px"}} />
+                        </td>
+                        <td align="right" style={{verticalAlign:"middle"}}>
+                          <span style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"12px", color:"#CBD5E1"}}>Confirmation</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
 
-          {/* Détails essentiels */}
-          <div style={detailsSection}>
-            <Text style={detailsTitle}>Détails de votre réservation</Text>
-            
-            {ticketTypes.map((ticket, index) => (
-              <div key={index} style={ticketRow}>
-                <Text style={ticketName}>{ticket.name} x{ticket.quantity}</Text>
-                <Text style={ticketPrice}>
-                  {ticket.price > 0 ? `${(ticket.price / 100).toFixed(2)} €` : 'Gratuit'}
-                </Text>
-              </div>
-            ))}
-            
-            <div style={totalRow}>
-              <Text style={totalLabel}>Total</Text>
-              <Text style={totalAmount}>
-                {totalAmount > 0 ? `${(totalAmount / 100).toFixed(2)} €` : 'Gratuit'}
-              </Text>
-            </div>
-          </div>
+                {/* Hero */}
+                <tr>
+                  <td style={{padding:"0 20px"}}>
+                    <table role="presentation" width="100%" style={{borderRadius:"16px", overflow:"hidden"}}>
+                      <tr>
+                        <td style={{background:brand.accent, padding:"32px 28px", textAlign:"center"}}>
+                          <div style={{fontFamily:"Arial,Helvetica,sans-serif", color:"#FFFFFF", fontSize:"26px", lineHeight:"1.25", fontWeight:"800", letterSpacing:"0.2px"}}>
+                            🎫 Inscription confirmée !
+                          </div>
+                          <div style={{fontFamily:"Arial,Helvetica,sans-serif", color:"#FFE4D5", fontSize:"14px", marginTop:"8px"}}>
+                            Panache Esport
+                          </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="card" style={{background:brand.card, padding:"28px"}}>
+                          <div style={{fontFamily:"Arial,Helvetica,sans-serif", color:brand.text, fontSize:"20px", fontWeight:"700", margin:"0 0 8px 0"}}>
+                            Bonjour {userName},
+                          </div>
+                          <div style={{fontFamily:"Arial,Helvetica,sans-serif", color:brand.subtext, fontSize:"14px", margin:"0 0 16px 0"}}>
+                            Votre inscription à <strong>{eventTitle}</strong> a été confirmée avec succès.
+                          </div>
 
-          {/* QR Code si disponible */}
-          {qrCodeUrl && (
-            <div style={qrSection}>
-              <Text style={qrTitle}>Votre billet</Text>
-              <div style={qrContainer}>
-                <img src={qrCodeUrl} alt="QR Code" style={qrCode} />
-              </div>
-              <Text style={qrText}>Présentez ce QR code à l'entrée</Text>
-            </div>
-          )}
+                          {/* Event details */}
+                          <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" style={{borderCollapse:"separate", borderSpacing:"0", background:brand.softBg, borderRadius:"12px"}}>
+                            <tr>
+                              <td style={{padding:"18px 20px"}}>
+                                <div style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"18px", fontWeight:"700", color:brand.text, marginBottom:"12px"}}>
+                                  {eventTitle}
+                                </div>
+                                <table role="presentation" width="100%">
+                                  <tr>
+                                    <td style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"14px", color:brand.text}}>
+                                      <strong style={{display:"inline-block", minWidth:"60px"}}>Date</strong>
+                                      {eventDate}
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td style={{height:"8px"}}></td>
+                                  </tr>
+                                  <tr>
+                                    <td style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"14px", color:brand.text}}>
+                                      <strong style={{display:"inline-block", minWidth:"60px"}}>Lieu</strong>
+                                      {eventVenue}, {eventCity}
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                          </table>
 
-          {/* Message important simple */}
-          <div style={importantBox}>
-            <Text style={importantText}>
-              <strong>Important :</strong> Arrivez 15 minutes avant le début. 
-              Conservez cet email comme preuve d'achat.
-            </Text>
-          </div>
+                          {/* Spacer */}
+                          <div style={{height:"16px"}}></div>
 
-          <Text style={helpText}>
-            Des questions ? Contactez l'organisateur.
-          </Text>
-        </Section>
+                          {/* Ticket details */}
+                          <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" style={{border:`1px solid ${brand.divider}`, borderRadius:"12px"}}>
+                            <tr>
+                              <td style={{padding:"18px 20px"}}>
+                                <div style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"16px", fontWeight:"700", color:brand.text, marginBottom:"12px"}}>
+                                  Détails de votre réservation
+                                </div>
+                                
+                                {ticketTypes.map((ticket, index) => (
+                                  <table key={index} role="presentation" width="100%" style={{marginBottom: index < ticketTypes.length - 1 ? "8px" : "0"}}>
+                                    <tr>
+                                      <td style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"14px", color:brand.text}}>
+                                        {ticket.name} x{ticket.quantity}
+                                      </td>
+                                      <td align="right" style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"14px", color:brand.text, fontWeight:"700"}}>
+                                        {ticket.price > 0 ? `${(ticket.price / 100).toFixed(2)} €` : 'Gratuit'}
+                                      </td>
+                                    </tr>
+                                  </table>
+                                ))}
+                                
+                                <div style={{borderTop:`1px solid ${brand.divider}`, margin:"12px 0 8px", paddingTop:"8px"}}>
+                                  <table role="presentation" width="100%">
+                                    <tr>
+                                      <td style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"16px", fontWeight:"700", color:brand.text}}>
+                                        Total
+                                      </td>
+                                      <td align="right" style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"16px", fontWeight:"700", color:brand.text}}>
+                                        {totalAmount > 0 ? `${(totalAmount / 100).toFixed(2)} €` : 'Gratuit'}
+                                      </td>
+                                    </tr>
+                                  </table>
+                                </div>
+                              </td>
+                            </tr>
+                          </table>
 
-        {/* Footer simple */}
-        <Section style={footer}>
-          <Text style={footerText}>
-            Panache - Plateforme de billetterie sportive
-          </Text>
-        </Section>
-      </Container>
-    </Body>
-  </Html>
-)
+                          {/* QR Code if available */}
+                          {qrCodeUrl && (
+                            <>
+                              <div style={{height:"16px"}}></div>
+                              <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" style={{border:`1px solid ${brand.divider}`, borderRadius:"12px"}}>
+                                <tr>
+                                  <td style={{padding:"18px 20px", textAlign:"center"}}>
+                                    <div style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"16px", fontWeight:"700", color:brand.text, marginBottom:"12px"}}>
+                                      Votre billet
+                                    </div>
+                                    <div style={{display:"inline-block", padding:"12px", background:"#FFFFFF", border:`1px solid ${brand.divider}`, borderRadius:"8px"}}>
+                                      <img src={qrCodeUrl} alt="QR Code" style={{width:"120px", height:"120px", display:"block"}} />
+                                    </div>
+                                    <div style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"12px", color:brand.subtext, marginTop:"8px"}}>
+                                      Présentez ce QR code à l'entrée
+                                    </div>
+                                  </td>
+                                </tr>
+                              </table>
+                            </>
+                          )}
+
+                          {/* Important note */}
+                          <div style={{marginTop:"16px", padding:"12px", background:"#FEF3C7", border:"1px solid #F59E0B", borderRadius:"8px"}}>
+                            <div style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"14px", color:"#92400E"}}>
+                              <strong>Important :</strong> Arrivez 15 minutes avant le début. Conservez cet email comme preuve d'achat.
+                            </div>
+                          </div>
+
+                          {/* Help text */}
+                          <div style={{marginTop:"16px", fontFamily:"Arial,Helvetica,sans-serif", fontSize:"12px", color:brand.subtext, lineHeight:"1.5", textAlign:"center"}}>
+                            Des questions ? Contactez l'organisateur.
+                          </div>
+
+                          {/* Divider */}
+                          <div style={{height:"24px"}}></div>
+                          <div style={{borderTop:`1px solid ${brand.divider}`}}></div>
+
+                          {/* Footer */}
+                          <div style={{fontFamily:"Arial,Helvetica,sans-serif", color:brand.subtext, fontSize:"12px", textAlign:"center", paddingTop:"16px"}}>
+                            Panache - Plateforme de billetterie sportive
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <tr><td style={{height:"24px"}}></td></tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+    </html>
+  );
+}
 
 export default EventConfirmationEmail
-
-// Styles simplifiés et naturels
-const main = {
-  backgroundColor: '#ffffff',
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
-}
-
-const container = {
-  margin: '0 auto',
-  padding: '0',
-  maxWidth: '600px',
-}
-
-const header = {
-  padding: '32px 24px 24px',
-  textAlign: 'center' as const,
-  borderBottom: '1px solid #e5e7eb',
-}
-
-const logoImage = {
-  height: '32px',
-  width: 'auto',
-}
-
-const content = {
-  padding: '32px 24px',
-}
-
-const h1 = {
-  color: '#111827',
-  fontSize: '24px',
-  fontWeight: 'bold',
-  margin: '0 0 16px',
-}
-
-const text = {
-  color: '#6b7280',
-  fontSize: '16px',
-  lineHeight: '24px',
-  margin: '16px 0',
-}
-
-const summaryCard = {
-  backgroundColor: '#f9fafb',
-  border: '1px solid #e5e7eb',
-  borderRadius: '8px',
-  padding: '20px',
-  margin: '24px 0',
-}
-
-const summaryTitle = {
-  color: '#111827',
-  fontSize: '18px',
-  fontWeight: 'bold',
-  margin: '0 0 8px',
-}
-
-const summaryDate = {
-  color: '#6b7280',
-  fontSize: '14px',
-  margin: '0 0 4px',
-}
-
-const summaryLocation = {
-  color: '#6b7280',
-  fontSize: '14px',
-  margin: '0',
-}
-
-const detailsSection = {
-  margin: '24px 0',
-}
-
-const detailsTitle = {
-  color: '#111827',
-  fontSize: '16px',
-  fontWeight: 'bold',
-  margin: '0 0 16px',
-}
-
-const ticketRow = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: '8px 0',
-  borderBottom: '1px solid #f3f4f6',
-}
-
-const ticketName = {
-  color: '#111827',
-  fontSize: '14px',
-  margin: '0',
-}
-
-const ticketPrice = {
-  color: '#111827',
-  fontSize: '14px',
-  fontWeight: 'bold',
-  margin: '0',
-}
-
-const totalRow = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: '12px 0 0',
-  borderTop: '1px solid #d1d5db',
-  marginTop: '8px',
-}
-
-const totalLabel = {
-  color: '#111827',
-  fontSize: '16px',
-  fontWeight: 'bold',
-  margin: '0',
-}
-
-const totalAmount = {
-  color: '#111827',
-  fontSize: '16px',
-  fontWeight: 'bold',
-  margin: '0',
-}
-
-const qrSection = {
-  textAlign: 'center' as const,
-  margin: '24px 0',
-}
-
-const qrTitle = {
-  color: '#111827',
-  fontSize: '16px',
-  fontWeight: 'bold',
-  margin: '0 0 16px',
-}
-
-const qrContainer = {
-  backgroundColor: '#ffffff',
-  border: '1px solid #e5e7eb',
-  borderRadius: '8px',
-  padding: '16px',
-  display: 'inline-block',
-  margin: '0 0 8px',
-}
-
-const qrCode = {
-  width: '120px',
-  height: '120px',
-}
-
-const qrText = {
-  color: '#6b7280',
-  fontSize: '12px',
-  margin: '0',
-}
-
-const importantBox = {
-  backgroundColor: '#fef3c7',
-  border: '1px solid #fbbf24',
-  borderRadius: '6px',
-  padding: '12px',
-  margin: '24px 0',
-}
-
-const importantText = {
-  color: '#92400e',
-  fontSize: '14px',
-  margin: '0',
-  lineHeight: '20px',
-}
-
-const helpText = {
-  color: '#6b7280',
-  fontSize: '14px',
-  margin: '24px 0 0',
-  textAlign: 'center' as const,
-}
-
-const footer = {
-  padding: '24px',
-  borderTop: '1px solid #e5e7eb',
-  textAlign: 'center' as const,
-  backgroundColor: '#f9fafb',
-}
-
-const footerText = {
-  color: '#6b7280',
-  fontSize: '12px',
-  margin: '0',
-}

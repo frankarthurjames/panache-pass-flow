@@ -1,14 +1,3 @@
-import {
-  Body,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Link,
-  Preview,
-  Section,
-  Text,
-} from 'npm:@react-email/components@0.0.22'
 import * as React from 'npm:react@18.3.1'
 
 interface EventReminderEmailProps {
@@ -33,499 +22,246 @@ export const EventReminderEmail = ({
   ticketsCount,
   organizerName,
   specialInstructions,
-}: EventReminderEmailProps) => (
-  <Html>
-    <Head />
-    <Preview>Rappel : {eventTitle} c'est demain !</Preview>
-    <Body style={main}>
-      <Container style={container}>
-        {/* Header */}
-        <Section style={header}>
-          <div style={logoContainer}>
-            <img src="https://wlxbydzshqijlfejqafp.supabase.co/storage/v1/object/public/event-images/panache-logo-text.png" alt="Panache" style={logoImage} />
-          </div>
-        </Section>
+}: EventReminderEmailProps) => {
+  // Couleurs brand Panache (orange)
+  const brand = {
+    bg: "#0B0B0C",            // fond global très sombre pour encadrer
+    card: "#FFFFFF",          // cartes / blocs
+    text: "#0F172A",          // slate-900
+    subtext: "#475569",       // slate-600
+    divider: "#E2E8F0",       // slate-200
+    accent: "#F97316",        // orange-500
+    accentDark: "#EA580C",    // orange-600 (hover)
+    softBg: "#FFF7ED"         // orange-50 (fond doux de section)
+  };
 
-        {/* Reminder badge */}
-        <Section style={content}>
-          <div style={reminderBadge}>
-            <span style={reminderIcon}>⏰</span>
-            <Text style={reminderText}>C'est bientôt !</Text>
-          </div>
+  const preheader = `Rappel : ${eventTitle} c'est bientôt !`;
 
-          <Heading style={h1}>Bonjour {userName},</Heading>
-          
-          <Text style={text}>
-            Nous espérons que vous êtes aussi excité que nous ! 
-            Votre événement <strong>{eventTitle}</strong> a lieu <strong>demain</strong>.
-          </Text>
+  return (
+    <html lang="fr">
+      <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Rappel : {eventTitle}</title>
+        <style>
+          {`.preheader { display:none!important; visibility:hidden; opacity:0; color:transparent; height:0; width:0; overflow:hidden; }
+          @media (prefers-color-scheme: dark) {
+            .dark-bg { background:${brand.bg} !important; }
+            .card { background:#111827 !important; color:#F9FAFB !important; }
+            .text { color:#F3F4F6 !important; }
+            .subtext { color:#D1D5DB !important; }
+            .divider { border-color:#374151 !important; }
+            .btn { color:#111827 !important; }
+          }`}
+        </style>
+      </head>
+      <body style={{margin:0, padding:0, background:brand.bg}}>
+        <span className="preheader">{preheader}</span>
+        <table role="presentation" cellPadding="0" cellSpacing="0" width="100%" className="dark-bg" style={{background:brand.bg}}>
+          <tr>
+            <td align="center" style={{padding:"24px 12px"}}>
+              {/* Container */}
+              <table role="presentation" cellPadding="0" cellSpacing="0" width="100%" style={{maxWidth:"640px"}}>
+                {/* Header */}
+                <tr>
+                  <td style={{padding:"16px 20px"}}>
+                    <table role="presentation" width="100%">
+                      <tr>
+                        <td align="left" style={{verticalAlign:"middle"}}>
+                          <img src="https://wlxbydzshqijlfejqafp.supabase.co/storage/v1/object/public/event-images/panache-logo-text.png" alt="Panache" height="36" style={{display:"block", border:0, outline:"none", textDecoration:"none", height:"36px"}} />
+                        </td>
+                        <td align="right" style={{verticalAlign:"middle"}}>
+                          <span style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"12px", color:"#CBD5E1"}}>Rappel</span>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
 
-          {/* Event reminder card */}
-          <div style={eventCard}>
-            <div style={eventHeader}>
-              <Heading style={eventTitle}>{eventTitle}</Heading>
-              <Text style={eventOrganizer}>Organisé par {organizerName}</Text>
-            </div>
-            
-            <div style={eventDetails}>
-              <div style={eventDetail}>
-                <span style={eventIcon}>📅</span>
-                <div style={eventInfo}>
-                  <Text style={eventLabel}>Date</Text>
-                  <Text style={eventValue}>{eventDate}</Text>
-                </div>
-              </div>
-              
-              <div style={eventDetail}>
-                <span style={eventIcon}>🕐</span>
-                <div style={eventInfo}>
-                  <Text style={eventLabel}>Heure</Text>
-                  <Text style={eventValue}>{eventTime}</Text>
-                </div>
-              </div>
-              
-              <div style={eventDetail}>
-                <span style={eventIcon}>📍</span>
-                <div style={eventInfo}>
-                  <Text style={eventLabel}>Lieu</Text>
-                  <Text style={eventValue}>{eventVenue}, {eventCity}</Text>
-                </div>
-              </div>
-              
-              <div style={eventDetail}>
-                <span style={eventIcon}>🎫</span>
-                <div style={eventInfo}>
-                  <Text style={eventLabel}>Vos billets</Text>
-                  <Text style={eventValue}>
-                    {ticketsCount} billet{ticketsCount > 1 ? 's' : ''}
-                  </Text>
-                </div>
-              </div>
-            </div>
-          </div>
+                {/* Hero */}
+                <tr>
+                  <td style={{padding:"0 20px"}}>
+                    <table role="presentation" width="100%" style={{borderRadius:"16px", overflow:"hidden"}}>
+                      <tr>
+                        <td style={{background:brand.accent, padding:"32px 28px", textAlign:"center"}}>
+                          <div style={{fontFamily:"Arial,Helvetica,sans-serif", color:"#FFFFFF", fontSize:"26px", lineHeight:"1.25", fontWeight:"800", letterSpacing:"0.2px"}}>
+                            ⏰ C'est bientôt !
+                          </div>
+                          <div style={{fontFamily:"Arial,Helvetica,sans-serif", color:"#FFE4D5", fontSize:"14px", marginTop:"8px"}}>
+                            {organizerName} × Panache Esport
+                          </div>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td className="card" style={{background:brand.card, padding:"28px"}}>
+                          <div style={{fontFamily:"Arial,Helvetica,sans-serif", color:brand.text, fontSize:"20px", fontWeight:"700", margin:"0 0 8px 0"}}>
+                            Bonjour {userName},
+                          </div>
+                          <div style={{fontFamily:"Arial,Helvetica,sans-serif", color:brand.subtext, fontSize:"14px", margin:"0 0 16px 0"}}>
+                            Nous espérons que vous êtes aussi excité que nous ! Votre événement <strong>{eventTitle}</strong> a lieu <strong>bientôt</strong>.
+                          </div>
 
-          {/* Important reminders */}
-          <Section style={remindersSection}>
-            <Heading style={sectionTitle}>N'oubliez pas :</Heading>
-            
-            <div style={reminderItem}>
-              <span style={checkIcon}>✅</span>
-              <Text style={reminderItemText}>
-                Arrivez 15 minutes avant le début pour éviter les files d'attente
-              </Text>
-            </div>
-            
-            <div style={reminderItem}>
-              <span style={checkIcon}>✅</span>
-              <Text style={reminderItemText}>
-                Apportez votre billet (version numérique ou imprimée)
-              </Text>
-            </div>
-            
-            <div style={reminderItem}>
-              <span style={checkIcon}>✅</span>
-              <Text style={reminderItemText}>
-                Portez une tenue de sport adaptée à l'activité
-              </Text>
-            </div>
-            
-            <div style={reminderItem}>
-              <span style={checkIcon}>✅</span>
-              <Text style={reminderItemText}>
-                N'oubliez pas votre bouteille d'eau et une serviette
-              </Text>
-            </div>
-          </Section>
+                          {/* Event details */}
+                          <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" style={{borderCollapse:"separate", borderSpacing:"0", background:brand.softBg, borderRadius:"12px"}}>
+                            <tr>
+                              <td style={{padding:"18px 20px"}}>
+                                <div style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"18px", fontWeight:"700", color:brand.text, marginBottom:"4px", textAlign:"center"}}>
+                                  {eventTitle}
+                                </div>
+                                <div style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"13px", color:brand.subtext, marginBottom:"16px", textAlign:"center"}}>
+                                  Organisé par {organizerName}
+                                </div>
+                                <table role="presentation" width="100%">
+                                  <tr>
+                                    <td style={{width:"20px", verticalAlign:"top", paddingTop:"2px"}}>📅</td>
+                                    <td style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"14px", color:brand.text, paddingBottom:"8px"}}>
+                                      <strong>Date :</strong> {eventDate}
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td style={{width:"20px", verticalAlign:"top", paddingTop:"2px"}}>🕐</td>
+                                    <td style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"14px", color:brand.text, paddingBottom:"8px"}}>
+                                      <strong>Heure :</strong> {eventTime}
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td style={{width:"20px", verticalAlign:"top", paddingTop:"2px"}}>📍</td>
+                                    <td style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"14px", color:brand.text, paddingBottom:"8px"}}>
+                                      <strong>Lieu :</strong> {eventVenue}, {eventCity}
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td style={{width:"20px", verticalAlign:"top", paddingTop:"2px"}}>🎫</td>
+                                    <td style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"14px", color:brand.text}}>
+                                      <strong>Vos billets :</strong> {ticketsCount} billet{ticketsCount > 1 ? 's' : ''}
+                                    </td>
+                                  </tr>
+                                </table>
+                              </td>
+                            </tr>
+                          </table>
 
-          {/* Special instructions */}
-          {specialInstructions && (
-            <Section style={instructionsSection}>
-              <Heading style={instructionsTitle}>Instructions spéciales</Heading>
-              <div style={instructionsCard}>
-                <Text style={instructionsText}>{specialInstructions}</Text>
-              </div>
-            </Section>
-          )}
+                          {/* Important reminders */}
+                          <div style={{margin:"20px 0"}}>
+                            <div style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"16px", fontWeight:"700", color:brand.text, marginBottom:"12px"}}>
+                              N'oubliez pas :
+                            </div>
+                            
+                            <table role="presentation" width="100%" cellPadding="0" cellSpacing="0" style={{border:`1px solid ${brand.divider}`, borderRadius:"12px"}}>
+                              <tr>
+                                <td style={{padding:"16px 20px"}}>
+                                  <table role="presentation" width="100%">
+                                    <tr>
+                                      <td style={{width:"20px", verticalAlign:"top", paddingTop:"2px"}}>✅</td>
+                                      <td style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"14px", color:brand.text, paddingBottom:"8px"}}>
+                                        Arrivez 15 minutes avant le début pour éviter les files d'attente
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td style={{width:"20px", verticalAlign:"top", paddingTop:"2px"}}>✅</td>
+                                      <td style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"14px", color:brand.text, paddingBottom:"8px"}}>
+                                        Apportez votre billet (version numérique ou imprimée)
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td style={{width:"20px", verticalAlign:"top", paddingTop:"2px"}}>✅</td>
+                                      <td style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"14px", color:brand.text, paddingBottom:"8px"}}>
+                                        Portez une tenue de sport adaptée à l'activité
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td style={{width:"20px", verticalAlign:"top", paddingTop:"2px"}}>✅</td>
+                                      <td style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"14px", color:brand.text}}>
+                                        N'oubliez pas votre bouteille d'eau et une serviette
+                                      </td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                            </table>
+                          </div>
 
-          {/* Weather reminder */}
-          <Section style={weatherSection}>
-            <div style={weatherCard}>
-              <span style={weatherIcon}>🌤️</span>
-              <div>
-                <Text style={weatherTitle}>Pensez à vérifier la météo</Text>
-                <Text style={weatherText}>
-                  Consultez les prévisions météo pour vous habiller en conséquence
-                </Text>
-              </div>
-            </div>
-          </Section>
+                          {/* Special instructions */}
+                          {specialInstructions && (
+                            <div style={{margin:"16px 0"}}>
+                              <div style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"16px", fontWeight:"700", color:brand.text, marginBottom:"8px"}}>
+                                Instructions spéciales
+                              </div>
+                              <div style={{padding:"12px", background:"#FEF3C7", border:"1px solid #F59E0B", borderRadius:"8px"}}>
+                                <div style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"14px", color:"#92400E"}}>
+                                  {specialInstructions}
+                                </div>
+                              </div>
+                            </div>
+                          )}
 
-          {/* Action buttons */}
-          <Section style={buttonsSection}>
-            <Link href="#" style={primaryButton}>
-              Voir mes billets
-            </Link>
-            
-            <Link href="#" style={secondaryButton}>
-              Itinéraire vers le lieu
-            </Link>
-          </Section>
+                          {/* Weather reminder */}
+                          <div style={{margin:"16px 0", padding:"16px", background:"#F1F5F9", border:`1px solid ${brand.divider}`, borderRadius:"12px"}}>
+                            <table role="presentation" width="100%">
+                              <tr>
+                                <td style={{width:"30px", verticalAlign:"top"}}>
+                                  <span style={{fontSize:"20px"}}>🌤️</span>
+                                </td>
+                                <td>
+                                  <div style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"14px", fontWeight:"700", color:brand.text, marginBottom:"4px"}}>
+                                    Pensez à vérifier la météo
+                                  </div>
+                                  <div style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"12px", color:brand.subtext}}>
+                                    Consultez les prévisions météo pour vous habiller en conséquence
+                                  </div>
+                                </td>
+                              </tr>
+                            </table>
+                          </div>
 
-          <Text style={contactText}>
-            Une question de dernière minute ? Contactez l'organisateur 
-            <Link href="#" style={link}> {organizerName}</Link> ou notre 
-            <Link href="#" style={link}> équipe support</Link>.
-          </Text>
+                          {/* Action buttons */}
+                          <div style={{textAlign:"center", margin:"24px 0"}}>
+                            <a href="#"
+                               style={{background:brand.accent, color:"#111827", textDecoration:"none", display:"inline-block", padding:"12px 20px", borderRadius:"8px", fontFamily:"Arial,Helvetica,sans-serif", fontWeight:"700", fontSize:"14px", marginBottom:"8px", marginRight:"8px"}}
+                               className="btn">
+                              Voir mes billets
+                            </a>
+                            <a href="#"
+                               style={{background:"transparent", border:`2px solid ${brand.accent}`, color:brand.accent, textDecoration:"none", display:"inline-block", padding:"10px 18px", borderRadius:"8px", fontFamily:"Arial,Helvetica,sans-serif", fontWeight:"700", fontSize:"14px"}}>
+                              Itinéraire vers le lieu
+                            </a>
+                          </div>
 
-          <div style={excitementSection}>
-            <Text style={excitementText}>
-              🎉 Nous avons hâte de vous voir demain ! 🎉
-            </Text>
-          </div>
-        </Section>
+                          {/* Excitement section */}
+                          <div style={{textAlign:"center", margin:"20px 0", padding:"16px", background:brand.softBg, borderRadius:"12px", border:`2px solid #FED7AA`}}>
+                            <div style={{fontFamily:"Arial,Helvetica,sans-serif", fontSize:"16px", fontWeight:"700", color:brand.accent}}>
+                              🎉 Nous avons hâte de vous voir ! 🎉
+                            </div>
+                          </div>
 
-        {/* Footer */}
-        <Section style={footer}>
-          <Text style={footerText}>
-            Email de rappel envoyé par Panache pour {eventTitle}
-          </Text>
-          <div style={footerLinks}>
-            <Link href="#" style={footerLink}>Mes événements</Link>
-            <span style={separator}>•</span>
-            <Link href="#" style={footerLink}>Support</Link>
-            <span style={separator}>•</span>
-            <Link href="#" style={footerLink}>Annulation</Link>
-          </div>
-        </Section>
-      </Container>
-    </Body>
-  </Html>
-)
+                          {/* Contact text */}
+                          <div style={{marginTop:"16px", fontFamily:"Arial,Helvetica,sans-serif", fontSize:"12px", color:brand.subtext, lineHeight:"1.5", textAlign:"center"}}>
+                            Une question de dernière minute ? Contactez l'organisateur {organizerName} ou notre équipe support.
+                          </div>
+
+                          {/* Divider */}
+                          <div style={{height:"24px"}}></div>
+                          <div style={{borderTop:`1px solid ${brand.divider}`}}></div>
+
+                          {/* Footer */}
+                          <div style={{fontFamily:"Arial,Helvetica,sans-serif", color:brand.subtext, fontSize:"12px", textAlign:"center", paddingTop:"16px"}}>
+                            Email de rappel envoyé par Panache pour {eventTitle}<br/>
+                            Mes événements • Support • Annulation
+                          </div>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+                <tr><td style={{height:"24px"}}></td></tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </body>
+    </html>
+  );
+}
 
 export default EventReminderEmail
-
-// Styles with Panache design system
-const main = {
-  backgroundColor: 'hsl(210, 20%, 98%)',
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
-}
-
-const container = {
-  margin: '0 auto',
-  padding: '20px 0 48px',
-  maxWidth: '600px',
-}
-
-const header = {
-  padding: '24px 0',
-  textAlign: 'center' as const,
-  borderBottom: '1px solid hsl(220, 13%, 91%)',
-}
-
-const logoContainer = {
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-}
-
-const logoImage = {
-  height: '40px',
-  width: 'auto',
-}
-
-const content = {
-  padding: '32px 24px',
-}
-
-const reminderBadge = {
-  backgroundColor: 'hsl(38, 92%, 95%)',
-  border: '2px solid hsl(38, 92%, 80%)',
-  borderRadius: '12px',
-  padding: '16px',
-  textAlign: 'center' as const,
-  margin: '0 0 32px',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  gap: '8px',
-}
-
-const reminderIcon = {
-  fontSize: '24px',
-}
-
-const reminderText = {
-  color: 'hsl(38, 92%, 50%)',
-  fontSize: '18px',
-  fontWeight: 'bold',
-  margin: 0,
-}
-
-const h1 = {
-  color: 'hsl(224, 71%, 4%)',
-  fontSize: '24px',
-  fontWeight: 'bold',
-  margin: '0 0 16px',
-}
-
-const text = {
-  color: 'hsl(220, 9%, 46%)',
-  fontSize: '16px',
-  lineHeight: '24px',
-  margin: '16px 0',
-}
-
-const eventCard = {
-  background: 'linear-gradient(135deg, hsl(25, 95%, 55%), hsl(25, 95%, 70%))',
-  borderRadius: '16px',
-  padding: '24px',
-  margin: '32px 0',
-  color: '#ffffff',
-}
-
-const eventHeader = {
-  textAlign: 'center' as const,
-  marginBottom: '24px',
-}
-
-const eventTitle = {
-  fontSize: '22px',
-  fontWeight: 'bold',
-  margin: '0 0 8px',
-  color: '#ffffff',
-}
-
-const eventOrganizer = {
-  fontSize: '14px',
-  margin: 0,
-  color: 'rgba(255, 255, 255, 0.9)',
-  fontWeight: '500',
-}
-
-const eventDetails = {
-  display: 'grid',
-  gap: '16px',
-}
-
-const eventDetail = {
-  display: 'flex',
-  alignItems: 'center',
-  gap: '16px',
-  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  borderRadius: '8px',
-  padding: '12px',
-}
-
-const eventIcon = {
-  fontSize: '20px',
-  width: '24px',
-  textAlign: 'center' as const,
-}
-
-const eventInfo = {
-  flex: 1,
-}
-
-const eventLabel = {
-  fontSize: '12px',
-  margin: '0 0 2px',
-  color: 'rgba(255, 255, 255, 0.8)',
-  fontWeight: '500',
-  textTransform: 'uppercase' as const,
-  letterSpacing: '0.5px',
-}
-
-const eventValue = {
-  fontSize: '16px',
-  margin: 0,
-  color: '#ffffff',
-  fontWeight: 'bold',
-}
-
-const remindersSection = {
-  margin: '32px 0',
-}
-
-const sectionTitle = {
-  color: 'hsl(224, 71%, 4%)',
-  fontSize: '18px',
-  fontWeight: 'bold',
-  margin: '0 0 20px',
-}
-
-const reminderItem = {
-  display: 'flex',
-  alignItems: 'flex-start',
-  gap: '12px',
-  margin: '16px 0',
-  padding: '12px',
-  backgroundColor: 'hsl(142, 76%, 98%)',
-  borderRadius: '8px',
-  border: '1px solid hsl(142, 76%, 90%)',
-}
-
-const checkIcon = {
-  fontSize: '16px',
-  marginTop: '2px',
-}
-
-const reminderItemText = {
-  color: 'hsl(142, 76%, 36%)',
-  fontSize: '14px',
-  margin: 0,
-  lineHeight: '20px',
-  fontWeight: '500',
-}
-
-const instructionsSection = {
-  margin: '32px 0',
-}
-
-const instructionsTitle = {
-  color: 'hsl(224, 71%, 4%)',
-  fontSize: '18px',
-  fontWeight: 'bold',
-  margin: '0 0 16px',
-}
-
-const instructionsCard = {
-  backgroundColor: 'hsl(38, 92%, 98%)',
-  border: '2px solid hsl(38, 92%, 85%)',
-  borderRadius: '12px',
-  padding: '20px',
-}
-
-const instructionsText = {
-  color: 'hsl(38, 92%, 35%)',
-  fontSize: '14px',
-  margin: 0,
-  lineHeight: '20px',
-  fontWeight: '500',
-}
-
-const weatherSection = {
-  margin: '32px 0',
-}
-
-const weatherCard = {
-  backgroundColor: 'hsl(220, 14%, 96%)',
-  border: '1px solid hsl(220, 13%, 91%)',
-  borderRadius: '12px',
-  padding: '20px',
-  display: 'flex',
-  alignItems: 'center',
-  gap: '16px',
-}
-
-const weatherIcon = {
-  fontSize: '24px',
-}
-
-const weatherTitle = {
-  color: 'hsl(224, 71%, 4%)',
-  fontSize: '14px',
-  fontWeight: 'bold',
-  margin: '0 0 4px',
-}
-
-const weatherText = {
-  color: 'hsl(220, 9%, 46%)',
-  fontSize: '13px',
-  margin: 0,
-  lineHeight: '18px',
-}
-
-const buttonsSection = {
-  textAlign: 'center' as const,
-  margin: '32px 0',
-  display: 'flex',
-  gap: '12px',
-  flexDirection: 'column' as const,
-}
-
-const primaryButton = {
-  backgroundColor: 'hsl(25, 95%, 55%)',
-  borderRadius: '8px',
-  color: '#ffffff',
-  fontSize: '16px',
-  fontWeight: 'bold',
-  textDecoration: 'none',
-  textAlign: 'center' as const,
-  display: 'inline-block',
-  padding: '14px 28px',
-  boxShadow: '0 4px 30px -4px hsl(25, 95%, 55%, 0.25)',
-  margin: '0 0 8px',
-}
-
-const secondaryButton = {
-  backgroundColor: 'transparent',
-  border: '2px solid hsl(25, 95%, 55%)',
-  borderRadius: '8px',
-  color: 'hsl(25, 95%, 55%)',
-  fontSize: '14px',
-  fontWeight: 'bold',
-  textDecoration: 'none',
-  textAlign: 'center' as const,
-  display: 'inline-block',
-  padding: '12px 24px',
-}
-
-const contactText = {
-  color: 'hsl(220, 9%, 46%)',
-  fontSize: '14px',
-  lineHeight: '20px',
-  margin: '24px 0',
-  textAlign: 'center' as const,
-}
-
-const excitementSection = {
-  textAlign: 'center' as const,
-  margin: '32px 0',
-  padding: '20px',
-  backgroundColor: 'hsl(25, 95%, 98%)',
-  borderRadius: '12px',
-  border: '2px solid hsl(25, 95%, 90%)',
-}
-
-const excitementText = {
-  color: 'hsl(25, 95%, 45%)',
-  fontSize: '16px',
-  fontWeight: 'bold',
-  margin: 0,
-}
-
-const footer = {
-  padding: '24px 0',
-  borderTop: '1px solid hsl(220, 13%, 91%)',
-  textAlign: 'center' as const,
-}
-
-const footerText = {
-  color: 'hsl(220, 9%, 46%)',
-  fontSize: '12px',
-  margin: '0 0 12px',
-}
-
-const footerLinks = {
-  display: 'flex',
-  justifyContent: 'center',
-  alignItems: 'center',
-  gap: '8px',
-  flexWrap: 'wrap' as const,
-}
-
-const footerLink = {
-  color: 'hsl(25, 95%, 55%)',
-  fontSize: '12px',
-  textDecoration: 'none',
-}
-
-const separator = {
-  color: 'hsl(220, 9%, 46%)',
-  fontSize: '12px',
-}
-
-const link = {
-  color: 'hsl(25, 95%, 55%)',
-  textDecoration: 'none',
-}
