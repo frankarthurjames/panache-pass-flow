@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, MapPin, Users, Download, Ticket, ExternalLink, Loader2, FileText, Receipt, QrCode } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -548,6 +549,18 @@ const MyEvents = () => {
     );
   }
 
+  // Filter events based on current time
+  const now = new Date();
+  const upcomingEvents = registrations.filter((eventGroup: any) => {
+    const eventDate = new Date(eventGroup.event.starts_at);
+    return eventDate >= now;
+  });
+
+  const pastEvents = registrations.filter((eventGroup: any) => {
+    const eventDate = new Date(eventGroup.event.starts_at);
+    return eventDate < now;
+  });
+
   return (
     <div className="space-y-6">
       <div>
@@ -557,143 +570,319 @@ const MyEvents = () => {
         </p>
       </div>
 
-      <div className="grid gap-6">
-        {registrations.map((eventGroup: any, eventIndex: number) => {
-          const event = eventGroup.event;
-          const eventStatus = getEventStatus(event);
-          const totalTickets = eventGroup.orders.reduce((sum: number, order: any) => sum + order.registrations.length, 0);
-          const totalPaid = eventGroup.orders.reduce((sum: number, order: any) => sum + order.totalPaid, 0);
+      <Tabs defaultValue="upcoming" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="upcoming">
+            À venir ({upcomingEvents.length})
+          </TabsTrigger>
+          <TabsTrigger value="past">
+            Passés ({pastEvents.length})
+          </TabsTrigger>
+        </TabsList>
 
-          return (
-            <Card key={eventIndex} className="overflow-hidden">
-              <CardHeader className="pb-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <CardTitle className="text-xl">{event.title}</CardTitle>
-                      <Badge className={eventStatus.color}>
-                        {eventStatus.label}
-                      </Badge>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>{formatDate(event.starts_at)}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        <span>{event.venue}, {event.city}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
-                        <span>{totalTickets} billet{totalTickets > 1 ? 's' : ''}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-lg font-bold">
-                      {(totalPaid / 100).toFixed(2)}€
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Total payé
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Bouton pour voir l'événement - global */}
-                <div className="mt-4 pt-4 border-t">
-                  <Button asChild variant="outline" size="sm">
-                    <Link to={`/events/${event.id}`}>
-                      <ExternalLink className="w-4 h-4 mr-2" />
-                      Voir l'événement
-                    </Link>
-                  </Button>
-                </div>
-              </CardHeader>
+        <TabsContent value="upcoming" className="space-y-6 mt-6">
+          {upcomingEvents.length === 0 ? (
+            <div className="text-center py-12">
+              <Calendar className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-xl font-semibold mb-2">Aucun événement à venir</h3>
+              <p className="text-muted-foreground mb-6">
+                Vous n'avez pas d'événements prévus prochainement.
+              </p>
+              <Button asChild>
+                <Link to="/events">Découvrir les événements</Link>
+              </Button>
+            </div>
+          ) : (
+            <div className="grid gap-6">
+              {upcomingEvents.map((eventGroup: any, eventIndex: number) => {
+                const event = eventGroup.event;
+                const eventStatus = getEventStatus(event);
+                const totalTickets = eventGroup.orders.reduce((sum: number, order: any) => sum + order.registrations.length, 0);
+                const totalPaid = eventGroup.orders.reduce((sum: number, order: any) => sum + order.totalPaid, 0);
 
-              <CardContent className="pt-0">
-                <div className="space-y-6">
-                  {/* Transactions séparées */}
-                  {eventGroup.orders.map((orderGroup: any, orderIndex: number) => {
-                    const order = orderGroup.order;
-                    const orderDate = new Date(order.created_at);
-                    
-                    return (
-                      <div key={orderIndex} className="border rounded-lg p-4 bg-muted/20">
-                        <div className="flex items-center justify-between mb-3">
-                          <div>
-                            <h4 className="font-medium">Transaction #{order.id.slice(-8).toUpperCase()}</h4>
-                            <p className="text-sm text-muted-foreground">
-                              {orderDate.toLocaleDateString('fr-FR')} à {orderDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-semibold">
-                              {(orderGroup.totalPaid / 100).toFixed(2)}€
-                            </div>
-                            <Badge variant="outline" className="text-xs">
-                              {orderGroup.registrations.length} billet{orderGroup.registrations.length > 1 ? 's' : ''}
+                return (
+                  <Card key={eventIndex} className="overflow-hidden">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <CardTitle className="text-xl">{event.title}</CardTitle>
+                            <Badge className={eventStatus.color}>
+                              {eventStatus.label}
                             </Badge>
                           </div>
-                        </div>
-
-                        {/* Détails des billets de cette commande */}
-                        <div className="space-y-2 mb-4">
-                          {orderGroup.registrations.map((reg: any, regIndex: number) => (
-                            <div key={regIndex} className="flex items-center justify-between p-2 bg-background rounded border">
-                              <div className="flex items-center gap-2">
-                                <span>{reg.ticket_types.name}</span>
-                                <span className="text-sm text-muted-foreground">
-                                  - {(reg.ticket_types.price_cents / 100).toFixed(2)}€
-                                </span>
-                              </div>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDownloadTicket(reg.id)}
-                                disabled={downloadingTickets[reg.id]}
-                              >
-                                <Download className="w-4 h-4 mr-2" />
-                                {downloadingTickets[reg.id] ? 'Génération...' : 'Télécharger'}
-                              </Button>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-4 h-4" />
+                              <span>{formatDate(event.starts_at)}</span>
                             </div>
-                          ))}
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-4 h-4" />
+                              <span>{event.venue}, {event.city}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Users className="w-4 h-4" />
+                              <span>{totalTickets} billet{totalTickets > 1 ? 's' : ''}</span>
+                            </div>
+                          </div>
                         </div>
-
-                        {/* Actions spécifiques à cette commande */}
-                        <div className="flex flex-wrap gap-2 pt-3 border-t">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleGetStripeInvoice(order.id)}
-                            disabled={loadingInvoices[order.id]}
-                          >
-                            {loadingInvoices[order.id] ? (
-                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                            ) : (
-                              <FileText className="w-4 h-4 mr-2" />
-                            )}
-                            {loadingInvoices[order.id] ? 'Chargement...' : 'Facture Stripe'}
-                          </Button>
-                          
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleDownloadReceipt(order.id)}
-                          >
-                            <Receipt className="w-4 h-4 mr-2" />
-                            Reçu PDF
-                          </Button>
+                        <div className="text-right">
+                          <div className="text-lg font-bold">
+                            {(totalPaid / 100).toFixed(2)}€
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            Total payé
+                          </div>
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                      
+                      {/* Bouton pour voir l'événement - global */}
+                      <div className="mt-4 pt-4 border-t">
+                        <Button asChild variant="outline" size="sm">
+                          <Link to={`/events/${event.id}`}>
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            Voir l'événement
+                          </Link>
+                        </Button>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="pt-0">
+                      <div className="space-y-6">
+                        {/* Transactions séparées */}
+                        {eventGroup.orders.map((orderGroup: any, orderIndex: number) => {
+                          const order = orderGroup.order;
+                          const orderDate = new Date(order.created_at);
+                          
+                          return (
+                            <div key={orderIndex} className="border rounded-lg p-4 bg-muted/20">
+                              <div className="flex items-center justify-between mb-3">
+                                <div>
+                                  <h4 className="font-medium">Transaction #{order.id.slice(-8).toUpperCase()}</h4>
+                                  <p className="text-sm text-muted-foreground">
+                                    {orderDate.toLocaleDateString('fr-FR')} à {orderDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <div className="font-semibold">
+                                    {(orderGroup.totalPaid / 100).toFixed(2)}€
+                                  </div>
+                                  <Badge variant="outline" className="text-xs">
+                                    {orderGroup.registrations.length} billet{orderGroup.registrations.length > 1 ? 's' : ''}
+                                  </Badge>
+                                </div>
+                              </div>
+
+                              {/* Détails des billets de cette commande */}
+                              <div className="space-y-2 mb-4">
+                                {orderGroup.registrations.map((reg: any, regIndex: number) => (
+                                  <div key={regIndex} className="flex items-center justify-between p-2 bg-background rounded border">
+                                    <div className="flex items-center gap-2">
+                                      <span>{reg.ticket_types.name}</span>
+                                      <span className="text-sm text-muted-foreground">
+                                        - {(reg.ticket_types.price_cents / 100).toFixed(2)}€
+                                      </span>
+                                    </div>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleDownloadTicket(reg.id)}
+                                      disabled={downloadingTickets[reg.id]}
+                                    >
+                                      <Download className="w-4 h-4 mr-2" />
+                                      {downloadingTickets[reg.id] ? 'Génération...' : 'Télécharger'}
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Actions spécifiques à cette commande */}
+                              <div className="flex flex-wrap gap-2 pt-3 border-t">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleGetStripeInvoice(order.id)}
+                                  disabled={loadingInvoices[order.id]}
+                                >
+                                  {loadingInvoices[order.id] ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  ) : (
+                                    <FileText className="w-4 h-4 mr-2" />
+                                  )}
+                                  {loadingInvoices[order.id] ? 'Chargement...' : 'Facture Stripe'}
+                                </Button>
+                                
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDownloadReceipt(order.id)}
+                                >
+                                  <Receipt className="w-4 h-4 mr-2" />
+                                  Reçu PDF
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="past" className="space-y-6 mt-6">
+          {pastEvents.length === 0 ? (
+            <div className="text-center py-12">
+              <Calendar className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-xl font-semibold mb-2">Aucun événement passé</h3>
+              <p className="text-muted-foreground">
+                Vous n'avez participé à aucun événement pour le moment.
+              </p>
+            </div>
+          ) : (
+            <div className="grid gap-6">
+              {pastEvents.map((eventGroup: any, eventIndex: number) => {
+                const event = eventGroup.event;
+                const eventStatus = getEventStatus(event);
+                const totalTickets = eventGroup.orders.reduce((sum: number, order: any) => sum + order.registrations.length, 0);
+                const totalPaid = eventGroup.orders.reduce((sum: number, order: any) => sum + order.totalPaid, 0);
+
+                return (
+                  <Card key={eventIndex} className="overflow-hidden">
+                    <CardHeader className="pb-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <CardTitle className="text-xl">{event.title}</CardTitle>
+                            <Badge className={eventStatus.color}>
+                              {eventStatus.label}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-1">
+                              <Calendar className="w-4 h-4" />
+                              <span>{formatDate(event.starts_at)}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <MapPin className="w-4 h-4" />
+                              <span>{event.venue}, {event.city}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <Users className="w-4 h-4" />
+                              <span>{totalTickets} billet{totalTickets > 1 ? 's' : ''}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-lg font-bold">
+                            {(totalPaid / 100).toFixed(2)}€
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            Total payé
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Bouton pour voir l'événement - global */}
+                      <div className="mt-4 pt-4 border-t">
+                        <Button asChild variant="outline" size="sm">
+                          <Link to={`/events/${event.id}`}>
+                            <ExternalLink className="w-4 h-4 mr-2" />
+                            Voir l'événement
+                          </Link>
+                        </Button>
+                      </div>
+                    </CardHeader>
+
+                    <CardContent className="pt-0">
+                      <div className="space-y-6">
+                        {/* Transactions séparées */}
+                        {eventGroup.orders.map((orderGroup: any, orderIndex: number) => {
+                          const order = orderGroup.order;
+                          const orderDate = new Date(order.created_at);
+                          
+                          return (
+                            <div key={orderIndex} className="border rounded-lg p-4 bg-muted/20">
+                              <div className="flex items-center justify-between mb-3">
+                                <div>
+                                  <h4 className="font-medium">Transaction #{order.id.slice(-8).toUpperCase()}</h4>
+                                  <p className="text-sm text-muted-foreground">
+                                    {orderDate.toLocaleDateString('fr-FR')} à {orderDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                  </p>
+                                </div>
+                                <div className="text-right">
+                                  <div className="font-semibold">
+                                    {(orderGroup.totalPaid / 100).toFixed(2)}€
+                                  </div>
+                                  <Badge variant="outline" className="text-xs">
+                                    {orderGroup.registrations.length} billet{orderGroup.registrations.length > 1 ? 's' : ''}
+                                  </Badge>
+                                </div>
+                              </div>
+
+                              {/* Détails des billets de cette commande */}
+                              <div className="space-y-2 mb-4">
+                                {orderGroup.registrations.map((reg: any, regIndex: number) => (
+                                  <div key={regIndex} className="flex items-center justify-between p-2 bg-background rounded border">
+                                    <div className="flex items-center gap-2">
+                                      <span>{reg.ticket_types.name}</span>
+                                      <span className="text-sm text-muted-foreground">
+                                        - {(reg.ticket_types.price_cents / 100).toFixed(2)}€
+                                      </span>
+                                    </div>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleDownloadTicket(reg.id)}
+                                      disabled={downloadingTickets[reg.id]}
+                                    >
+                                      <Download className="w-4 h-4 mr-2" />
+                                      {downloadingTickets[reg.id] ? 'Génération...' : 'Télécharger'}
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Actions spécifiques à cette commande */}
+                              <div className="flex flex-wrap gap-2 pt-3 border-t">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleGetStripeInvoice(order.id)}
+                                  disabled={loadingInvoices[order.id]}
+                                >
+                                  {loadingInvoices[order.id] ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  ) : (
+                                    <FileText className="w-4 h-4 mr-2" />
+                                  )}
+                                  {loadingInvoices[order.id] ? 'Chargement...' : 'Facture Stripe'}
+                                </Button>
+                                
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDownloadReceipt(order.id)}
+                                >
+                                  <Receipt className="w-4 h-4 mr-2" />
+                                  Reçu PDF
+                                </Button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
