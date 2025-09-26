@@ -1,377 +1,314 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect, KeyboardEvent } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
 import { EventCard } from "@/components/EventCard";
-import { FeatureCard } from "@/components/FeatureCard";
 import { SearchSection } from "@/components/SearchSection";
 import { Footer } from "@/components/Footer";
-import { ArrowRight, Zap, Shield, BarChart3, Search, Loader2, Calendar } from "lucide-react";
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { ArrowRight } from "lucide-react";
+
+/**
+ * Petits helpers UI internes (typo/sections).
+ */
+const SectionHeading = ({ kicker, title, subtitle }: { kicker?: string; title: string; subtitle?: string }) => (
+  <div className="text-center mb-16">
+    {kicker && (
+      <div className="inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold tracking-widest"
+           style={{ borderColor: "rgba(249,115,22,.3)", color: "#EA580C" }}>
+        {kicker}
+      </div>
+    )}
+    <h2 className="mt-4 text-4xl md:text-5xl font-bold tracking-tight text-foreground">{title}</h2>
+    {subtitle && <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">{subtitle}</p>}
+  </div>
+);
+
+type PopularEvent = {
+  id: string;
+  title: string;
+  date: string;
+  price: string;
+  location: string;
+  participants: string;
+  image: string;
+};
 
 const Index = () => {
   const navigate = useNavigate();
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [popularEvents, setPopularEvents] = useState<any[]>([]);
-  const [stats, setStats] = useState({
-    totalEvents: 250,
-    totalTickets: 15000,
-    satisfaction: 98
-  });
+  const [popularEvents, setPopularEvents] = useState<PopularEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const handleQuickSearch = () => {
-    if (searchQuery.trim()) {
-      navigate(`/events?q=${encodeURIComponent(searchQuery.trim())}`);
-    } else {
-      navigate('/events');
-    }
+  const [stats] = useState({
+    totalEvents: 250,
+    totalTickets: 15000,
+    satisfaction: 98,
+  });
+
+  const goSearch = () => {
+    const q = searchQuery.trim();
+    navigate(q ? `/events?q=${encodeURIComponent(q)}` : "/events");
+  };
+  const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") goSearch();
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleQuickSearch();
-    }
-  };
-
-  // Récupération des données réelles
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
-
-        // Récupérer les événements populaires (3 derniers événements publiés)
-        const { data: eventsData, error: eventsError } = await supabase
-          .from('events')
+        const { data, error } = await supabase
+          .from("events")
           .select(`
             *,
-            organizations (
-              id,
-              name,
-              logo_url
-            ),
-            registrations (
-              id
-            ),
-            ticket_types (
-              id,
-              price_cents,
-              currency
-            )
+            organizations ( id, name, logo_url ),
+            registrations ( id ),
+            ticket_types ( id, price_cents, currency )
           `)
-          .eq('status', 'published')
-          .gte('starts_at', new Date().toISOString())
-          .order('created_at', { ascending: false })
+          .eq("status", "published")
+          .gte("starts_at", new Date().toISOString())
+          .order("created_at", { ascending: false })
           .limit(3);
 
-        if (eventsError) {
-          console.error('Error fetching events:', eventsError);
-        } else {
-          const formattedEvents = eventsData?.map(event => {
-            const participantsCount = event.registrations?.length || 0;
-            const minPrice = event.ticket_types?.length > 0 
-              ? Math.min(...event.ticket_types.map((t: any) => t.price_cents))
-              : 0;
-            
+        if (!error && data) {
+          const formatted = data.map((e: any) => {
+            const participantsCount = e.registrations?.length || 0;
+            const minPrice = e.ticket_types?.length ? Math.min(...e.ticket_types.map((t: any) => t.price_cents)) : 0;
             return {
-              id: event.id,
-              title: event.title,
-              date: new Date(event.starts_at).toLocaleDateString('fr-FR', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric'
+              id: e.id,
+              title: e.title,
+              date: new Date(e.starts_at).toLocaleDateString("fr-FR", {
+                day: "numeric", month: "short", year: "numeric",
               }),
-              price: minPrice > 0 ? `${(minPrice / 100).toFixed(0)}€` : 'Gratuit',
-              location: event.city || 'Lieu à confirmer',
-              participants: `${participantsCount}/${event.capacity || '∞'}`,
-              image: event.images && Array.isArray(event.images) && event.images.length > 0 ? event.images[0] : 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=500&h=400&fit=crop'
-            };
-          }) || [];
-
-          setPopularEvents(formattedEvents);
+              price: minPrice > 0 ? `${(minPrice / 100).toFixed(0)}€` : "Gratuit",
+              location: e.city || "Lieu à confirmer",
+              participants: `${participantsCount}/${e.capacity || "∞"}`,
+              image:
+                Array.isArray(e.images) && e.images.length
+                  ? e.images[0]
+                  : "https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=1200&h=800&fit=crop",
+            } as PopularEvent;
+          });
+          setPopularEvents(formatted);
         }
-
-        // Stats fixées pour la communication
-        setStats({
-          totalEvents: 250,
-          totalTickets: 15000,
-          satisfaction: 98
-        });
-
-      } catch (err) {
-        console.error('Error fetching data:', err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, []);
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
-      {/* Hero Section */}
-      <header className="relative py-32 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-primary/5 -z-10" />
-        <div className="container mx-auto text-center max-w-4xl">
-          <Badge variant="secondary" className="mb-8 text-sm font-medium px-4 py-2">
-            🏆 Plateforme de billetterie sportive
+
+      {/* HERO */}
+      <header className="relative overflow-hidden">
+        {/* Glow d'arrière-plan subtil */}
+        <div className="pointer-events-none absolute inset-0 -z-10">
+          <div className="absolute -top-24 left-1/2 h-[600px] w-[900px] -translate-x-1/2 rounded-full blur-3xl"
+               style={{ background: "radial-gradient(closest-side, rgba(249,115,22,.18), transparent 70%)" }} />
+        </div>
+
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16 text-center max-w-5xl">
+          <Badge variant="secondary" className="mb-6 border-0"
+                 style={{ background: "rgba(249,115,22,.12)", color: "#EA580C" }}>
+            Plateforme de billetterie sportive
           </Badge>
-          <h1 className="text-5xl md:text-7xl font-bold mb-8 leading-tight">
-            Organisez vos événements{" "}
-            <span className="bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent">
-              sportifs
-            </span>{" "}
-            en quelques clics
+
+          <h1 className="text-5xl md:text-7xl font-bold leading-tight tracking-tight text-foreground">
+            La billetterie <span className="text-transparent bg-clip-text"
+              style={{ backgroundImage: "linear-gradient(90deg, #F97316, #EA580C)" }}>taillée pour le sport</span>
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto leading-relaxed">
-            De la création à la vente de billets, gérez tout votre événement sur une seule plateforme moderne et intuitive.
+
+          <p className="mt-6 text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto">
+            Crée, vends et contrôle tes billets depuis une interface simple et exigeante — sans friction.
           </p>
-          {/* Recherche rapide */}
-          <div className="max-w-2xl mx-auto mb-16">
-            <div className="flex gap-2 bg-white rounded-lg p-2 shadow-lg border">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                <Input
-                  placeholder="Rechercher un événement sportif..."
-                  className="pl-10 h-12 text-base border-0 focus-visible:ring-0"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                />
-              </div>
-              <Button 
-                size="lg" 
-                onClick={handleQuickSearch}
-                className="h-12 px-8 text-base"
-              >
-                <Search className="mr-2 h-4 w-4" />
+
+          {/* Barre de recherche compacte */}
+          <div className="mt-10 max-w-2xl mx-auto">
+            <div className="flex gap-2 rounded-xl border bg-card px-2 py-2 shadow-sm">
+              <Input
+                placeholder="Rechercher un événement…"
+                className="h-12 border-0 focus-visible:ring-0 text-base"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={onKeyDown}
+              />
+              <Button onClick={goSearch} className="h-12 px-6 font-semibold"
+                      style={{ background: "#F97316", color: "#111827" }}
+                      onMouseOver={(e) => (e.currentTarget.style.background = "#EA580C")}
+                      onMouseOut={(e) => (e.currentTarget.style.background = "#F97316")}>
                 Rechercher
               </Button>
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
-            <Button size="lg" asChild className="text-lg px-10 py-4 h-auto">
+          {/* CTA primaire */}
+          <div className="mt-8 flex justify-center">
+            <Button asChild className="h-12 px-7 text-base font-semibold"
+                    style={{ background: "#F97316", color: "#111827" }}
+                    onMouseOver={(e) => (e.currentTarget.style.background = "#EA580C")}
+                    onMouseOut={(e) => (e.currentTarget.style.background = "#F97316")}>
               <Link to="/auth?tab=signup">
-                Créer mon événement
-                <ArrowRight className="ml-2 h-5 w-5" />
+                Créer mon événement <ArrowRight className="ml-1 h-5 w-5" />
               </Link>
             </Button>
           </div>
-          
-          {/* Stats */}
-          <div className="grid grid-cols-3 gap-8 max-w-2xl mx-auto">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">
-                {loading ? (
-                  <Loader2 className="w-8 h-8 animate-spin mx-auto" />
-                ) : (
-                  `${stats.totalEvents}+`
-                )}
+
+          {/* Stats épurées */}
+          <div className="mt-14 grid grid-cols-3 gap-6 max-w-2xl mx-auto">
+            {[
+              { label: "Événements créés", value: `${stats.totalEvents}+` },
+              { label: "Billets vendus", value: `${stats.totalTickets}+` },
+              { label: "Satisfaction", value: `${stats.satisfaction}%` },
+            ].map((s, i) => (
+              <div key={i} className="text-center">
+                <div className="text-3xl md:text-4xl font-bold text-foreground">{loading ? "—" : s.value}</div>
+                <div className="text-sm text-muted-foreground mt-1">{s.label}</div>
               </div>
-              <div className="text-sm text-muted-foreground">Événements créés</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">
-                {loading ? (
-                  <Loader2 className="w-8 h-8 animate-spin mx-auto" />
-                ) : (
-                  `${stats.totalTickets}+`
-                )}
-              </div>
-              <div className="text-sm text-muted-foreground">Billets vendus</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-primary mb-2">{stats.satisfaction}%</div>
-              <div className="text-sm text-muted-foreground">Satisfaction client</div>
-            </div>
+            ))}
           </div>
         </div>
       </header>
 
       <main>
-        {/* Search Section */}
+        {/* Section recherche avancée existante */}
         <SearchSection />
 
-      {/* How it works */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/30">
-        <div className="container mx-auto">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl font-bold mb-6">Simple comme 1-2-3</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Lancez votre événement sportif en moins de 10 minutes
-            </p>
-          </div>
-          
-          <div className="grid lg:grid-cols-3 gap-12">
-            <div className="text-center group">
-              <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/20 transition-colors">
-                <span className="text-2xl font-bold text-primary">1</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-4">Créez votre événement</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Ajoutez les détails de votre événement : date, lieu, description. Notre interface intuitive vous guide à chaque étape.
-              </p>
-            </div>
-
-            <div className="text-center group">
-              <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/20 transition-colors">
-                <span className="text-2xl font-bold text-primary">2</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-4">Configurez la billetterie</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Définissez vos tarifs, quotas et types de billets. Les paiements sont automatiquement sécurisés via Stripe.
-              </p>
-            </div>
-
-            <div className="text-center group">
-              <div className="w-20 h-20 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-6 group-hover:bg-primary/20 transition-colors">
-                <span className="text-2xl font-bold text-primary">3</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-4">Partagez et vendez</h3>
-              <p className="text-muted-foreground leading-relaxed">
-                Diffusez votre événement et suivez les ventes en temps réel depuis votre tableau de bord personnalisé.
-              </p>
-            </div>
-          </div>
-
-          <div className="text-center mt-16">
-            <Button size="lg" asChild>
-              <Link to="/auth?tab=signup">
-                Commencer maintenant
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Features */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8">
-        <div className="container mx-auto">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl font-bold mb-6">Tout ce dont vous avez besoin</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Des outils professionnels pour organiser des événements sportifs inoubliables
-            </p>
-          </div>
-          
-          <FeatureCard
-            icon={<Zap className="h-8 w-8 text-primary" />}
-            title="Création ultra-rapide"
-            description="Créez votre événement en quelques étapes grâce à notre formulaire guidé. Ajoutez vos billets, configurez les prix et publiez instantanément."
-            features={[
-              "Formulaire guidé étape par étape",
-              "Gestion des types de billets",
-              "Publication instantanée"
-            ]}
-          />
-
-          <FeatureCard
-            icon={<Shield className="h-8 w-8 text-primary" />}
-            title="Paiements sécurisés"
-            description="Intégration complète avec Stripe. Acceptez les paiements par carte, recevez vos fonds directement et gérez vos transactions."
-            features={[
-              "Intégration Stripe native",
-              "Paiements par carte sécurisés",
-              "Réception directe des fonds"
-            ]}
-            imagePosition="left"
-          />
-
-          <FeatureCard
-            icon={<BarChart3 className="h-8 w-8 text-primary" />}
-            title="Gestion simplifiée"
-            description="Suivez vos événements et participants depuis votre tableau de bord. Validez les billets avec notre système QR intégré."
-            features={[
-              "Tableau de bord complet",
-              "Validation QR des billets",
-              "Gestion des participants"
-            ]}
-          />
-        </div>
-      </section>
-
-      {/* Events Preview */}
-      <section className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/30">
-        <div className="container mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-6">Événements populaires</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Découvrez les événements qui cartonnent sur Panache Esport
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
-            {loading ? (
-              // Skeleton loading
-              Array.from({ length: 3 }).map((_, index) => (
-                <div key={index} className="bg-muted rounded-lg p-6 animate-pulse">
-                  <div className="w-full h-48 bg-muted-foreground/20 rounded-lg mb-4"></div>
-                  <div className="h-4 bg-muted-foreground/20 rounded mb-2"></div>
-                  <div className="h-3 bg-muted-foreground/20 rounded mb-4 w-2/3"></div>
-                  <div className="flex justify-between items-center">
-                    <div className="h-3 bg-muted-foreground/20 rounded w-1/3"></div>
-                    <div className="h-3 bg-muted-foreground/20 rounded w-1/4"></div>
+        {/* Process en 3 étapes — sans icônes, numéros sobres */}
+        <section className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/30">
+          <div className="container mx-auto">
+            <SectionHeading
+              kicker="Comment ça marche"
+              title="Simple comme 1-2-3"
+              subtitle="Lance ton événement en moins de 10 minutes."
+            />
+            <div className="grid lg:grid-cols-3 gap-10 max-w-5xl mx-auto">
+              {[{
+                n: 1, t: "Crée ton événement",
+                d: "Titre, date, lieu et description — l'essentiel, sans superflu."
+              }, {
+                n: 2, t: "Ouvre la billetterie",
+                d: "Types de billets, quotas, tarifs. Stripe s'occupe du paiement."
+              }, {
+                n: 3, t: "Partage et contrôle",
+                d: "Suis les ventes et valide les entrées via QR depuis ton dashboard."
+              }].map((step) => (
+                <div key={step.n} className="group rounded-2xl border bg-card p-6">
+                  <div className="h-9 w-9 rounded-full flex items-center justify-center font-bold text-sm"
+                       style={{ background: "rgba(249,115,22,.12)", color: "#EA580C" }}>
+                    {step.n}
                   </div>
+                  <h3 className="mt-4 text-xl font-semibold">{step.t}</h3>
+                  <p className="mt-2 text-muted-foreground">{step.d}</p>
                 </div>
-              ))
-            ) : popularEvents.length > 0 ? (
-              popularEvents.map((event, index) => (
-                <EventCard
-                  key={index}
-                  id={event.id}
-                  title={event.title}
-                  date={event.date}
-                  price={event.price}
-                  location={event.location}
-                  participants={event.participants}
-                  image={event.image}
-                />
-              ))
-            ) : (
-              <div className="col-span-full text-center py-12">
-                <div className="text-muted-foreground mb-4">
-                  <Calendar className="w-16 h-16 mx-auto mb-4" />
-                  <h3 className="text-xl font-semibold mb-2">Aucun événement disponible</h3>
-                  <p>Il n'y a actuellement aucun événement à afficher.</p>
-                </div>
-                <Button asChild>
-                  <Link to="/events">Voir tous les événements</Link>
-                </Button>
-              </div>
-            )}
+              ))}
+            </div>
+            <div className="text-center mt-14">
+              <Button asChild className="h-12 px-7 text-base font-semibold"
+                      style={{ background: "#F97316", color: "#111827" }}
+                      onMouseOver={(e) => (e.currentTarget.style.background = "#EA580C")}
+                      onMouseOut={(e) => (e.currentTarget.style.background = "#F97316")}>
+                <Link to="/auth?tab=signup">Commencer maintenant <ArrowRight className="ml-1 h-5 w-5" /></Link>
+              </Button>
+            </div>
           </div>
-          
-          <div className="text-center">
-            <Button size="lg" variant="outline" asChild>
-              <Link to="/events">
-                Explorer tous les événements
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+        </section>
 
-        {/* Final CTA */}
-        <section className="py-24 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-primary via-primary to-primary/90">
+        {/* Propositions de valeur — listes courtes, sans pictos */}
+        <section className="py-24 px-4 sm:px-6 lg:px-8">
+          <div className="container mx-auto">
+            <SectionHeading
+              title="Tout ce qu'il faut — sans l'inutile"
+              subtitle="Des outils pro, centrés sur la vitesse et la fiabilité."
+            />
+            <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+              {[
+                {
+                  t: "Création ultra-rapide",
+                  f: ["Formulaire guidé", "Brouillons et publication immédiate", "Médias & SEO natifs"],
+                },
+                {
+                  t: "Paiements maîtrisés",
+                  f: ["Stripe intégré", "Payouts directs", "Frais clairs et transparents"],
+                },
+                {
+                  t: "Opérations fluides",
+                  f: ["Tableau de bord temps réel", "Validation QR offline-ready", "Export participants"],
+                },
+              ].map((card, idx) => (
+                <div key={idx} className="rounded-2xl border bg-card p-6">
+                  <h3 className="text-lg font-semibold">{card.t}</h3>
+                  <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                    {card.f.map((x) => (
+                      <li key={x} className="leading-relaxed">— {x}</li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* Événements populaires */}
+        <section className="py-24 px-4 sm:px-6 lg:px-8 bg-muted/30">
+          <div className="container mx-auto">
+            <SectionHeading title="Événements populaires"
+                            subtitle="Découvre ce qui cartonne sur Panache Esport." />
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-10">
+              {loading
+                ? Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="rounded-xl border bg-card p-6">
+                      <div className="h-48 w-full rounded-lg bg-muted animate-pulse" />
+                      <div className="mt-4 h-4 w-3/4 bg-muted animate-pulse rounded" />
+                      <div className="mt-2 h-3 w-1/2 bg-muted animate-pulse rounded" />
+                    </div>
+                  ))
+                : popularEvents.length
+                  ? popularEvents.map((e) => (
+                      <EventCard
+                        key={e.id}
+                        id={e.id}
+                        title={e.title}
+                        date={e.date}
+                        price={e.price}
+                        location={e.location}
+                        participants={e.participants}
+                        image={e.image}
+                      />
+                    ))
+                  : (
+                    <div className="col-span-full text-center text-muted-foreground py-12">
+                      <p>Aucun événement disponible pour le moment.</p>
+                    </div>
+                  )}
+            </div>
+            <div className="text-center">
+              <Button variant="outline" asChild className="h-12 px-7 text-base">
+                <Link to="/events">Explorer tous les événements <ArrowRight className="ml-1 h-5 w-5" /></Link>
+              </Button>
+            </div>
+          </div>
+        </section>
+
+        {/* CTA final */}
+        <section className="py-24 px-4 sm:px-6 lg:px-8"
+                 style={{ background: "linear-gradient(135deg, #F97316, #EA580C)" }}>
           <div className="container mx-auto text-center">
             <h2 className="text-4xl md:text-5xl font-bold mb-6 text-white">
-              Votre prochain événement commence ici
+              Ton prochain événement commence ici
             </h2>
             <p className="text-xl mb-10 text-white/90 max-w-2xl mx-auto leading-relaxed">
-              Rejoignez plus de 5000 organisateurs qui ont choisi Panache 
+              Rejoins plus de 250 organisateurs qui ont choisi Panache 
               pour créer des événements sportifs exceptionnels.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-              <Button size="lg" variant="secondary" asChild className="text-lg px-10 py-4 h-auto">
+              <Button size="lg" variant="secondary" asChild className="text-lg px-10 py-4 h-auto bg-white text-[#EA580C] hover:bg-gray-50">
                 <Link to="/auth?tab=signup">
                   Créer mon événement gratuitement
                   <ArrowRight className="ml-2 h-5 w-5" />
