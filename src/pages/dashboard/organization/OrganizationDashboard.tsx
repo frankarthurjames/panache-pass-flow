@@ -23,7 +23,7 @@ const OrganizationDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!orgId) return;
-      
+
       try {
         // Récupérer l'organisation
         const { data: org, error: orgError } = await supabase
@@ -78,10 +78,10 @@ const OrganizationDashboard = () => {
             return {
               id: event.id,
               title: event.title,
-              date: new Date(event.starts_at).toLocaleDateString('fr-FR', { 
-                day: 'numeric', 
-                month: 'short', 
-                year: 'numeric' 
+              date: new Date(event.starts_at).toLocaleDateString('fr-FR', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric'
               }),
               status: statusMap[event.status]?.label || 'En attente',
               participants: `${participantsCount || 0}/${event.capacity || 0}`,
@@ -104,12 +104,12 @@ const OrganizationDashboard = () => {
         startOfLastWeek.setDate(startOfWeek.getDate() - 7);
 
         const totalEvents = events.length;
-        
+
         // Compter les événements créés ce mois
-        const eventsThisMonth = events.filter(event => 
+        const eventsThisMonth = events.filter(event =>
           new Date(event.created_at) >= startOfMonth
         ).length;
-        
+
         // Compter les événements créés le mois dernier
         const eventsLastMonth = events.filter(event => {
           const eventDate = new Date(event.created_at);
@@ -127,7 +127,7 @@ const OrganizationDashboard = () => {
           .select('*, events!inner(*)')
           .eq('events.organization_id', orgId)
           .gte('created_at', startOfWeek.toISOString());
-        
+
         const participantsLastWeek = await supabase
           .from('registrations')
           .select('*, events!inner(*)')
@@ -211,7 +211,7 @@ const OrganizationDashboard = () => {
             </p>
           </div>
         </div>
-        <Button size="lg" asChild>
+        <Button size="lg" asChild className="rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 border-0 shadow-md transition-all hover:shadow-lg">
           <Link to={`/dashboard/org/${orgId}/events/new`}>
             <Plus className="w-5 h-5 mr-2" />
             Créer un événement
@@ -222,15 +222,17 @@ const OrganizationDashboard = () => {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {stats.map((stat) => (
-          <Card key={stat.title}>
+          <Card key={stat.title} className="rounded-xl border-gray-100 shadow-sm hover:shadow-md transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {stat.title}
               </CardTitle>
-              <stat.icon className="h-4 w-4 text-primary" />
+              <div className="p-2 bg-orange-50 rounded-lg">
+                <stat.icon className="h-4 w-4 text-orange-500" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold mb-1">{stat.value}</div>
+              <div className="text-2xl font-bold mb-1 text-gray-900">{stat.value}</div>
               <p className="text-xs text-muted-foreground">{stat.change}</p>
             </CardContent>
           </Card>
@@ -247,7 +249,7 @@ const OrganizationDashboard = () => {
             </Link>
           </Button>
         </div>
-        
+
         <div className="grid gap-4">
           {loading ? (
             <div className="text-center py-8">Chargement...</div>
@@ -282,7 +284,7 @@ const OrganizationDashboard = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" asChild>
                       <Link to={`/events/${event.id}`}>
@@ -314,7 +316,7 @@ const OrganizationDashboard = () => {
             </Card>
           ))}
         </div>
-        
+
         {userEvents.length === 0 && (
           <Card className="p-12 text-center">
             <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />

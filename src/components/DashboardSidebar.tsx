@@ -101,15 +101,17 @@ export function DashboardSidebar() {
   };
 
   const getNavClassName = ({ isActive }: { isActive: boolean }) =>
-    isActive ? "bg-muted text-foreground font-medium" : "hover:bg-muted/50 text-muted-foreground";
+    isActive
+      ? "bg-orange-50 text-gray-900 font-medium"
+      : "hover:bg-gray-50 text-gray-600 hover:text-gray-900";
 
   return (
     <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible="icon">
       <SidebarContent className="px-2">
         {/* Header avec logo */}
         <div className="px-2 py-4 border-b border-border/50">
-          <Logo 
-            size={collapsed ? "sm" : "md"} 
+          <Logo
+            size={collapsed ? "sm" : "md"}
             showText={!collapsed}
             className="justify-center"
           />
@@ -118,7 +120,7 @@ export function DashboardSidebar() {
         {!collapsed && (
           <div className="px-2 py-4">
             <Select value={selectedOrg} onValueChange={handleOrgChange}>
-              <SelectTrigger className="w-full">
+              <SelectTrigger className="w-full rounded-xl border-gray-200 focus:ring-orange-500/20">
                 <SelectValue placeholder={organizations.length ? "Sélectionner une organisation" : "Nouvelle organisation"} />
               </SelectTrigger>
               <SelectContent className="z-50 bg-popover">
@@ -151,15 +153,15 @@ export function DashboardSidebar() {
 
         {/* Main Navigation */}
         <SidebarGroup>
-          <SidebarGroupLabel>Principal</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-gray-500 font-medium">Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url} 
-                      end={item.exact} 
+                    <NavLink
+                      to={item.url}
+                      end={item.exact}
                       className={getNavClassName}
                     >
                       <item.icon className="w-4 h-4" />
@@ -175,7 +177,7 @@ export function DashboardSidebar() {
         {/* Organization Navigation */}
         {selectedOrg && (
           <SidebarGroup>
-            <SidebarGroupLabel>
+            <SidebarGroupLabel className="text-gray-500 font-medium">
               {!collapsed ? currentOrg?.name : "Org"}
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -183,8 +185,8 @@ export function DashboardSidebar() {
                 {orgMenuItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <NavLink 
-                        to={item.url.replace(':orgId', selectedOrg)} 
+                      <NavLink
+                        to={item.url.replace(':orgId', selectedOrg)}
                         className={getNavClassName}
                       >
                         <item.icon className="w-4 h-4" />
@@ -200,9 +202,9 @@ export function DashboardSidebar() {
 
         {/* Create Organization */}
         <div className="mt-auto p-2">
-          <Button 
-            variant="outline" 
-            size={collapsed ? "icon" : "sm"} 
+          <Button
+            variant="outline"
+            size={collapsed ? "icon" : "sm"}
             className="w-full"
             asChild
           >

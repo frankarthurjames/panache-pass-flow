@@ -37,3 +37,5 @@ USING (
 CREATE INDEX IF NOT EXISTS idx_ticket_validations_registration_id ON public.ticket_validations(registration_id);
 CREATE INDEX IF NOT EXISTS idx_ticket_validations_validated_at ON public.ticket_validations(validated_at);
 
+
+

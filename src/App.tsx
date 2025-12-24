@@ -10,6 +10,8 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Events from "./pages/Events";
 import EventDetail from "./pages/EventDetail";
+import Clubs from "./pages/Clubs";
+import ClubDetail from "./pages/ClubDetail";
 import Profile from "./pages/Profile";
 import CreateEvent from "./pages/CreateEvent";
 import NotFound from "./pages/NotFound";
@@ -51,21 +53,23 @@ const App = () => (
             <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
             <Route path="/events" element={<PublicRoute allowAuthenticated><Events /></PublicRoute>} />
             <Route path="/events/:id" element={<PublicRoute allowAuthenticated><EventDetail /></PublicRoute>} />
+            <Route path="/clubs" element={<PublicRoute allowAuthenticated><Clubs /></PublicRoute>} />
+            <Route path="/clubs/:id" element={<PublicRoute allowAuthenticated><ClubDetail /></PublicRoute>} />
             <Route path="/faq" element={<PublicRoute allowAuthenticated><FAQ /></PublicRoute>} />
             <Route path="/contact" element={<PublicRoute allowAuthenticated><Contact /></PublicRoute>} />
             <Route path="/legal/terms" element={<PublicRoute allowAuthenticated><Terms /></PublicRoute>} />
             <Route path="/legal/privacy" element={<PublicRoute allowAuthenticated><Privacy /></PublicRoute>} />
             <Route path="/legal/mentions" element={<PublicRoute allowAuthenticated><Mentions /></PublicRoute>} />
-            
+
             {/* Protected Routes */}
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/dashboard/events/new" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
             <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
-            
+
             {/* Special Routes */}
             <Route path="/test-qr" element={<TestQR />} />
             <Route path="/validate-ticket" element={<ValidateTicket />} />
-            
+
             {/* Protected Dashboard Routes */}
             <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
               <Route index element={<Overview />} />
@@ -83,7 +87,7 @@ const App = () => (
               <Route path="org/:orgId/integrations" element={<Integrations />} />
               <Route path="org/:orgId/settings" element={<Settings />} />
             </Route>
-            
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

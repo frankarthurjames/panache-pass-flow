@@ -16,7 +16,7 @@ const Organizations = () => {
   useEffect(() => {
     const fetchOrganizations = async () => {
       if (!user) return;
-      
+
       try {
         // Récupérer les organisations où l'utilisateur est membre
         const { data: orgMembers, error: membersError } = await supabase
@@ -41,7 +41,7 @@ const Organizations = () => {
           const orgsWithStats = await Promise.all(
             validMembers.map(async (member: any) => {
               const org = member.organizations;
-              
+
               // Dates pour les comparaisons
               const now = new Date();
               const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -51,7 +51,7 @@ const Organizations = () => {
               startOfWeek.setHours(0, 0, 0, 0);
               const startOfLastWeek = new Date(startOfWeek);
               startOfLastWeek.setDate(startOfWeek.getDate() - 7);
-              
+
               // Compter les événements totaux
               const { count: totalEventsCount } = await supabase
                 .from('events')
@@ -140,10 +140,10 @@ const Organizations = () => {
                 revenueVariation: revenueVariation,
                 status: "Actif",
                 lastActivity: "Il y a 2h", // À implémenter plus tard
-                createdAt: new Date(org.created_at).toLocaleDateString('fr-FR', { 
-                  day: 'numeric', 
-                  month: 'short', 
-                  year: 'numeric' 
+                createdAt: new Date(org.created_at).toLocaleDateString('fr-FR', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric'
                 })
               };
             })
@@ -172,7 +172,7 @@ const Organizations = () => {
             Gérez toutes vos organisations depuis cette page
           </p>
         </div>
-        <Button size="lg" asChild>
+        <Button size="lg" asChild className="rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 border-0 shadow-md transition-all hover:shadow-lg">
           <Link to="/dashboard/organizations/new">
             <Plus className="w-5 h-5 mr-2" />
             Créer une organisation
@@ -195,7 +195,7 @@ const Organizations = () => {
                       {org.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
-                  
+
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <h3 className="font-semibold text-xl">{org.name}</h3>
@@ -204,11 +204,11 @@ const Organizations = () => {
                         {org.status}
                       </Badge>
                     </div>
-                    
+
                     <div className="text-sm text-muted-foreground mb-3">
                       Créée le {org.createdAt} • {org.lastActivity}
                     </div>
-                    
+
                     <div className="flex items-center gap-8 text-sm">
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-primary" />
@@ -225,7 +225,7 @@ const Organizations = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center gap-2">
                   <Button variant="outline" size="sm" asChild>
                     <Link to={`/dashboard/org/${org.id}`}>
@@ -243,7 +243,7 @@ const Organizations = () => {
           </Card>
         ))}
       </div>
-      
+
       {organizations.length === 0 && (
         <Card className="p-12 text-center">
           <Building2 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />

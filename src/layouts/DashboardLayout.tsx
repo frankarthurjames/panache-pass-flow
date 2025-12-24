@@ -6,7 +6,7 @@ import { Logo } from "@/components/Logo";
 export default function DashboardLayout() {
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex flex-col w-full">
+      <div className="min-h-screen flex flex-col w-full bg-gray-50/50">
         {/* Header with SidebarTrigger */}
         <header className="h-16 flex items-center justify-between border-b bg-background px-4">
           <div className="flex items-center gap-3">

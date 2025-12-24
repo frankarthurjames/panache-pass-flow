@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Calendar, MapPin, Users, Download, Ticket, ExternalLink, Loader2, FileText, Receipt, QrCode } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Calendar, MapPin, Users, Download, Ticket, ExternalLink, Loader2, FileText, Receipt, QrCode, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -13,9 +14,11 @@ const MyEvents = () => {
   const { user } = useAuth();
   const [registrations, setRegistrations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [downloadingTickets, setDownloadingTickets] = useState<{[key: string]: boolean}>({});
-  const [stripeInvoices, setStripeInvoices] = useState<{[key: string]: any}>({});
-  const [loadingInvoices, setLoadingInvoices] = useState<{[key: string]: boolean}>({});
+  const [downloadingTickets, setDownloadingTickets] = useState<{ [key: string]: boolean }>({});
+  const [stripeInvoices, setStripeInvoices] = useState<{ [key: string]: any }>({});
+  const [loadingInvoices, setLoadingInvoices] = useState<{ [key: string]: boolean }>({});
+  const [searchTerm, setSearchTerm] = useState("");
+  const [expandedEvents, setExpandedEvents] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
     const fetchMyEvents = async () => {
@@ -68,14 +71,14 @@ const MyEvents = () => {
         const groupedRegistrations = registrationsData?.reduce((acc: any, reg: any) => {
           const eventId = reg.events.id;
           const orderId = reg.orders?.id;
-          
+
           if (!acc[eventId]) {
             acc[eventId] = {
               event: reg.events,
               orders: {}
             };
           }
-          
+
           if (orderId && !acc[eventId].orders[orderId]) {
             acc[eventId].orders[orderId] = {
               order: reg.orders,
@@ -83,11 +86,11 @@ const MyEvents = () => {
               totalPaid: reg.orders.total_cents || 0
             };
           }
-          
+
           if (orderId) {
             acc[eventId].orders[orderId].registrations.push(reg);
           }
-          
+
           return acc;
         }, {}) || {};
 
@@ -103,14 +106,14 @@ const MyEvents = () => {
           const now = new Date();
           const dateA = new Date(a.event.starts_at);
           const dateB = new Date(b.event.starts_at);
-          
+
           const isAUpcoming = dateA >= now;
           const isBUpcoming = dateB >= now;
-          
+
           // Si l'un est à venir et l'autre passé, prioriser celui à venir
           if (isAUpcoming && !isBUpcoming) return -1;
           if (!isAUpcoming && isBUpcoming) return 1;
-          
+
           // Si les deux sont dans la même catégorie
           if (isAUpcoming && isBUpcoming) {
             // Pour les événements à venir, trier par date croissante (plus proche en premier)
@@ -136,7 +139,7 @@ const MyEvents = () => {
   const handleDownloadTicket = async (registrationId: string) => {
     try {
       setDownloadingTickets(prev => ({ ...prev, [registrationId]: true }));
-      
+
       // Générer le PDF du billet
       const { data: pdfData, error: pdfError } = await supabase.functions.invoke('generate-ticket-pdf', {
         body: { registrationId: registrationId }
@@ -151,7 +154,7 @@ const MyEvents = () => {
       // Télécharger le PDF
       const response = await fetch(pdfData.pdfUrl);
       const blob = await response.blob();
-      
+
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
@@ -160,7 +163,7 @@ const MyEvents = () => {
       link.click();
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
-      
+
       toast.success("Billet téléchargé avec succès !");
     } catch (error) {
       console.error('Error downloading ticket:', error);
@@ -173,7 +176,7 @@ const MyEvents = () => {
   const handleGetStripeInvoice = async (orderId: string) => {
     try {
       setLoadingInvoices(prev => ({ ...prev, [orderId]: true }));
-      
+
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         toast.error("Session expirée, veuillez vous reconnecter");
@@ -190,14 +193,14 @@ const MyEvents = () => {
       });
 
       const result = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(result.error || 'Erreur lors de la récupération de la facture');
       }
 
       if (result.invoice) {
         setStripeInvoices(prev => ({ ...prev, [orderId]: result.invoice }));
-        
+
         // Ouvrir la facture Stripe dans un nouvel onglet
         if (result.invoice.hosted_invoice_url) {
           window.open(result.invoice.hosted_invoice_url, '_blank');
@@ -252,7 +255,7 @@ const MyEvents = () => {
       const event = order.events;
       const orderDate = new Date(order.created_at);
       const eventDate = new Date(event.starts_at);
-      
+
       const htmlContent = `
         <!DOCTYPE html>
         <html>
@@ -407,18 +410,18 @@ const MyEvents = () => {
               <div>
                 <strong>Date:</strong><br>
                 ${eventDate.toLocaleDateString('fr-FR', {
-                  weekday: 'long',
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric'
-                })}
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })}
               </div>
               <div>
                 <strong>Heure:</strong><br>
                 ${eventDate.toLocaleTimeString('fr-FR', {
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
+        hour: '2-digit',
+        minute: '2-digit'
+      })}
               </div>
               <div>
                 <strong>Lieu:</strong><br>
@@ -475,12 +478,12 @@ const MyEvents = () => {
         printWindow.document.write(htmlContent);
         printWindow.document.close();
         printWindow.focus();
-        
+
         // Attendre que le contenu soit chargé puis imprimer
         printWindow.onload = () => {
           printWindow.print();
         };
-        
+
         toast.success("Reçu généré ! Utilisez Ctrl+P pour imprimer.");
       } else {
         toast.error("Impossible d'ouvrir la fenêtre d'impression");
@@ -549,33 +552,65 @@ const MyEvents = () => {
     );
   }
 
-  // Filter events based on current time
+
+
+  const toggleEventDetails = (eventId: string) => {
+    setExpandedEvents(prev => ({
+      ...prev,
+      [eventId]: !prev[eventId]
+    }));
+  };
+
+  // ... existing useEffect ...
+
+  // Filter events based on current time and search term
   const now = new Date();
-  const upcomingEvents = registrations.filter((eventGroup: any) => {
+  const filteredRegistrations = registrations.filter((eventGroup: any) => {
+    const matchesSearch = eventGroup.event.title.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
+  });
+
+  const upcomingEvents = filteredRegistrations.filter((eventGroup: any) => {
     const eventDate = new Date(eventGroup.event.starts_at);
     return eventDate >= now;
   });
 
-  const pastEvents = registrations.filter((eventGroup: any) => {
+  const pastEvents = filteredRegistrations.filter((eventGroup: any) => {
     const eventDate = new Date(eventGroup.event.starts_at);
     return eventDate < now;
   });
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold">Mes événements</h1>
-        <p className="text-muted-foreground">
-          Gérez vos réservations et téléchargez vos billets
-        </p>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold">Mes événements</h1>
+          <p className="text-muted-foreground">
+            Gérez vos réservations et téléchargez vos billets
+          </p>
+        </div>
+        <div className="w-full md:w-72">
+          <Input
+            placeholder="Rechercher un événement..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="rounded-xl border-gray-200 focus:ring-orange-500/20"
+          />
+        </div>
       </div>
 
       <Tabs defaultValue="upcoming" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="upcoming">
+        <TabsList className="grid w-full grid-cols-2 bg-gray-100/50 p-1 rounded-full">
+          <TabsTrigger
+            value="upcoming"
+            className="rounded-full data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-sm transition-all"
+          >
             À venir ({upcomingEvents.length})
           </TabsTrigger>
-          <TabsTrigger value="past">
+          <TabsTrigger
+            value="past"
+            className="rounded-full data-[state=active]:bg-white data-[state=active]:text-orange-600 data-[state=active]:shadow-sm transition-all"
+          >
             Passés ({pastEvents.length})
           </TabsTrigger>
         </TabsList>
@@ -599,133 +634,162 @@ const MyEvents = () => {
                 const eventStatus = getEventStatus(event);
                 const totalTickets = eventGroup.orders.reduce((sum: number, order: any) => sum + order.registrations.length, 0);
                 const totalPaid = eventGroup.orders.reduce((sum: number, order: any) => sum + order.totalPaid, 0);
+                const isExpanded = expandedEvents[event.id];
 
                 return (
-                  <Card key={eventIndex} className="overflow-hidden">
+                  <Card key={eventIndex} className="overflow-hidden rounded-xl border-gray-100 shadow-sm hover:shadow-md transition-all">
                     <CardHeader className="pb-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <CardTitle className="text-xl">{event.title}</CardTitle>
-                            <Badge className={eventStatus.color}>
+                            <CardTitle className="text-xl font-bold">{event.title}</CardTitle>
+                            <Badge className={`${eventStatus.color} border-0`}>
                               {eventStatus.label}
                             </Badge>
                           </div>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
-                              <Calendar className="w-4 h-4" />
+                          <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="w-4 h-4 text-orange-500" />
                               <span>{formatDate(event.starts_at)}</span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <MapPin className="w-4 h-4" />
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-4 h-4 text-orange-500" />
                               <span>{event.venue}, {event.city}</span>
                             </div>
-                            <div className="flex items-center gap-1">
-                              <Users className="w-4 h-4" />
+                            <div className="flex items-center gap-2">
+                              <Users className="w-4 h-4 text-orange-500" />
                               <span>{totalTickets} billet{totalTickets > 1 ? 's' : ''}</span>
                             </div>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-lg font-bold">
+                          <div className="text-xl font-bold text-gray-900">
                             {(totalPaid / 100).toFixed(2)}€
                           </div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
                             Total payé
                           </div>
                         </div>
                       </div>
-                      
-                      {/* Bouton pour voir l'événement - global */}
-                      <div className="mt-4 pt-4 border-t">
-                        <Button asChild variant="outline" size="sm">
+
+                      <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-50">
+                        <Button asChild variant="outline" size="sm" className="rounded-lg hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200">
                           <Link to={`/events/${event.id}`}>
                             <ExternalLink className="w-4 h-4 mr-2" />
                             Voir l'événement
                           </Link>
                         </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleEventDetails(event.id)}
+                          className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                        >
+                          {isExpanded ? (
+                            <>
+                              <ChevronUp className="w-4 h-4 mr-2" />
+                              Masquer mes billets
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="w-4 h-4 mr-2" />
+                              Voir mes billets
+                            </>
+                          )}
+                        </Button>
                       </div>
                     </CardHeader>
 
-                    <CardContent className="pt-0">
-                      <div className="space-y-6">
-                        {/* Transactions séparées */}
-                        {eventGroup.orders.map((orderGroup: any, orderIndex: number) => {
-                          const order = orderGroup.order;
-                          const orderDate = new Date(order.created_at);
-                          
-                          return (
-                            <div key={orderIndex} className="border rounded-lg p-4 bg-muted/20">
-                              <div className="flex items-center justify-between mb-3">
-                                <div>
-                                  <h4 className="font-medium">Transaction #{order.id.slice(-8).toUpperCase()}</h4>
-                                  <p className="text-sm text-muted-foreground">
-                                    {orderDate.toLocaleDateString('fr-FR')} à {orderDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                                  </p>
-                                </div>
-                                <div className="text-right">
-                                  <div className="font-semibold">
-                                    {(orderGroup.totalPaid / 100).toFixed(2)}€
-                                  </div>
-                                  <Badge variant="outline" className="text-xs">
-                                    {orderGroup.registrations.length} billet{orderGroup.registrations.length > 1 ? 's' : ''}
-                                  </Badge>
-                                </div>
-                              </div>
+                    {isExpanded && (
+                      <CardContent className="pt-0 pb-6 bg-gray-50/50 border-t border-gray-100">
+                        <div className="space-y-4 pt-6">
+                          {/* Transactions séparées */}
+                          {eventGroup.orders.map((orderGroup: any, orderIndex: number) => {
+                            const order = orderGroup.order;
+                            const orderDate = new Date(order.created_at);
 
-                              {/* Détails des billets de cette commande */}
-                              <div className="space-y-2 mb-4">
-                                {orderGroup.registrations.map((reg: any, regIndex: number) => (
-                                  <div key={regIndex} className="flex items-center justify-between p-2 bg-background rounded border">
-                                    <div className="flex items-center gap-2">
-                                      <span>{reg.ticket_types.name}</span>
-                                      <span className="text-sm text-muted-foreground">
-                                        - {(reg.ticket_types.price_cents / 100).toFixed(2)}€
-                                      </span>
+                            return (
+                              <div key={orderIndex} className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+                                <div className="flex items-center justify-between mb-4">
+                                  <div>
+                                    <h4 className="font-bold text-gray-900">Commande #{order.id.slice(-8).toUpperCase()}</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                      {orderDate.toLocaleDateString('fr-FR')} à {orderDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="font-bold text-gray-900">
+                                      {(orderGroup.totalPaid / 100).toFixed(2)}€
                                     </div>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleDownloadTicket(reg.id)}
-                                      disabled={downloadingTickets[reg.id]}
-                                    >
-                                      <Download className="w-4 h-4 mr-2" />
-                                      {downloadingTickets[reg.id] ? 'Génération...' : 'Télécharger'}
-                                    </Button>
+                                    <Badge variant="outline" className="text-xs bg-gray-50">
+                                      {orderGroup.registrations.length} billet{orderGroup.registrations.length > 1 ? 's' : ''}
+                                    </Badge>
                                   </div>
-                                ))}
-                              </div>
+                                </div>
 
-                              {/* Actions spécifiques à cette commande */}
-                              <div className="flex flex-wrap gap-2 pt-3 border-t">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleGetStripeInvoice(order.id)}
-                                  disabled={loadingInvoices[order.id]}
-                                >
-                                  {loadingInvoices[order.id] ? (
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                  ) : (
-                                    <FileText className="w-4 h-4 mr-2" />
-                                  )}
-                                  {loadingInvoices[order.id] ? 'Chargement...' : 'Facture Stripe'}
-                                </Button>
-                                
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleDownloadReceipt(order.id)}
-                                >
-                                  <Receipt className="w-4 h-4 mr-2" />
-                                  Reçu PDF
-                                </Button>
+                                {/* Détails des billets de cette commande */}
+                                <div className="space-y-2 mb-4">
+                                  {orderGroup.registrations.map((reg: any, regIndex: number) => (
+                                    <div key={regIndex} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                      <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-white rounded-md border border-gray-100">
+                                          <Ticket className="w-4 h-4 text-orange-500" />
+                                        </div>
+                                        <div>
+                                          <span className="font-medium text-gray-900">{reg.ticket_types.name}</span>
+                                          <div className="text-sm text-muted-foreground">
+                                            {(reg.ticket_types.price_cents / 100).toFixed(2)}€
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleDownloadTicket(reg.id)}
+                                        disabled={downloadingTickets[reg.id]}
+                                        className="rounded-lg hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200"
+                                      >
+                                        <Download className="w-4 h-4 mr-2" />
+                                        {downloadingTickets[reg.id] ? '...' : 'Télécharger'}
+                                      </Button>
+                                    </div>
+                                  ))}
+                                </div>
+
+                                {/* Actions spécifiques à cette commande */}
+                                <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleGetStripeInvoice(order.id)}
+                                    disabled={loadingInvoices[order.id]}
+                                    className="text-gray-600 hover:text-gray-900"
+                                  >
+                                    {loadingInvoices[order.id] ? (
+                                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ) : (
+                                      <FileText className="w-4 h-4 mr-2" />
+                                    )}
+                                    {loadingInvoices[order.id] ? 'Chargement...' : 'Facture'}
+                                  </Button>
+
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDownloadReceipt(order.id)}
+                                    className="text-gray-600 hover:text-gray-900"
+                                  >
+                                    <Receipt className="w-4 h-4 mr-2" />
+                                    Reçu
+                                  </Button>
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </CardContent>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    )}
                   </Card>
                 );
               })}
@@ -749,133 +813,162 @@ const MyEvents = () => {
                 const eventStatus = getEventStatus(event);
                 const totalTickets = eventGroup.orders.reduce((sum: number, order: any) => sum + order.registrations.length, 0);
                 const totalPaid = eventGroup.orders.reduce((sum: number, order: any) => sum + order.totalPaid, 0);
+                const isExpanded = expandedEvents[event.id];
 
                 return (
-                  <Card key={eventIndex} className="overflow-hidden">
+                  <Card key={eventIndex} className="overflow-hidden rounded-xl border-gray-100 shadow-sm hover:shadow-md transition-all opacity-75 hover:opacity-100">
                     <CardHeader className="pb-4">
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-3 mb-2">
-                            <CardTitle className="text-xl">{event.title}</CardTitle>
-                            <Badge className={eventStatus.color}>
+                            <CardTitle className="text-xl font-bold">{event.title}</CardTitle>
+                            <Badge className={`${eventStatus.color} border-0`}>
                               {eventStatus.label}
                             </Badge>
                           </div>
-                          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-6 text-sm text-muted-foreground">
+                            <div className="flex items-center gap-2">
                               <Calendar className="w-4 h-4" />
                               <span>{formatDate(event.starts_at)}</span>
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-2">
                               <MapPin className="w-4 h-4" />
                               <span>{event.venue}, {event.city}</span>
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-2">
                               <Users className="w-4 h-4" />
                               <span>{totalTickets} billet{totalTickets > 1 ? 's' : ''}</span>
                             </div>
                           </div>
                         </div>
                         <div className="text-right">
-                          <div className="text-lg font-bold">
+                          <div className="text-xl font-bold text-gray-900">
                             {(totalPaid / 100).toFixed(2)}€
                           </div>
-                          <div className="text-sm text-muted-foreground">
+                          <div className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
                             Total payé
                           </div>
                         </div>
                       </div>
-                      
-                      {/* Bouton pour voir l'événement - global */}
-                      <div className="mt-4 pt-4 border-t">
-                        <Button asChild variant="outline" size="sm">
+
+                      <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-50">
+                        <Button asChild variant="outline" size="sm" className="rounded-lg hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200">
                           <Link to={`/events/${event.id}`}>
                             <ExternalLink className="w-4 h-4 mr-2" />
                             Voir l'événement
                           </Link>
                         </Button>
+
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => toggleEventDetails(event.id)}
+                          className="text-gray-600 hover:text-gray-900"
+                        >
+                          {isExpanded ? (
+                            <>
+                              <ChevronUp className="w-4 h-4 mr-2" />
+                              Masquer mes billets
+                            </>
+                          ) : (
+                            <>
+                              <ChevronDown className="w-4 h-4 mr-2" />
+                              Voir mes billets
+                            </>
+                          )}
+                        </Button>
                       </div>
                     </CardHeader>
 
-                    <CardContent className="pt-0">
-                      <div className="space-y-6">
-                        {/* Transactions séparées */}
-                        {eventGroup.orders.map((orderGroup: any, orderIndex: number) => {
-                          const order = orderGroup.order;
-                          const orderDate = new Date(order.created_at);
-                          
-                          return (
-                            <div key={orderIndex} className="border rounded-lg p-4 bg-muted/20">
-                              <div className="flex items-center justify-between mb-3">
-                                <div>
-                                  <h4 className="font-medium">Transaction #{order.id.slice(-8).toUpperCase()}</h4>
-                                  <p className="text-sm text-muted-foreground">
-                                    {orderDate.toLocaleDateString('fr-FR')} à {orderDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                                  </p>
-                                </div>
-                                <div className="text-right">
-                                  <div className="font-semibold">
-                                    {(orderGroup.totalPaid / 100).toFixed(2)}€
-                                  </div>
-                                  <Badge variant="outline" className="text-xs">
-                                    {orderGroup.registrations.length} billet{orderGroup.registrations.length > 1 ? 's' : ''}
-                                  </Badge>
-                                </div>
-                              </div>
+                    {isExpanded && (
+                      <CardContent className="pt-0 pb-6 bg-gray-50/50 border-t border-gray-100">
+                        <div className="space-y-4 pt-6">
+                          {/* Transactions séparées */}
+                          {eventGroup.orders.map((orderGroup: any, orderIndex: number) => {
+                            const order = orderGroup.order;
+                            const orderDate = new Date(order.created_at);
 
-                              {/* Détails des billets de cette commande */}
-                              <div className="space-y-2 mb-4">
-                                {orderGroup.registrations.map((reg: any, regIndex: number) => (
-                                  <div key={regIndex} className="flex items-center justify-between p-2 bg-background rounded border">
-                                    <div className="flex items-center gap-2">
-                                      <span>{reg.ticket_types.name}</span>
-                                      <span className="text-sm text-muted-foreground">
-                                        - {(reg.ticket_types.price_cents / 100).toFixed(2)}€
-                                      </span>
+                            return (
+                              <div key={orderIndex} className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+                                <div className="flex items-center justify-between mb-4">
+                                  <div>
+                                    <h4 className="font-bold text-gray-900">Commande #{order.id.slice(-8).toUpperCase()}</h4>
+                                    <p className="text-sm text-muted-foreground">
+                                      {orderDate.toLocaleDateString('fr-FR')} à {orderDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                                    </p>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="font-bold text-gray-900">
+                                      {(orderGroup.totalPaid / 100).toFixed(2)}€
                                     </div>
-                                    <Button
-                                      variant="outline"
-                                      size="sm"
-                                      onClick={() => handleDownloadTicket(reg.id)}
-                                      disabled={downloadingTickets[reg.id]}
-                                    >
-                                      <Download className="w-4 h-4 mr-2" />
-                                      {downloadingTickets[reg.id] ? 'Génération...' : 'Télécharger'}
-                                    </Button>
+                                    <Badge variant="outline" className="text-xs bg-gray-50">
+                                      {orderGroup.registrations.length} billet{orderGroup.registrations.length > 1 ? 's' : ''}
+                                    </Badge>
                                   </div>
-                                ))}
-                              </div>
+                                </div>
 
-                              {/* Actions spécifiques à cette commande */}
-                              <div className="flex flex-wrap gap-2 pt-3 border-t">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleGetStripeInvoice(order.id)}
-                                  disabled={loadingInvoices[order.id]}
-                                >
-                                  {loadingInvoices[order.id] ? (
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                  ) : (
-                                    <FileText className="w-4 h-4 mr-2" />
-                                  )}
-                                  {loadingInvoices[order.id] ? 'Chargement...' : 'Facture Stripe'}
-                                </Button>
-                                
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleDownloadReceipt(order.id)}
-                                >
-                                  <Receipt className="w-4 h-4 mr-2" />
-                                  Reçu PDF
-                                </Button>
+                                {/* Détails des billets de cette commande */}
+                                <div className="space-y-2 mb-4">
+                                  {orderGroup.registrations.map((reg: any, regIndex: number) => (
+                                    <div key={regIndex} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                                      <div className="flex items-center gap-3">
+                                        <div className="p-2 bg-white rounded-md border border-gray-100">
+                                          <Ticket className="w-4 h-4 text-gray-400" />
+                                        </div>
+                                        <div>
+                                          <span className="font-medium text-gray-900">{reg.ticket_types.name}</span>
+                                          <div className="text-sm text-muted-foreground">
+                                            {(reg.ticket_types.price_cents / 100).toFixed(2)}€
+                                          </div>
+                                        </div>
+                                      </div>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleDownloadTicket(reg.id)}
+                                        disabled={downloadingTickets[reg.id]}
+                                        className="rounded-lg"
+                                      >
+                                        <Download className="w-4 h-4 mr-2" />
+                                        {downloadingTickets[reg.id] ? '...' : 'Télécharger'}
+                                      </Button>
+                                    </div>
+                                  ))}
+                                </div>
+
+                                {/* Actions spécifiques à cette commande */}
+                                <div className="flex flex-wrap gap-2 pt-3 border-t border-gray-100">
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleGetStripeInvoice(order.id)}
+                                    disabled={loadingInvoices[order.id]}
+                                    className="text-gray-600 hover:text-gray-900"
+                                  >
+                                    {loadingInvoices[order.id] ? (
+                                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    ) : (
+                                      <FileText className="w-4 h-4 mr-2" />
+                                    )}
+                                    {loadingInvoices[order.id] ? 'Chargement...' : 'Facture'}
+                                  </Button>
+
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDownloadReceipt(order.id)}
+                                    className="text-gray-600 hover:text-gray-900"
+                                  >
+                                    <Receipt className="w-4 h-4 mr-2" />
+                                    Reçu
+                                  </Button>
+                                </div>
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </CardContent>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    )}
                   </Card>
                 );
               })}

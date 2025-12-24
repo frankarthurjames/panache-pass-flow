@@ -10,3 +10,5 @@ COMMENT ON COLUMN public.orders.total_ht_cents IS 'Total HT (billets + frais pla
 COMMENT ON COLUMN public.orders.tva_cents IS 'TVA (20%) en centimes';
 COMMENT ON COLUMN public.orders.total_cents IS 'Total TTC en centimes';
 
+
+

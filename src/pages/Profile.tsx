@@ -89,11 +89,11 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       {/* Header */}
-      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-muted/30">
+      <section className="py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-white to-gray-50/50 border-b">
         <div className="container mx-auto">
-          <h1 className="text-3xl font-bold mb-2">Mon Profil</h1>
+          <h1 className="text-3xl font-bold mb-2 text-gray-900">Mon Profil</h1>
           <p className="text-muted-foreground">
             Gérez vos informations personnelles et préférences de compte
           </p>
@@ -103,33 +103,36 @@ const Profile = () => {
       <section className="py-8 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-4xl">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            
+
             {/* Profile Summary */}
             <div className="lg:col-span-1">
-              <Card>
-                <CardHeader className="text-center">
-                  <Avatar className="w-24 h-24 mx-auto mb-4">
+              <Card className="rounded-xl border-gray-100 shadow-sm overflow-hidden">
+                <div className="h-24 bg-gradient-to-r from-orange-400 to-pink-500 opacity-10"></div>
+                <CardHeader className="text-center -mt-12 relative z-10">
+                  <Avatar className="w-24 h-24 mx-auto mb-4 border-4 border-white shadow-md">
                     <AvatarImage src={user?.user_metadata?.avatar_url} />
-                    <AvatarFallback className="text-xl">
+                    <AvatarFallback className="text-xl font-bold bg-orange-50 text-orange-600">
                       {formData.displayName?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
-                  <CardTitle className="text-xl">
+                  <CardTitle className="text-xl font-bold">
                     {formData.displayName || 'Utilisateur'}
                   </CardTitle>
                   <CardDescription>{user?.email}</CardDescription>
-                  <Badge variant="secondary" className="mt-2">
-                    Organisateur vérifié ✓
-                  </Badge>
+                  <div className="flex justify-center mt-2">
+                    <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-100">
+                      Organisateur vérifié ✓
+                    </Badge>
+                  </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="text-sm space-y-2">
-                    <div className="flex items-center text-muted-foreground">
-                      <Calendar className="w-4 h-4 mr-2" />
+                  <div className="text-sm space-y-3 pt-2 border-t border-gray-50">
+                    <div className="flex items-center text-gray-600">
+                      <Calendar className="w-4 h-4 mr-3 text-orange-500" />
                       Membre depuis janvier 2024
                     </div>
-                    <div className="flex items-center text-muted-foreground">
-                      <MapPin className="w-4 h-4 mr-2" />
+                    <div className="flex items-center text-gray-600">
+                      <MapPin className="w-4 h-4 mr-3 text-orange-500" />
                       {formData.location || 'France'}
                     </div>
                   </div>
@@ -139,7 +142,7 @@ const Profile = () => {
 
             {/* Profile Form */}
             <div className="lg:col-span-2 space-y-6">
-              
+
               {/* Personal Information */}
               <Card>
                 <CardHeader>
@@ -155,37 +158,37 @@ const Profile = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="firstName">Prénom</Label>
-                      <Input 
-                        id="firstName" 
+                      <Input
+                        id="firstName"
                         value={formData.firstName}
                         onChange={(e) => handleInputChange('firstName', e.target.value)}
-                        placeholder="Votre prénom" 
+                        placeholder="Votre prénom"
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="lastName">Nom</Label>
-                      <Input 
-                        id="lastName" 
+                      <Input
+                        id="lastName"
                         value={formData.lastName}
                         onChange={(e) => handleInputChange('lastName', e.target.value)}
-                        placeholder="Votre nom" 
+                        placeholder="Votre nom"
                       />
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="displayName">Nom d'affichage</Label>
-                    <Input 
-                      id="displayName" 
+                    <Input
+                      id="displayName"
                       value={formData.displayName}
                       onChange={(e) => handleInputChange('displayName', e.target.value)}
-                      placeholder="Comment voulez-vous être appelé ?" 
+                      placeholder="Comment voulez-vous être appelé ?"
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="bio">Biographie</Label>
-                    <Textarea 
+                    <Textarea
                       id="bio"
                       value={formData.bio}
                       onChange={(e) => handleInputChange('bio', e.target.value)}
@@ -210,8 +213,8 @@ const Profile = () => {
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
-                    <Input 
-                      id="email" 
+                    <Input
+                      id="email"
                       type="email"
                       value={user?.email || ''}
                       disabled
@@ -221,21 +224,21 @@ const Profile = () => {
                       L'email ne peut pas être modifié pour des raisons de sécurité
                     </p>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="phone">Téléphone</Label>
-                    <Input 
-                      id="phone" 
+                    <Input
+                      id="phone"
                       value={formData.phone}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
                       placeholder="+33 6 12 34 56 78"
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="location">Localisation</Label>
-                    <Input 
-                      id="location" 
+                    <Input
+                      id="location"
                       value={formData.location}
                       onChange={(e) => handleInputChange('location', e.target.value)}
                       placeholder="Ville, Région"

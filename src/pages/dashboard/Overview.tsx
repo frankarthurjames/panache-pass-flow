@@ -17,7 +17,7 @@ const Overview = () => {
   useEffect(() => {
     const fetchData = async () => {
       if (!user) return;
-      
+
       try {
         // Récupérer les organisations
         const { data: orgMembers, error: membersError } = await supabase
@@ -61,7 +61,7 @@ const Overview = () => {
           const orgsWithStats = await Promise.all(
             validMembers.map(async (member: any) => {
               const org = member.organizations;
-              
+
               // Compter les événements totaux
               const { count: eventsCount } = await supabase
                 .from('events')
@@ -127,7 +127,7 @@ const Overview = () => {
 
               const monthlyRevenue = paymentsThisMonth?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
               const totalOrgRevenue = allPayments?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
-              
+
               // Ajouter aux totaux globaux
               totalEvents += eventsCount || 0;
               totalEventsThisMonth += eventsThisMonth || 0;
@@ -211,7 +211,7 @@ const Overview = () => {
             Vue d'ensemble de toutes vos organisations et activités
           </p>
         </div>
-        <Button size="lg" asChild>
+        <Button size="lg" asChild className="rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 border-0 shadow-md transition-all hover:shadow-lg">
           <Link to="/dashboard/organizations/new">
             <Plus className="w-5 h-5 mr-2" />
             Créer une organisation
@@ -222,15 +222,17 @@ const Overview = () => {
       {/* Global Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {globalStats.map((stat) => (
-          <Card key={stat.title}>
+          <Card key={stat.title} className="rounded-xl border-gray-100 shadow-sm hover:shadow-md transition-all">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
                 {stat.title}
               </CardTitle>
-              <stat.icon className="h-4 w-4 text-primary" />
+              <div className="p-2 bg-orange-50 rounded-lg">
+                <stat.icon className="h-4 w-4 text-orange-500" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold mb-1">{stat.value}</div>
+              <div className="text-2xl font-bold mb-1 text-gray-900">{stat.value}</div>
               <p className="text-xs text-muted-foreground">{stat.change}</p>
             </CardContent>
           </Card>
@@ -247,7 +249,7 @@ const Overview = () => {
             </Link>
           </Button>
         </div>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {loading ? (
             <div className="text-center py-8 col-span-2">Chargement...</div>
@@ -277,7 +279,7 @@ const Overview = () => {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div className="grid grid-cols-3 gap-4 text-center">
                     <div>
                       <div className="text-2xl font-bold text-primary">{org.eventsCount}</div>
@@ -297,7 +299,7 @@ const Overview = () => {
             </Link>
           ))}
         </div>
-        
+
         {organizations.length === 0 && (
           <Card className="p-12 text-center">
             <Building2 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
