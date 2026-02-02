@@ -30,6 +30,7 @@ const NewOrganization = () => {
     // Step 3: Configuration Stripe
     stripeAccountId: "",
     acceptStripeTerms: false,
+    category: "company", // Default category
   });
 
   const steps = [
@@ -41,7 +42,7 @@ const NewOrganization = () => {
     },
     {
       number: 2,
-      title: "Informations légales", 
+      title: "Informations légales",
       description: "SIRET et informations de facturation",
       icon: FileText
     },
@@ -60,8 +61,8 @@ const NewOrganization = () => {
   ];
 
   const handleInputChange = (field: string, value: string | boolean | string[]) => {
-    setFormData(prev => ({ 
-      ...prev, 
+    setFormData(prev => ({
+      ...prev,
       [field]: value,
       // Auto-generate slug when name changes
       ...(field === 'name' && typeof value === 'string' ? {
@@ -93,8 +94,8 @@ const NewOrganization = () => {
       case 1:
         return formData.name.trim() !== "" && formData.slug.trim() !== "";
       case 2:
-        return formData.billingEmail.trim() !== "" && 
-               /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.billingEmail); // Email validation
+        return formData.billingEmail.trim() !== "" &&
+          /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.billingEmail); // Email validation
       case 3:
         return true; // Stripe est optionnel
       default:
@@ -109,7 +110,7 @@ const NewOrganization = () => {
     }
 
     setIsSubmitting(true);
-    
+
     try {
       // Create the organization with only essential fields to avoid RLS issues
       const { data: organization, error: orgError } = await supabase
@@ -119,7 +120,8 @@ const NewOrganization = () => {
           slug: formData.slug,
           created_by_user_id: user.id,
           billing_email: formData.billingEmail || null,
-          billing_country: formData.billingCountry || 'FR'
+          billing_country: formData.billingCountry || 'FR',
+          category: formData.category
         })
         .select()
         .single();
@@ -187,7 +189,7 @@ const NewOrganization = () => {
                 placeholder="Ex: Club Sportif de Lyon"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="slug">Identifiant unique (slug) *</Label>
               <Input
@@ -200,13 +202,40 @@ const NewOrganization = () => {
                 Utilisé dans l'URL de vos pages publiques
               </p>
             </div>
-            
+
             <ImageUpload
               value={formData.logoUrls}
               onChange={(images) => handleInputChange("logoUrls", images)}
               maxImages={1}
               label="Logo de l'organisation"
             />
+
+            <div className="space-y-2">
+              <Label>Type d'organisation</Label>
+              <div className="grid grid-cols-3 gap-4">
+                {[
+                  { id: 'company', label: 'Entreprise', icon: Building2 },
+                  { id: 'club', label: 'Club', icon: Building2 },
+                  { id: 'association', label: 'Association', icon: Building2 },
+                ].map((type) => (
+                  <div
+                    key={type.id}
+                    className={`cursor-pointer rounded-lg border-2 p-4 flex flex-col items-center gap-2 transition-all ${formData.category === type.id
+                        ? "border-primary bg-primary/5"
+                        : "border-muted hover:border-primary/50"
+                      }`}
+                    onClick={() => handleInputChange("category", type.id)}
+                  >
+                    <type.icon className={`w-6 h-6 ${formData.category === type.id ? "text-primary" : "text-muted-foreground"
+                      }`} />
+                    <span className={`text-sm font-medium ${formData.category === type.id ? "text-primary" : "text-muted-foreground"
+                      }`}>
+                      {type.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         );
 
@@ -226,7 +255,7 @@ const NewOrganization = () => {
                 Obligatoire pour émettre des factures en France
               </p>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="billingEmail">Email de facturation *</Label>
               <Input
@@ -237,7 +266,7 @@ const NewOrganization = () => {
                 placeholder="facturation@votre-organisation.fr"
               />
             </div>
-            
+
           </div>
         );
 
@@ -264,14 +293,14 @@ const NewOrganization = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="flex items-center justify-center">
               <Button variant="outline" size="lg">
                 <CreditCard className="w-5 h-5 mr-2" />
                 Connecter Stripe maintenant
               </Button>
             </div>
-            
+
             <p className="text-center text-sm text-muted-foreground">
               Ou ignorez cette étape et configurez Stripe plus tard
             </p>
@@ -288,14 +317,14 @@ const NewOrganization = () => {
                 Vérifiez les informations ci-dessous avant de finaliser
               </p>
             </div>
-            
+
             <div className="space-y-4">
               {formData.logoUrls.length > 0 && (
                 <div className="flex justify-between items-center py-2 border-b">
                   <span className="font-medium">Logo :</span>
-                  <img 
-                    src={formData.logoUrls[0]} 
-                    alt="Logo" 
+                  <img
+                    src={formData.logoUrls[0]}
+                    alt="Logo"
                     className="w-12 h-12 rounded object-cover"
                   />
                 </div>
@@ -303,6 +332,13 @@ const NewOrganization = () => {
               <div className="flex justify-between py-2 border-b">
                 <span className="font-medium">Nom :</span>
                 <span>{formData.name}</span>
+              </div>
+              <div className="flex justify-between py-2 border-b">
+                <span className="font-medium">Type :</span>
+                <Badge variant="outline" className="capitalize">
+                  {formData.category === 'company' ? 'Entreprise' :
+                    formData.category === 'club' ? 'Club' : 'Association'}
+                </Badge>
               </div>
               <div className="flex justify-between py-2 border-b">
                 <span className="font-medium">Slug :</span>
@@ -367,22 +403,20 @@ const NewOrganization = () => {
         {steps.map((step) => (
           <div
             key={step.number}
-            className={`flex items-center space-x-3 p-3 rounded-lg border ${
-              currentStep === step.number
+            className={`flex items-center space-x-3 p-3 rounded-lg border ${currentStep === step.number
                 ? "border-primary bg-primary/5"
                 : currentStep > step.number
-                ? "border-green-200 bg-green-50"
-                : "border-border bg-muted/30"
-            }`}
+                  ? "border-green-200 bg-green-50"
+                  : "border-border bg-muted/30"
+              }`}
           >
             <div
-              className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                currentStep === step.number
+              className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep === step.number
                   ? "bg-primary text-primary-foreground"
                   : currentStep > step.number
-                  ? "bg-green-600 text-white"
-                  : "bg-muted text-muted-foreground"
-              }`}
+                    ? "bg-green-600 text-white"
+                    : "bg-muted text-muted-foreground"
+                }`}
             >
               {currentStep > step.number ? (
                 <CheckCircle className="w-4 h-4" />
@@ -421,7 +455,7 @@ const NewOrganization = () => {
           <ArrowLeft className="w-4 h-4 mr-2" />
           Précédent
         </Button>
-        
+
         {currentStep < steps.length ? (
           <Button
             onClick={nextStep}

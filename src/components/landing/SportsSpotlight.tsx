@@ -13,7 +13,7 @@ export const SportsSpotlight = () => {
     return (
         <section className="relative py-24 overflow-hidden">
             <div
-                className="absolute inset-0 bg-[#F032E6]"
+                className="absolute inset-0 bg-[#F97316]"
                 style={{
                     zIndex: 0,
                     clipPath: "polygon(0 0, 100% 0, 100% 85%, 0 100%)"

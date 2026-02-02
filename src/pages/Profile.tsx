@@ -107,7 +107,7 @@ const Profile = () => {
             {/* Profile Summary */}
             <div className="lg:col-span-1">
               <Card className="rounded-xl border-gray-100 shadow-sm overflow-hidden">
-                <div className="h-24 bg-gradient-to-r from-orange-400 to-pink-500 opacity-10"></div>
+                <div className="h-24 bg-gradient-to-r from-orange-400 to-orange-600 opacity-10"></div>
                 <CardHeader className="text-center -mt-12 relative z-10">
                   <Avatar className="w-24 h-24 mx-auto mb-4 border-4 border-white shadow-md">
                     <AvatarImage src={user?.user_metadata?.avatar_url} />

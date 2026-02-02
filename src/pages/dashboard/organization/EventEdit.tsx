@@ -304,7 +304,7 @@ const EventEdit = () => {
           <Button
             onClick={handleSave}
             disabled={saving || isFinished}
-            className="rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 text-white border-0 shadow-md hover:shadow-lg transition-all"
+            className="rounded-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white border-0 shadow-md hover:shadow-lg transition-all"
           >
             <Save className="w-4 h-4 mr-2" />
             {saving ? "Sauvegarde..." : "Sauvegarder"}

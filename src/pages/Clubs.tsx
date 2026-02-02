@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ClubCard } from "@/components/ClubCard";
@@ -12,93 +12,55 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { supabase } from "@/integrations/supabase/client";
 
-// Mock Data
-const CLUBS = [
-    {
-        id: 1,
-        name: "FC Lyon",
-        category: "Football",
-        location: "69001 Lyon",
-        logo: "https://upload.wikimedia.org/wikipedia/fr/thumb/c/c7/Logo_FC_Lyon_2020.svg/1200px-Logo_FC_Lyon_2020.svg.png",
-        color: "#DC2626"
-    },
-    {
-        id: 2,
-        name: "ASVEL Basket",
-        category: "Basketball",
-        location: "69100 Villeurbanne",
-        logo: "https://upload.wikimedia.org/wikipedia/fr/thumb/9/9b/Logo_ASVEL_2018.svg/1200px-Logo_ASVEL_2018.svg.png",
-        color: "#111827"
-    },
-    {
-        id: 3,
-        name: "LOU Rugby",
-        category: "Rugby",
-        location: "69007 Lyon",
-        logo: "https://upload.wikimedia.org/wikipedia/fr/thumb/0/06/Logo_LOU_Rugby_2019.svg/1200px-Logo_LOU_Rugby_2019.svg.png",
-        color: "#000000"
-    },
-    {
-        id: 4,
-        name: "Tennis Club Lyon",
-        category: "Tennis",
-        location: "69006 Lyon",
-        logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Tennis_ball.svg/1024px-Tennis_ball.svg.png", // Placeholder
-        color: "#16A34A"
-    },
-    {
-        id: 5,
-        name: "Lyon Natation",
-        category: "Natation",
-        location: "69009 Lyon",
-        logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e3/Swimming_pictogram.svg/1024px-Swimming_pictogram.svg.png", // Placeholder
-        color: "#2563EB"
-    },
-    {
-        id: 6,
-        name: "Badminton Club",
-        category: "Badminton",
-        location: "69003 Lyon",
-        logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Badminton_pictogram.svg/1024px-Badminton_pictogram.svg.png", // Placeholder
-        color: "#9333EA"
-    },
-    {
-        id: 7,
-        name: "FC Lyon",
-        category: "Football",
-        location: "69001 Lyon",
-        logo: "https://upload.wikimedia.org/wikipedia/fr/thumb/c/c7/Logo_FC_Lyon_2020.svg/1200px-Logo_FC_Lyon_2020.svg.png",
-        color: "#DC2626"
-    },
-    {
-        id: 8,
-        name: "ASVEL Basket",
-        category: "Basketball",
-        location: "69100 Villeurbanne",
-        logo: "https://upload.wikimedia.org/wikipedia/fr/thumb/9/9b/Logo_ASVEL_2018.svg/1200px-Logo_ASVEL_2018.svg.png",
-        color: "#111827"
-    },
-    {
-        id: 9,
-        name: "LOU Rugby",
-        category: "Rugby",
-        location: "69007 Lyon",
-        logo: "https://upload.wikimedia.org/wikipedia/fr/thumb/0/06/Logo_LOU_Rugby_2019.svg/1200px-Logo_LOU_Rugby_2019.svg.png",
-        color: "#000000"
-    },
-];
+interface Club {
+    id: string;
+    name: string;
+    category: string;
+    address: string | null;
+    logo_url: string | null;
+}
 
 const Clubs = () => {
+    const [clubs, setClubs] = useState<Club[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [sortBy, setSortBy] = useState("Nom");
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
 
-    const displayedClubs = CLUBS.filter(club =>
+    useEffect(() => {
+        const fetchClubs = async () => {
+            try {
+                // Fetch organizations with category 'club'
+                // Note: 'category' column must exist in the database
+                const { data, error } = await supabase
+                    .from('organizations')
+                    .select('id, name, category, address, logo_url')
+                    .eq('category', 'club');
+
+                if (error) throw error;
+                setClubs(data || []);
+            } catch (error) {
+                console.error("Error fetching clubs:", error);
+                // Fallback to empty list or handle error appropriately
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchClubs();
+    }, []);
+
+    const displayedClubs = clubs.filter(club =>
         club.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        club.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        club.location.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+        (club.category && club.category.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        (club.address && club.address.toLowerCase().includes(searchQuery.toLowerCase()))
+    ).sort((a, b) => {
+        if (sortBy === "Nom") return a.name.localeCompare(b.name);
+        if (sortBy === "Sport") return (a.category || "").localeCompare(b.category || "");
+        if (sortBy === "Ville") return (a.address || "").localeCompare(b.address || "");
+        return 0;
+    });
 
     return (
         <div className="min-h-screen bg-white font-sans">
@@ -119,7 +81,7 @@ const Clubs = () => {
                         />
                         <Button
                             className="absolute right-2 top-2 h-10 w-10 rounded-full p-0 flex items-center justify-center hover:scale-105 transition-transform shadow-md"
-                            style={{ background: "#F032E6" }}
+                            style={{ background: "#F97316" }}
                         >
                             <Search className="h-5 w-5 text-white" />
                         </Button>
@@ -162,10 +124,10 @@ const Clubs = () => {
                                 key={club.id}
                                 id={club.id}
                                 name={club.name}
-                                category={club.category}
-                                location={club.location}
-                                logo={club.logo}
-                                color={club.color}
+                                category={club.category === 'club' ? 'Club Sportif' : (club.category || 'Club')}
+                                location={club.address || "Lieu non précisé"}
+                                logo={club.logo_url || "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Tennis_ball.svg/1024px-Tennis_ball.svg.png"} // Fallback logo
+                                color="#F97316" // Default orange color
                             />
                         ))}
                     </div>

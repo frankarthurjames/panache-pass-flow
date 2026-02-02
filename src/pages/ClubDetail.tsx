@@ -56,7 +56,7 @@ const ClubDetail = () => {
             <div className="relative h-[400px] overflow-hidden">
                 {/* Slanted Background */}
                 <div
-                    className="absolute inset-0 bg-[#F032E6] transform -skew-y-3 origin-top-left scale-110"
+                    className="absolute inset-0 bg-[#F97316] transform -skew-y-3 origin-top-left scale-110"
                     style={{ zIndex: 0 }}
                 />
 
@@ -67,7 +67,7 @@ const ClubDetail = () => {
                         alt="Cover"
                         className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-[#F032E6]/80 mix-blend-multiply" />
+                    <div className="absolute inset-0 bg-[#F97316]/80 mix-blend-multiply" />
                 </div>
 
                 <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center relative z-10 pt-20">

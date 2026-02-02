@@ -211,7 +211,7 @@ const Overview = () => {
             Vue d'ensemble de toutes vos organisations et activités
           </p>
         </div>
-        <Button size="lg" asChild className="rounded-full bg-gradient-to-r from-orange-500 to-pink-500 hover:from-orange-600 hover:to-pink-600 border-0 shadow-md transition-all hover:shadow-lg">
+        <Button size="lg" asChild className="rounded-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 border-0 shadow-md transition-all hover:shadow-lg">
           <Link to="/dashboard/organizations/new">
             <Plus className="w-5 h-5 mr-2" />
             Créer une organisation

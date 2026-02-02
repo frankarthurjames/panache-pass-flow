@@ -90,7 +90,7 @@ const QRValidator = () => {
       // Formater l'historique en combinant les données
       const formattedHistory = validations.map(validation => {
         const registration = registrationMap.get(validation.registration_id);
-        
+
         return {
           valid: ['validated', 'valid', 'active'].includes(validation.status),
           status: validation.status,
@@ -161,7 +161,7 @@ const QRValidator = () => {
       if (functionError) {
         throw new Error(functionError.message || 'Erreur lors de la validation');
       }
-      
+
       if (result.success && result.valid) {
         setValidationResult(result);
         setScanHistory(prev => [result, ...prev.slice(0, 9)]);
@@ -173,13 +173,13 @@ const QRValidator = () => {
       } else {
         // Améliorer l'affichage des erreurs de billet déjà validé
         const isAlreadyValidated = result.error && result.error.includes("déjà validé");
-        setValidationResult({ 
-          valid: false, 
+        setValidationResult({
+          valid: false,
           error: result.error,
           alreadyValidated: isAlreadyValidated,
           validatedAt: isAlreadyValidated ? result.error.match(/le (\d{2}\/\d{2}\/\d{4} à \d{2}:\d{2}:\d{2})/)?.[1] : null
         });
-        
+
         if (isAlreadyValidated) {
           toast.error(`⚠️ Billet déjà validé`, {
             description: result.error,
@@ -194,12 +194,12 @@ const QRValidator = () => {
     } catch (error) {
       console.error('Error validating QR:', error);
       const errorMessage = error.message || "Erreur lors de la validation du billet";
-      
+
       // Vérifier si c'est un billet déjà validé
       const isAlreadyValidated = errorMessage.includes("déjà validé");
       if (isAlreadyValidated) {
-        setValidationResult({ 
-          valid: false, 
+        setValidationResult({
+          valid: false,
           error: errorMessage,
           alreadyValidated: true,
           validatedAt: errorMessage.match(/le (\d{2}\/\d{2}\/\d{4} à \d{2}:\d{2}:\d{2})/)?.[1]
@@ -233,19 +233,19 @@ const QRValidator = () => {
   const startCamera = async () => {
     try {
       console.log("Démarrage de la caméra...");
-      
+
       // Vérifier si getUserMedia est supporté
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         toast.error("Votre navigateur ne supporte pas l'accès à la caméra");
         return;
       }
-      
+
       // Arrêter la caméra existante si elle existe
       if (stream) {
         stream.getTracks().forEach(track => track.stop());
         setStream(null);
       }
-      
+
       // Configuration plus permissive de la caméra
       let constraints: MediaStreamConstraints = {
         video: {
@@ -254,7 +254,7 @@ const QRValidator = () => {
           facingMode: { ideal: 'environment' }
         }
       };
-      
+
       let mediaStream;
       try {
         mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
@@ -269,18 +269,18 @@ const QRValidator = () => {
         };
         mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
       }
-      
+
       console.log("Stream obtenu:", mediaStream);
-      
+
       setStream(mediaStream);
       setIsScanning(true);
-      
+
       // Attendre que le composant soit mis à jour
       setTimeout(() => {
         if (videoRef.current && mediaStream.active) {
           console.log("Configuration de l'élément vidéo...");
           videoRef.current.srcObject = mediaStream;
-          
+
           // Événements de la vidéo
           videoRef.current.onloadedmetadata = () => {
             console.log("Métadonnées chargées, dimensions:", videoRef.current?.videoWidth, "x", videoRef.current?.videoHeight);
@@ -290,20 +290,20 @@ const QRValidator = () => {
               startQRDetection();
             }
           };
-          
+
           videoRef.current.oncanplay = () => {
             console.log("Vidéo prête à être lue");
           };
-          
+
           videoRef.current.onplay = () => {
             console.log("Vidéo en cours de lecture");
           };
-          
+
           videoRef.current.onerror = (error) => {
             console.error("Erreur vidéo:", error);
             toast.error("Erreur lors de l'affichage de la caméra");
           };
-          
+
           // Forcer le démarrage avec gestion d'erreur améliorée
           const playVideo = async () => {
             try {
@@ -322,7 +322,7 @@ const QRValidator = () => {
           toast.error("Erreur lors de l'initialisation de la caméra");
         }
       }, 200);
-      
+
     } catch (error) {
       console.error('Error accessing camera:', error);
       if (error.name === 'NotAllowedError') {
@@ -343,7 +343,7 @@ const QRValidator = () => {
       clearInterval(detectionIntervalRef.current);
       detectionIntervalRef.current = null;
     }
-    
+
     if (stream) {
       stream.getTracks().forEach(track => track.stop());
       setStream(null);
@@ -376,7 +376,7 @@ const QRValidator = () => {
         // S'assurer que les dimensions sont valides
         const width = video.videoWidth;
         const height = video.videoHeight;
-        
+
         if (width === 0 || height === 0) {
           return;
         }
@@ -386,18 +386,18 @@ const QRValidator = () => {
         context.drawImage(video, 0, 0, width, height);
 
         const imageData = context.getImageData(0, 0, width, height);
-        
+
         // Détection QR code avec jsQR - paramètres optimisés
         const code = jsQR(imageData.data, imageData.width, imageData.height, {
           inversionAttempts: "dontInvert"
         });
-        
+
         if (code && code.data) {
           console.log("QR Code détecté automatiquement:", code.data);
           setQrData(code.data);
           stopCamera();
           toast.success("QR Code détecté ! Validation en cours...");
-          
+
           // Auto-valider le QR code détecté et effacer pour enchaîner
           setTimeout(() => {
             handleQRScan();
@@ -437,7 +437,7 @@ const QRValidator = () => {
 
     try {
       console.log("Capture de l'image pour détection QR...");
-      
+
       // Capturer l'image de la vidéo
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
@@ -445,20 +445,20 @@ const QRValidator = () => {
 
       // Obtenir les données de l'image pour la détection QR
       const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-      
+
       console.log("Recherche de QR code dans l'image capturée...");
-      
+
       // Détection QR code avec jsQR
       const code = jsQR(imageData.data, imageData.width, imageData.height, {
         inversionAttempts: "dontInvert"
       });
-      
+
       if (code && code.data) {
         console.log("QR Code détecté dans l'image:", code.data);
         setQrData(code.data);
         stopCamera();
         toast.success("QR Code détecté ! Validation en cours...");
-        
+
         // Auto-valider le QR code détecté et effacer pour enchaîner
         setTimeout(() => {
           handleQRScan();
@@ -502,13 +502,13 @@ const QRValidator = () => {
     switch (status) {
       case 'valid':
       case 'active':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 border-0';
       case 'upcoming':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 border-0';
       case 'expired':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 border-0';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 border-0';
     }
   };
 
@@ -527,7 +527,7 @@ const QRValidator = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Validation des billets</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Validation des billets</h1>
         <p className="text-muted-foreground">
           Scannez les QR codes des billets pour vérifier leur validité
         </p>
@@ -535,35 +535,39 @@ const QRValidator = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Scanner un billet</CardTitle>
+          <Card className="rounded-xl border-gray-100 shadow-sm">
+            <CardHeader className="bg-gray-50/50 border-b border-gray-100">
+              <CardTitle className="flex items-center gap-2">
+                <QrCode className="w-5 h-5 text-orange-500" />
+                Scanner un billet
+              </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div>
+            <CardContent className="p-6">
+              <div className="space-y-6">
+                <div className="space-y-2">
                   <Label htmlFor="qr-input">Données du QR code</Label>
                   <Input
                     id="qr-input"
                     placeholder="Collez ici les données du QR code"
                     value={qrData}
                     onChange={(e) => setQrData(e.target.value)}
-                    className="mt-1"
+                    className="rounded-xl border-gray-200 focus:ring-orange-500/20"
                   />
                 </div>
-                
+
                 <div className="flex gap-3">
-                  <Button 
-                    onClick={handleQRScan} 
+                  <Button
+                    onClick={handleQRScan}
                     disabled={loading || !qrData.trim()}
-                    className="flex-1"
+                    className="flex-1 rounded-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white border-0 shadow-md transition-all"
                   >
                     {loading ? "Validation..." : "Valider le billet"}
                   </Button>
-                  
+
                   <Button
                     variant="outline"
                     onClick={() => fileInputRef.current?.click()}
+                    className="rounded-full border-gray-200 hover:bg-gray-50"
                   >
                     Fichier
                   </Button>
@@ -575,27 +579,27 @@ const QRValidator = () => {
                       <Button
                         onClick={startCamera}
                         variant="outline"
-                        className="flex-1"
+                        className="flex-1 rounded-xl border-dashed border-2 border-gray-200 hover:border-orange-200 hover:bg-orange-50 h-32 flex flex-col gap-2"
                       >
-                        <Camera className="w-4 h-4 mr-2" />
-                        Ouvrir la caméra
+                        <Camera className="w-8 h-8 text-gray-400" />
+                        <span>Ouvrir la caméra</span>
                       </Button>
                     ) : (
                       <Button
                         onClick={stopCamera}
                         variant="outline"
-                        className="flex-1"
+                        className="flex-1 rounded-full border-red-200 hover:bg-red-50 hover:text-red-600"
                       >
                         <CameraOff className="w-4 h-4 mr-2" />
                         Fermer la caméra
                       </Button>
                     )}
-                    
+
                     {isScanning && (
                       <Button
                         onClick={captureQR}
                         variant="default"
-                        className="flex-1"
+                        className="flex-1 rounded-full"
                       >
                         <QrCode className="w-4 h-4 mr-2" />
                         Capturer QR
@@ -604,47 +608,41 @@ const QRValidator = () => {
                   </div>
 
                   {isScanning && (
-                    <div className="relative">
+                    <div className="relative rounded-xl overflow-hidden shadow-lg">
                       <video
                         ref={videoRef}
-                        className="w-full h-64 object-cover rounded-lg border bg-gray-200"
+                        className="w-full h-64 object-cover bg-gray-900"
                         autoPlay
                         playsInline
                         muted
-                        style={{ 
+                        style={{
                           minHeight: '256px',
-                          backgroundColor: '#f3f4f6'
                         }}
-                        onLoadStart={() => console.log("Vidéo commence à charger")}
-                        onLoadedData={() => console.log("Données vidéo chargées")}
-                        onCanPlay={() => console.log("Vidéo peut être lue")}
-                        onPlay={() => console.log("Vidéo en cours de lecture")}
-                        onError={(e) => console.error("Erreur vidéo:", e)}
                       />
                       <canvas
                         ref={canvasRef}
                         className="hidden"
                       />
                       <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="w-48 h-48 border-2 border-white border-dashed rounded-lg flex items-center justify-center">
-                          <QrCode className="w-16 h-16 text-white opacity-50" />
+                        <div className="w-48 h-48 border-2 border-white/80 border-dashed rounded-lg flex items-center justify-center">
+                          <QrCode className="w-16 h-16 text-white/50" />
                         </div>
                       </div>
-                      <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded text-sm">
+                      <div className="absolute top-2 left-2 bg-black/70 text-white px-2 py-1 rounded-md text-sm backdrop-blur-sm">
                         {detectionActive ? "🔍 Recherche de QR code..." : "⏳ Initialisation..."}
                       </div>
                       {detectionActive && (
-                        <div className="absolute top-2 right-2 bg-green-600 text-white px-2 py-1 rounded text-xs animate-pulse">
+                        <div className="absolute top-2 right-2 bg-green-500/90 text-white px-2 py-1 rounded-md text-xs animate-pulse backdrop-blur-sm">
                           Détection active
                         </div>
                       )}
-                      <div className="absolute bottom-2 left-2 right-2 bg-black/70 text-white px-2 py-1 rounded text-xs text-center">
+                      <div className="absolute bottom-2 left-2 right-2 bg-black/70 text-white px-2 py-1 rounded-md text-xs text-center backdrop-blur-sm">
                         Positionnez le QR code dans le cadre pour une détection automatique
                       </div>
                     </div>
                   )}
                 </div>
-                
+
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -657,11 +655,13 @@ const QRValidator = () => {
           </Card>
 
           {validationResult && (
-            <Card className={validationResult.valid ? 'border-green-200' : 'border-red-200'}>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+            <Card className={`rounded-xl shadow-md border-2 ${validationResult.valid ? 'border-green-100 bg-green-50/30' : 'border-red-100 bg-red-50/30'}`}>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center gap-3">
                   {getStatusIcon(validationResult.status || (validationResult.valid ? 'valid' : 'invalid'))}
-                  Résultat de la validation
+                  <span className={validationResult.valid ? 'text-green-800' : 'text-red-800'}>
+                    {validationResult.valid ? 'Billet Valide' : 'Billet Invalide'}
+                  </span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -672,50 +672,51 @@ const QRValidator = () => {
                         {validationResult.message}
                       </Badge>
                     </div>
-                    
+
                     {validationResult.ticket && (
-                      <div className="space-y-3">
+                      <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm space-y-3">
                         <div className="flex items-center gap-2">
-                          <span className="font-medium">{validationResult.ticket.event.title}</span>
+                          <Ticket className="w-4 h-4 text-orange-500" />
+                          <span className="font-bold text-gray-900">{validationResult.ticket.event.title}</span>
                         </div>
-                        
+
                         <div className="flex items-center gap-2">
-                          <User className="w-4 h-4 text-muted-foreground" />
-                          <span>{validationResult.ticket.user.name}</span>
+                          <User className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-700">{validationResult.ticket.user.name}</span>
                         </div>
-                        
+
                         <div className="flex items-center gap-2">
-                          <Calendar className="w-4 h-4 text-muted-foreground" />
-                          <span>{formatDate(validationResult.ticket.event.starts_at)}</span>
+                          <Calendar className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-600">{formatDate(validationResult.ticket.event.starts_at)}</span>
                         </div>
-                        
+
                         <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4 text-muted-foreground" />
-                          <span>{validationResult.ticket.event.venue}, {validationResult.ticket.event.city}</span>
+                          <MapPin className="w-4 h-4 text-gray-400" />
+                          <span className="text-gray-600">{validationResult.ticket.event.venue}, {validationResult.ticket.event.city}</span>
                         </div>
-                        
-                        <div className="pt-2 border-t">
-                          <div className="text-sm text-muted-foreground">
-                            Type: {validationResult.ticket.ticket_type.name} • 
-                            Prix: {(validationResult.ticket.ticket_type.price_cents / 100).toFixed(2)}€
+
+                        <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
+                          <div className="text-sm text-gray-500">
+                            {validationResult.ticket.ticket_type.name}
                           </div>
-                          <div className="text-sm text-muted-foreground">
-                            ID: {validationResult.ticket.id}
+                          <div className="font-bold text-gray-900">
+                            {(validationResult.ticket.ticket_type.price_cents / 100).toFixed(2)}€
                           </div>
                         </div>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <div className="text-red-600">
-                    <p className="font-medium">
-                      {validationResult.alreadyValidated ? "Billet déjà validé" : "Billet invalide"}
+                  <div className="bg-white rounded-xl p-4 border border-red-100 shadow-sm">
+                    <p className="font-medium text-red-700 text-lg mb-1">
+                      {validationResult.alreadyValidated ? "Billet déjà validé" : "Validation impossible"}
                     </p>
-                    <p className="text-sm mt-1">{validationResult.error}</p>
+                    <p className="text-gray-600">{validationResult.error}</p>
                     {validationResult.alreadyValidated && validationResult.validatedAt && (
-                      <p className="text-xs mt-1 text-red-500">
+                      <div className="mt-3 pt-3 border-t border-red-50 flex items-center gap-2 text-sm text-red-600">
+                        <Clock className="w-4 h-4" />
                         Validé le {validationResult.validatedAt}
-                      </p>
+                      </div>
                     )}
                   </div>
                 )}
@@ -725,41 +726,49 @@ const QRValidator = () => {
         </div>
 
         <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Historique des validations</CardTitle>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={loadScanHistory}
-              className="w-fit"
-            >
-              Actualiser
-            </Button>
-          </CardHeader>
-            <CardContent>
+          <Card className="rounded-xl border-gray-100 shadow-sm h-full flex flex-col">
+            <CardHeader className="bg-gray-50/50 border-b border-gray-100 flex flex-row items-center justify-between">
+              <CardTitle>Historique des validations</CardTitle>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={loadScanHistory}
+                className="text-muted-foreground hover:text-gray-900"
+              >
+                <Clock className="w-4 h-4 mr-2" />
+                Actualiser
+              </Button>
+            </CardHeader>
+            <CardContent className="flex-1 p-0">
               {scanHistory.length === 0 ? (
-                <p className="text-muted-foreground text-center py-4">
-                  Aucune validation effectuée
-                </p>
+                <div className="flex flex-col items-center justify-center h-64 text-muted-foreground">
+                  <Clock className="w-12 h-12 mb-4 text-gray-200" />
+                  <p>Aucune validation effectuée</p>
+                </div>
               ) : (
-                <div className="space-y-3 max-h-96 overflow-y-auto">
+                <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
                   {scanHistory.map((result, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        {getStatusIcon(result.status || (result.valid ? 'valid' : 'invalid'))}
-                        <div>
-                          <div className="font-medium text-sm">
-                            {result.ticket?.event?.title || 'Billet inconnu'}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {result.ticket?.user?.name || 'Utilisateur inconnu'}
+                    <div key={index} className="p-4 hover:bg-gray-50 transition-colors">
+                      <div className="flex items-start justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          {getStatusIcon(result.status || (result.valid ? 'valid' : 'invalid'))}
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {result.ticket?.event?.title || 'Billet inconnu'}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {result.ticket?.user?.name || 'Utilisateur inconnu'}
+                            </div>
                           </div>
                         </div>
+                        <Badge className={getStatusColor(result.status || (result.valid ? 'valid' : 'invalid'))}>
+                          {result.status || (result.valid ? 'Valide' : 'Invalide')}
+                        </Badge>
                       </div>
-                      <Badge className={getStatusColor(result.status || (result.valid ? 'valid' : 'invalid'))}>
-                        {result.status || (result.valid ? 'Valide' : 'Invalide')}
-                      </Badge>
+                      <div className="flex justify-between items-center text-xs text-gray-400 pl-9">
+                        <span>{result.ticket?.ticket_type?.name}</span>
+                        <span>{result.validated_at ? new Date(result.validated_at).toLocaleTimeString() : 'À l\'instant'}</span>
+                      </div>
                     </div>
                   ))}
                 </div>

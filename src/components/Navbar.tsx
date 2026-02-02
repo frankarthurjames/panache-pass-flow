@@ -76,7 +76,7 @@ export const Navbar = ({ variant = "transparent" }: NavbarProps) => {
                       size="sm"
                       className="flex items-center space-x-2 text-white rounded-full px-4 hover:opacity-90 transition-opacity"
                       style={{
-                        background: isOrange ? "#FFFFFF" : "#F032E6",
+                        background: isOrange ? "#FFFFFF" : "#F97316",
                         color: isOrange ? "#000000" : "#FFFFFF"
                       }}
                     >
@@ -106,7 +106,7 @@ export const Navbar = ({ variant = "transparent" }: NavbarProps) => {
                 asChild
                 className="rounded-full px-6 font-semibold border-0"
                 style={{
-                  background: isOrange ? "#FFFFFF" : "#F032E6",
+                  background: isOrange ? "#FFFFFF" : "#F97316",
                   color: isOrange ? "#000000" : "#FFFFFF"
                 }}
               >
