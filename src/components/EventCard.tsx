@@ -10,9 +10,10 @@ interface EventCardProps {
   image: string;
   tag: string;
   tagColor: string;
+  price?: string;
 }
 
-export const EventCard = ({ id, title, date, location, image, tag, tagColor }: EventCardProps) => {
+export const EventCard = ({ id, title, date, location, image, tag, tagColor, price }: EventCardProps) => {
   return (
     <Link
       to={`/events/${id}`}
@@ -35,11 +36,20 @@ export const EventCard = ({ id, title, date, location, image, tag, tagColor }: E
       </div>
 
       {/* Content bottom left */}
-      <div className="absolute bottom-4 left-4 text-white p-2">
-        <h3 className="text-xl font-bold leading-tight mb-1">{title}</h3>
-        <p className="text-sm text-white/90">
-          {date} - {location}
-        </p>
+      <div className="absolute inset-x-0 bottom-4 px-4 text-white flex justify-between items-end">
+        <div className="max-w-[70%]">
+          <h3 className="text-xl font-bold leading-tight mb-1 truncate">
+            {title.replace(/^\[.*?\]\s*/, '')}
+          </h3>
+          <p className="text-sm text-white/90">
+            {date} - {location}
+          </p>
+        </div>
+        {price && (
+          <div className="bg-orange-500 text-white px-3 py-1 rounded-lg font-bold text-sm shadow-lg whitespace-nowrap mb-1">
+            {price}
+          </div>
+        )}
       </div>
     </Link>
   );

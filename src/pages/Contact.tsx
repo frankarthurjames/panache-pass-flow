@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { SEO } from "@/components/SEO";
 import { Mail, MapPin, Phone, Clock, Send } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,8 +34,12 @@ const Contact = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <SEO
+        title="Contactez-nous"
+        description="Une question ou un problème ? Contactez l'équipe Panache pour obtenir de l'aide sur vos événements et réservations."
+      />
       <Navbar />
-      
+
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
@@ -43,7 +48,7 @@ const Contact = () => {
               Contactez-nous
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Une question ? Un problème ? Notre équipe est là pour vous aider. 
+              Une question ? Un problème ? Notre équipe est là pour vous aider.
               N'hésitez pas à nous contacter !
             </p>
           </div>
@@ -178,7 +183,7 @@ const Contact = () => {
                   </div>
                   <div className="mt-4 p-3 bg-muted rounded-lg">
                     <p className="text-sm text-muted-foreground">
-                      💡 <strong>Astuce :</strong> Pour une réponse plus rapide, consultez d'abord notre 
+                      💡 <strong>Astuce :</strong> Pour une réponse plus rapide, consultez d'abord notre
                       <a href="/faq" className="text-primary hover:underline ml-1">FAQ</a>
                     </p>
                   </div>

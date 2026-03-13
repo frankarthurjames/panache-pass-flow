@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { Hero } from "@/components/landing/Hero";
 import { SportsSpotlight } from "@/components/landing/SportsSpotlight";
 import { LatestActivities } from "@/components/landing/LatestActivities";
+import { SEO } from "@/components/SEO";
 
 const Index = () => {
   const [loading] = useState(false);
@@ -18,6 +19,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background font-sans">
+      <SEO
+        title="Réservez vos activités sportives"
+        description="Trouvez et réservez les meilleures activités sportives et événements près de chez vous avec Panache."
+      />
       <Navbar />
 
       <Hero stats={stats} loading={loading} />

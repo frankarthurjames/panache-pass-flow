@@ -7,14 +7,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
-import { useParams } from "react-router-dom";
-import { 
-  Building2, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  CreditCard, 
-  Shield, 
+import { useParams, useNavigate } from "react-router-dom";
+import {
+  Building2,
+  Mail,
+  Phone,
+  MapPin,
+  CreditCard,
+  Shield,
   Trash2,
   Upload,
   ExternalLink
@@ -26,6 +26,7 @@ import { ImageUpload } from "@/components/ImageUpload";
 
 const Settings = () => {
   const { orgId } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [loadingStripe, setLoadingStripe] = useState(false);
@@ -57,7 +58,7 @@ const Settings = () => {
   // Charger les données de l'organisation
   useEffect(() => {
     if (!orgId) return;
-    
+
     const loadOrganizationData = async () => {
       try {
         const { data, error } = await supabase
@@ -109,19 +110,19 @@ const Settings = () => {
       setTimeout(() => {
         checkStripeStatus();
       }, 1000);
-      // Nettoyer l'URL
-      window.history.replaceState({}, '', window.location.pathname);
+      // Nettoyer l'URL et rediriger proprement
+      navigate(`/dashboard/org/${orgId}/settings`, { replace: true });
     } else if (refresh === 'true') {
       // Rafraîchir le statut
       checkStripeStatus();
-      // Nettoyer l'URL
-      window.history.replaceState({}, '', window.location.pathname);
+      // Nettoyer l'URL et rediriger proprement
+      navigate(`/dashboard/org/${orgId}/settings`, { replace: true });
     }
   }, []);
 
   const checkStripeStatus = async () => {
     if (!user || !orgId) return;
-    
+
     try {
       const { data, error } = await supabase.functions.invoke('check-connect-status', {
         body: { organizationId: orgId }
@@ -149,7 +150,7 @@ const Settings = () => {
 
   const handleSave = async () => {
     if (!orgId || !user) return;
-    
+
     setIsLoading(true);
     try {
       // First, check if user is owner of the organization
@@ -186,7 +187,7 @@ const Settings = () => {
         console.error('Error updating organization:', error);
         throw error;
       }
-      
+
       toast.success("Paramètres sauvegardés avec succès !");
     } catch (error) {
       console.error('Error saving organization:', error);
@@ -198,7 +199,7 @@ const Settings = () => {
 
   const handleConnectStripe = async () => {
     if (!user || !orgId) return;
-    
+
     setLoadingStripe(true);
     try {
       const { data, error } = await supabase.functions.invoke('create-connect-account', {
@@ -211,12 +212,13 @@ const Settings = () => {
 
       if (error) throw error;
 
-      // Rediriger vers l'onboarding Stripe
-      window.open(data.onboardingUrl, '_blank');
+      // Rediriger vers l'onboarding Stripe dans le même onglet
+      window.location.href = data.onboardingUrl;
       toast.success("Redirection vers Stripe...");
     } catch (error) {
       console.error('Error connecting Stripe:', error);
-      toast.error("Erreur lors de la connexion à Stripe");
+      const errorMessage = error instanceof Error ? error.message : "Erreur lors de la connexion à Stripe";
+      toast.error(errorMessage);
     } finally {
       setLoadingStripe(false);
     }
@@ -224,7 +226,7 @@ const Settings = () => {
 
   const handleDisconnectStripe = async () => {
     if (!user || !orgId) return;
-    
+
     setLoadingStripe(true);
     try {
       const { data, error } = await supabase.functions.invoke('disconnect-stripe', {
@@ -243,19 +245,23 @@ const Settings = () => {
     }
   };
 
-  const handleDeleteOrganization = () => {
-    // Confirmation dialog et suppression
-    toast.error("Fonctionnalité de suppression pas encore implémentée");
-  };
 
   return (
     <div className="space-y-8">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold mb-2">Paramètres de l'organisation</h1>
-        <p className="text-muted-foreground">
-          Gérez les informations et la configuration de votre organisation
-        </p>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold mb-2">Paramètres de l'organisation</h1>
+          <p className="text-muted-foreground">
+            Gérez les informations et la configuration de votre organisation
+          </p>
+        </div>
+        <Button
+          onClick={handleSave}
+          disabled={isLoading}
+          className="w-full md:w-auto"
+        >
+          {isLoading ? "Sauvegarde..." : "Sauvegarder les modifications"}
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -280,7 +286,7 @@ const Settings = () => {
                   onChange={(e) => handleInputChange("name", e.target.value)}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>
                 <Textarea
@@ -290,7 +296,7 @@ const Settings = () => {
                   rows={4}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="website">Site web</Label>
                 <Input
@@ -300,9 +306,9 @@ const Settings = () => {
                   onChange={(e) => handleInputChange("website", e.target.value)}
                 />
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="logo">Logo de l'organisation</Label>
+                {/* <Label htmlFor="logo">Logo de l'organisation</Label> */}
                 <ImageUpload
                   value={orgData.logo ? [orgData.logo] : []}
                   onChange={(images) => handleInputChange("logo", images[0] || null)}
@@ -331,7 +337,7 @@ const Settings = () => {
                   onChange={(e) => handleInputChange("email", e.target.value)}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="phone">Téléphone</Label>
                 <Input
@@ -341,7 +347,7 @@ const Settings = () => {
                   onChange={(e) => handleInputChange("phone", e.target.value)}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="address">Adresse</Label>
                 <Textarea
@@ -372,7 +378,7 @@ const Settings = () => {
                   maxLength={14}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="billingEmail">Email de facturation</Label>
                 <Input
@@ -406,7 +412,7 @@ const Settings = () => {
                   onCheckedChange={(checked) => handleNotificationChange("newRegistration", checked)}
                 />
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Paiements reçus</Label>
@@ -419,7 +425,7 @@ const Settings = () => {
                   onCheckedChange={(checked) => handleNotificationChange("paymentReceived", checked)}
                 />
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Rappels d'événements</Label>
@@ -432,7 +438,7 @@ const Settings = () => {
                   onCheckedChange={(checked) => handleNotificationChange("eventReminder", checked)}
                 />
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Rapport hebdomadaire</Label>
@@ -462,11 +468,11 @@ const Settings = () => {
               <div className="flex items-center justify-between">
                 <span>Status</span>
                 <Badge variant={stripeStatus.connected && stripeStatus.charges_enabled ? "default" : "secondary"}>
-                  {stripeStatus.connected && stripeStatus.charges_enabled ? "Actif" : 
-                   stripeStatus.connected ? "En cours de configuration" : "Non connecté"}
+                  {stripeStatus.connected && stripeStatus.charges_enabled ? "Actif" :
+                    stripeStatus.connected ? "En cours de configuration" : "Non connecté"}
                 </Badge>
               </div>
-              
+
               {stripeStatus.connected ? (
                 <div className="space-y-3">
                   {stripeStatus.charges_enabled ? (
@@ -478,24 +484,24 @@ const Settings = () => {
                       Configuration en cours. Veuillez finaliser votre onboarding Stripe.
                     </p>
                   )}
-                  
+
                   {stripeStatus.business_profile?.name && (
                     <p className="text-sm font-medium">
                       {stripeStatus.business_profile.name}
                     </p>
                   )}
-                  
-                   <div className="flex flex-col gap-2">
-                    <Button 
-                      variant="outline" 
+
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={() => window.open('https://dashboard.stripe.com/', '_blank')}
                     >
                       <ExternalLink className="w-4 h-4 mr-2" />
                       Dashboard Stripe
                     </Button>
-                    <Button 
-                      variant="outline" 
+                    <Button
+                      variant="outline"
                       size="sm"
                       onClick={checkStripeStatus}
                       disabled={loadingStripe}
@@ -503,8 +509,8 @@ const Settings = () => {
                       Actualiser le statut
                     </Button>
                     {!stripeStatus.charges_enabled && (
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         size="sm"
                         onClick={handleConnectStripe}
                         disabled={loadingStripe}
@@ -512,9 +518,9 @@ const Settings = () => {
                         Finaliser la configuration
                       </Button>
                     )}
-                    <Button 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       className="text-destructive"
                       onClick={handleDisconnectStripe}
                       disabled={loadingStripe}
@@ -528,8 +534,8 @@ const Settings = () => {
                   <p className="text-sm text-muted-foreground">
                     Connectez Stripe pour recevoir des paiements pour vos événements.
                   </p>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     className="w-full"
                     onClick={handleConnectStripe}
                     disabled={loadingStripe || !orgData.name || !orgData.billingEmail}
@@ -547,39 +553,6 @@ const Settings = () => {
             </CardContent>
           </Card>
 
-          {/* Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <Button 
-                onClick={handleSave} 
-                disabled={isLoading}
-                className="w-full"
-              >
-                {isLoading ? "Sauvegarde..." : "Sauvegarder les modifications"}
-              </Button>
-              
-              <Separator />
-              
-              <div className="space-y-2">
-                <Label className="text-destructive">Zone de danger</Label>
-                <p className="text-sm text-muted-foreground">
-                  Cette action est irréversible et supprimera définitivement votre organisation.
-                </p>
-                <Button 
-                  variant="destructive" 
-                  size="sm" 
-                  onClick={handleDeleteOrganization}
-                  className="w-full"
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />
-                  Supprimer l'organisation
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </div>

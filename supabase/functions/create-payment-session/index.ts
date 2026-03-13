@@ -73,12 +73,16 @@ serve(async (req) => {
     );
 
     // Calculer les frais de la plateforme (2% du TTC billets + 0,50€ par commande)
+    // Pour les événements gratuits (subtotal = 0), les frais sont également de 0
     const platformFeePercentage = 0.02; // 2%
-    const platformFeeFixed = 50; // 0,50€ en centimes (par commande)
-    const platformFeeCents = Math.round(subtotalCents * platformFeePercentage) + platformFeeFixed;
-    
+    const platformFeeFixed = subtotalCents > 0 ? 50 : 0; // 0,50€ seulement si payant
+    const platformFeeCents = subtotalCents > 0
+      ? Math.round(subtotalCents * platformFeePercentage) + platformFeeFixed
+      : 0;
+
     // Le total payé est TTC (les prix des billets sont déjà TTC) → on ajoute simplement les frais de plateforme TTC
     const totalCents = subtotalCents + platformFeeCents;
+    const isFree = totalCents === 0;
 
     // Créer une commande dans la base de données
     const { data: orderData, error: orderError } = await supabaseClient
@@ -87,7 +91,7 @@ serve(async (req) => {
         user_id: user.id,
         event_id: eventId,
         total_cents: totalCents,
-        status: 'pending'
+        status: isFree ? 'paid' : 'pending' // Directement payé si gratuit
       })
       .select()
       .single();
@@ -129,13 +133,13 @@ serve(async (req) => {
 
     // Vérifier la disponibilité des billets
     console.log("Checking ticket availability");
-    
+
     // Récupérer les billets déjà vendus (registrations existantes)
     const { data: existingRegistrations, error: regError } = await supabaseClient
       .from('registrations')
       .select('ticket_type_id')
       .eq('event_id', eventId);
-    
+
     if (regError) {
       console.error("Error fetching existing registrations:", regError);
       throw new Error("Failed to check ticket availability");
@@ -153,10 +157,10 @@ serve(async (req) => {
       if (!ticketType) {
         throw new Error(`Type de billet introuvable: ${item.ticket_type_id}`);
       }
-      
+
       const soldCount = soldTicketsCount[item.ticket_type_id] || 0;
       const availableCount = ticketType.quantity - soldCount;
-      
+
       if (item.quantity > availableCount) {
         throw new Error(`Plus assez de billets disponibles pour "${ticketType.name}". Disponible: ${availableCount}, Demandé: ${item.quantity}`);
       }
@@ -166,13 +170,64 @@ serve(async (req) => {
     if (eventData.capacity) {
       const totalSoldTickets = Object.values(soldTicketsCount).reduce((sum: number, count: number) => sum + count, 0);
       const totalRequestedTickets = lineItems.reduce((sum: number, item: any) => sum + item.quantity, 0);
-      
+
       if (totalSoldTickets + totalRequestedTickets > eventData.capacity) {
         throw new Error(`Capacité de l'événement dépassée. Capacité: ${eventData.capacity}, Billets vendus: ${totalSoldTickets}, Demandé: ${totalRequestedTickets}`);
       }
     }
 
     console.log("Ticket availability check passed");
+
+    if (isFree) {
+      console.log("Free order processing: creating registrations");
+      const registrations = [];
+      for (const item of lineItems) {
+        for (let i = 0; i < item.quantity; i++) {
+          registrations.push({
+            event_id: eventId,
+            ticket_type_id: item.ticket_type_id,
+            order_id: orderData.id,
+            user_id: user.id,
+            status: 'issued'
+          });
+        }
+      }
+
+      const { data: createdRegs, error: regInsertError } = await supabaseClient
+        .from('registrations')
+        .insert(registrations)
+        .select();
+
+      if (regInsertError) {
+        console.error("Error creating registrations for free order:", regInsertError);
+      } else {
+        console.log("Registrations created for free order:", createdRegs?.length);
+
+        // Déclencher l'envoi des billets (async)
+        for (const reg of createdRegs || []) {
+          try {
+            const pdfRes = await supabaseClient.functions.invoke('generate-ticket-pdf', {
+              body: { registrationId: reg.id }
+            });
+            if (pdfRes.data?.pdfUrl) {
+              await supabaseClient.functions.invoke('send-ticket-email', {
+                body: { registrationId: reg.id, pdfUrl: pdfRes.data.pdfUrl }
+              });
+            }
+          } catch (e) {
+            console.error("Error generating/sending free ticket:", e);
+          }
+        }
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        orderId: orderData.id
+      }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      });
+    }
 
     // Préparer les line items pour Stripe
     const stripeLineItems = lineItems.map((item: any) => {
@@ -246,7 +301,7 @@ serve(async (req) => {
       console.error("Error updating order with session ID:", updateError);
     }
 
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       url: session.url,
       sessionId: session.id,
       orderId: orderData.id

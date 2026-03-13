@@ -8,28 +8,143 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useNavigate, Link } from "react-router-dom";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { 
-  Calendar as CalendarIcon, 
-  MapPin, 
-  Users, 
-  Euro, 
-  Save, 
-  Eye, 
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import {
+  Calendar as CalendarIcon,
+  MapPin,
+  Users,
+  Euro,
+  Save,
+  Eye,
   ArrowLeft,
   Plus,
-  X
+  X,
+  Loader2
 } from "lucide-react";
-import { Link } from "react-router-dom";
+
 import { cn } from "@/lib/utils";
 
 const CreateEvent = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [organizations, setOrganizations] = useState<any[]>([]);
+  const [selectedOrgId, setSelectedOrgId] = useState<string>("");
+
+  const [title, setTitle] = useState("");
+  const [sport, setSport] = useState("");
+  const [description, setDescription] = useState("");
   const [date, setDate] = useState<Date>();
+  const [time, setTime] = useState("14:00");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [venue, setVenue] = useState("");
+  const [minAge, setMinAge] = useState("");
+  const [maxAge, setMaxAge] = useState("");
+  const [level, setLevel] = useState("");
+
   const [ticketTypes, setTicketTypes] = useState([
     { id: 1, name: "Standard", price: "25", quantity: "100" }
   ]);
+
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      if (!user) return;
+      const { data, error } = await supabase
+        .from('organization_members')
+        .select(`
+          organization_id,
+          organizations (
+            id,
+            name
+          )
+        `)
+        .eq('user_id', user.id);
+
+      if (error) {
+        console.error('Error fetching organizations:', error);
+        return;
+      }
+
+      const orgs = data?.map((m: any) => m.organizations).filter(Boolean) || [];
+      setOrganizations(orgs);
+      if (orgs.length > 0) {
+        setSelectedOrgId(orgs[0].id);
+      }
+    };
+
+    fetchOrganizations();
+  }, [user]);
+
+  const handleSubmit = async (status: "draft" | "published" = "published") => {
+    if (!user || !selectedOrgId) {
+      toast.error("Veuillez sélectionner une organisation");
+      return;
+    }
+
+    if (!title || !date) {
+      toast.error("Veuillez remplir les champs obligatoires (*) ");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Create starts_at from date and time
+      const startsAt = new Date(date);
+      const [hours, minutes] = time.split(':').map(Number);
+      startsAt.setHours(hours, minutes, 0, 0);
+
+      const eventData = {
+        title: sport ? `[${sport.toUpperCase()}] ${title}` : title,
+        description: description || null,
+        starts_at: startsAt.toISOString(),
+        ends_at: startsAt.toISOString(), // Simplified for now
+        venue: venue && address ? `${venue}, ${address}` : (venue || address || null),
+        city: city || null,
+        capacity: ticketTypes.reduce((acc, t) => acc + (parseInt(t.quantity) || 0), 0),
+        organization_id: selectedOrgId,
+        status: status,
+        images: [] // Placeholder
+      };
+
+      const { data: event, error: eventError } = await supabase
+        .from('events')
+        .insert(eventData)
+        .select()
+        .single();
+
+      if (eventError) throw eventError;
+
+      const ticketTypesData = ticketTypes.map(t => ({
+        event_id: event.id,
+        name: t.name,
+        price_cents: Math.round(parseFloat(t.price) * 100) || 0,
+        quantity: parseInt(t.quantity) || 0,
+        max_per_order: 10,
+        currency: "EUR"
+      }));
+
+      const { error: ticketsError } = await supabase
+        .from('ticket_types')
+        .insert(ticketTypesData);
+
+      if (ticketsError) throw ticketsError;
+
+      toast.success(status === "published" ? "Événement publié !" : "Brouillon sauvegardé !");
+      navigate(`/dashboard/org/${selectedOrgId}/events`);
+    } catch (err: any) {
+      console.error(err);
+      toast.error("Une erreur est survenue: " + err.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const addTicketType = () => {
     const newId = Math.max(...ticketTypes.map(t => t.id)) + 1;
@@ -41,7 +156,7 @@ const CreateEvent = () => {
   };
 
   const updateTicketType = (id: number, field: string, value: string) => {
-    setTicketTypes(ticketTypes.map(t => 
+    setTicketTypes(ticketTypes.map(t =>
       t.id === id ? { ...t, [field]: value } : t
     ));
   };
@@ -49,9 +164,9 @@ const CreateEvent = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      
+
       {/* Header */}
-      <section className="py-8 px-4 sm:px-6 lg:px-8 bg-muted/30">
+      <section className="pt-24 pb-8 px-4 sm:px-6 lg:px-8 bg-muted/30">
         <div className="container mx-auto">
           <div className="flex items-center gap-4 mb-4">
             <Button variant="ghost" size="sm" asChild>
@@ -85,7 +200,7 @@ const CreateEvent = () => {
       <section className="py-8 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-4xl">
           <div className="space-y-8">
-            
+
             {/* Basic Information */}
             <Card>
               <CardHeader>
@@ -95,17 +210,37 @@ const CreateEvent = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Titre de l'événement *</Label>
-                  <Input 
-                    id="title" 
-                    placeholder="Ex: Tournoi de Tennis de Table Amateur 2025"
-                  />
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="organization">Organisation *</Label>
+                    <Select value={selectedOrgId} onValueChange={setSelectedOrgId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionnez une organisation" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {organizations.map((org) => (
+                          <SelectItem key={org.id} value={org.id}>
+                            {org.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Titre de l'événement *</Label>
+                    <Input
+                      id="title"
+                      placeholder="Ex: Tournoi de Tennis de Table Amateur 2025"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                    />
+                  </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="sport">Sport *</Label>
-                  <Select>
+                  <Select value={sport} onValueChange={setSport}>
                     <SelectTrigger>
                       <SelectValue placeholder="Sélectionnez un sport" />
                     </SelectTrigger>
@@ -124,10 +259,12 @@ const CreateEvent = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="description">Description</Label>
-                  <Textarea 
+                  <Textarea
                     id="description"
                     placeholder="Décrivez votre événement, les règles, le niveau requis..."
                     className="min-h-[120px]"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                   />
                 </div>
               </CardContent>
@@ -172,35 +309,46 @@ const CreateEvent = () => {
                       </PopoverContent>
                     </Popover>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="time">Heure de début *</Label>
-                    <Input id="time" type="time" defaultValue="14:00" />
+                    <Input
+                      id="time"
+                      type="time"
+                      value={time}
+                      onChange={(e) => setTime(e.target.value)}
+                    />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="address">Adresse *</Label>
-                    <Input 
-                      id="address" 
+                    <Input
+                      id="address"
                       placeholder="123 Rue de la Paix"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="city">Ville *</Label>
-                    <Input 
-                      id="city" 
+                    <Input
+                      id="city"
                       placeholder="Paris"
+                      value={city}
+                      onChange={(e) => setCity(e.target.value)}
                     />
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="venue">Nom du lieu</Label>
-                  <Input 
-                    id="venue" 
+                  <Input
+                    id="venue"
                     placeholder="Ex: Gymnase Jean Moulin, Stade Municipal..."
+                    value={venue}
+                    onChange={(e) => setVenue(e.target.value)}
                   />
                 </div>
               </CardContent>
@@ -224,8 +372,8 @@ const CreateEvent = () => {
                       <div className="flex justify-between items-center">
                         <Badge variant="outline">Type de billet {ticket.id}</Badge>
                         {ticketTypes.length > 1 && (
-                          <Button 
-                            variant="ghost" 
+                          <Button
+                            variant="ghost"
                             size="sm"
                             onClick={() => removeTicketType(ticket.id)}
                           >
@@ -233,11 +381,11 @@ const CreateEvent = () => {
                           </Button>
                         )}
                       </div>
-                      
+
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         <div className="space-y-2">
                           <Label>Nom du billet</Label>
-                          <Input 
+                          <Input
                             placeholder="Ex: Standard, VIP, Étudiant"
                             value={ticket.name}
                             onChange={(e) => updateTicketType(ticket.id, 'name', e.target.value)}
@@ -245,7 +393,7 @@ const CreateEvent = () => {
                         </div>
                         <div className="space-y-2">
                           <Label>Prix (€)</Label>
-                          <Input 
+                          <Input
                             type="number"
                             placeholder="25"
                             value={ticket.price}
@@ -254,7 +402,7 @@ const CreateEvent = () => {
                         </div>
                         <div className="space-y-2">
                           <Label>Quantité disponible</Label>
-                          <Input 
+                          <Input
                             type="number"
                             placeholder="100"
                             value={ticket.quantity}
@@ -265,7 +413,7 @@ const CreateEvent = () => {
                     </div>
                   ))}
                 </div>
-                
+
                 <Button variant="outline" onClick={addTicketType}>
                   <Plus className="w-4 h-4 mr-2" />
                   Ajouter un type de billet
@@ -288,17 +436,29 @@ const CreateEvent = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="minAge">Âge minimum</Label>
-                    <Input id="minAge" type="number" placeholder="16" />
+                    <Input
+                      id="minAge"
+                      type="number"
+                      placeholder="16"
+                      value={minAge}
+                      onChange={(e) => setMinAge(e.target.value)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="maxAge">Âge maximum (optionnel)</Label>
-                    <Input id="maxAge" type="number" placeholder="65" />
+                    <Input
+                      id="maxAge"
+                      type="number"
+                      placeholder="65"
+                      value={maxAge}
+                      onChange={(e) => setMaxAge(e.target.value)}
+                    />
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="level">Niveau requis</Label>
-                  <Select>
+                  <Select value={level} onValueChange={setLevel}>
                     <SelectTrigger>
                       <SelectValue placeholder="Sélectionnez le niveau" />
                     </SelectTrigger>
@@ -320,11 +480,12 @@ const CreateEvent = () => {
                 <Link to="/dashboard">Annuler</Link>
               </Button>
               <div className="flex gap-4">
-                <Button variant="outline">
+                <Button variant="outline" onClick={() => handleSubmit("draft")} disabled={isSubmitting}>
                   <Save className="w-4 h-4 mr-2" />
                   Sauvegarder le brouillon
                 </Button>
-                <Button>
+                <Button onClick={() => handleSubmit("published")} disabled={isSubmitting}>
+                  {isSubmitting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
                   Publier l'événement
                 </Button>
               </div>

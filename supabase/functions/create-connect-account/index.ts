@@ -31,6 +31,19 @@ serve(async (req) => {
     const { organizationId, organizationName, organizationEmail } = await req.json();
     console.log("Request data:", { organizationId, organizationName, organizationEmail });
 
+    // Vérifier que l'utilisateur a accès à cette organisation
+    const { data: memberData, error: memberError } = await supabaseClient
+      .from('organization_members')
+      .select('id')
+      .eq('organization_id', organizationId)
+      .eq('user_id', user.id)
+      .single();
+
+    if (memberError || !memberData) {
+      console.error("User is not a member of this organization:", memberError);
+      throw new Error("Access denied: You must be a member of this organization to connect Stripe");
+    }
+
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2024-12-18.acacia",
     });
@@ -79,9 +92,9 @@ serve(async (req) => {
 
     console.log("Organization updated with Stripe account ID");
 
-    return new Response(JSON.stringify({ 
+    return new Response(JSON.stringify({
       accountId: account.id,
-      onboardingUrl: accountLink.url 
+      onboardingUrl: accountLink.url
     }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
       status: 200,

@@ -56,13 +56,19 @@ export const Navbar = ({ variant = "transparent" }: NavbarProps) => {
               to="/events"
               className={`font-medium text-sm uppercase tracking-wide transition-colors ${location.pathname.startsWith('/events') ? 'text-white font-bold' : 'text-white/90 hover:text-white'}`}
             >
-              activités
+              événements
             </Link>
             <Link
               to="/clubs"
               className={`font-medium text-sm uppercase tracking-wide transition-colors ${location.pathname.startsWith('/clubs') ? 'text-white font-bold' : 'text-white/90 hover:text-white'}`}
             >
               clubs
+            </Link>
+            <Link
+              to="/calendar"
+              className={`font-medium text-sm uppercase tracking-wide transition-colors ${location.pathname.startsWith('/calendar') ? 'text-white font-bold' : 'text-white/90 hover:text-white'}`}
+            >
+              calendrier
             </Link>
           </div>
 

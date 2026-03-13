@@ -1,13 +1,18 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { SEO } from "@/components/SEO";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Building, Mail, Phone, Globe, Shield } from "lucide-react";
 
 const Mentions = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <SEO
+        title="Mentions Légales"
+        description="Informations légales concernant la société Panache et l'exploitation de la plateforme."
+      />
       <Navbar />
-      
+
       <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
@@ -97,7 +102,7 @@ const Mentions = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  Le directeur de la publication est Monsieur Jean Dupont, 
+                  Le directeur de la publication est Monsieur Jean Dupont,
                   Président de la société Panache SAS.
                 </p>
               </CardContent>
@@ -141,14 +146,14 @@ const Mentions = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-muted-foreground leading-relaxed">
-                  L'ensemble de ce site relève de la législation française et internationale 
-                  sur le droit d'auteur et la propriété intellectuelle. Tous les droits de 
-                  reproduction sont réservés, y compris pour les documents téléchargeables 
+                  L'ensemble de ce site relève de la législation française et internationale
+                  sur le droit d'auteur et la propriété intellectuelle. Tous les droits de
+                  reproduction sont réservés, y compris pour les documents téléchargeables
                   et les représentations iconographiques et photographiques.
                 </p>
                 <p className="text-muted-foreground leading-relaxed">
-                  La reproduction de tout ou partie de ce site sur un support électronique 
-                  quel qu'il soit est formellement interdite sauf autorisation expresse 
+                  La reproduction de tout ou partie de ce site sur un support électronique
+                  quel qu'il soit est formellement interdite sauf autorisation expresse
                   du directeur de la publication.
                 </p>
               </CardContent>
@@ -161,19 +166,19 @@ const Mentions = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground leading-relaxed">
-                  Conformément à la loi "Informatique et Libertés" du 6 janvier 1978 modifiée 
-                  et au Règlement Général sur la Protection des Données (RGPD), vous disposez 
-                  d'un droit d'accès, de rectification, de suppression et d'opposition aux 
+                  Conformément à la loi "Informatique et Libertés" du 6 janvier 1978 modifiée
+                  et au Règlement Général sur la Protection des Données (RGPD), vous disposez
+                  d'un droit d'accès, de rectification, de suppression et d'opposition aux
                   données personnelles vous concernant.
                 </p>
                 <p className="text-muted-foreground leading-relaxed mt-4">
-                  Pour exercer ces droits, contactez-nous à : 
+                  Pour exercer ces droits, contactez-nous à :
                   <a href="mailto:privacy@panache.fr" className="text-primary hover:underline ml-1">
                     privacy@panache.fr
                   </a>
                 </p>
                 <p className="text-muted-foreground leading-relaxed mt-4">
-                  Pour plus d'informations, consultez notre 
+                  Pour plus d'informations, consultez notre
                   <a href="/legal/privacy" className="text-primary hover:underline ml-1">
                     politique de confidentialité
                   </a>.
@@ -188,14 +193,14 @@ const Mentions = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground leading-relaxed">
-                  L'éditeur s'efforce d'assurer au mieux de ses possibilités l'exactitude 
-                  et la mise à jour des informations diffusées sur ce site. Toutefois, 
-                  il ne peut garantir l'exactitude, la précision ou l'exhaustivité des 
+                  L'éditeur s'efforce d'assurer au mieux de ses possibilités l'exactitude
+                  et la mise à jour des informations diffusées sur ce site. Toutefois,
+                  il ne peut garantir l'exactitude, la précision ou l'exhaustivité des
                   informations mises à disposition sur ce site.
                 </p>
                 <p className="text-muted-foreground leading-relaxed mt-4">
-                  En conséquence, l'éditeur décline toute responsabilité pour toute 
-                  imprécision, inexactitude ou omission portant sur des informations 
+                  En conséquence, l'éditeur décline toute responsabilité pour toute
+                  imprécision, inexactitude ou omission portant sur des informations
                   disponibles sur ce site.
                 </p>
               </CardContent>
@@ -208,12 +213,12 @@ const Mentions = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground leading-relaxed">
-                  Pour toute question relative aux présentes mentions légales, 
+                  Pour toute question relative aux présentes mentions légales,
                   vous pouvez nous contacter :
                 </p>
                 <ul className="list-disc list-inside text-muted-foreground mt-4 space-y-2">
                   <li>
-                    Par email : 
+                    Par email :
                     <a href="mailto:legal@panache.fr" className="text-primary hover:underline ml-1">
                       legal@panache.fr
                     </a>

@@ -16,12 +16,14 @@ import Profile from "./pages/Profile";
 import CreateEvent from "./pages/CreateEvent";
 import NotFound from "./pages/NotFound";
 import FAQ from "./pages/FAQ";
+import Calendar from "./pages/Calendar";
 import Terms from "./pages/legal/Terms";
 import Privacy from "./pages/legal/Privacy";
 import Contact from "./pages/Contact";
 import Mentions from "./pages/legal/Mentions";
 import DashboardLayout from "./layouts/DashboardLayout";
 import Overview from "./pages/dashboard/Overview";
+import UpdatePassword from "./pages/UpdatePassword";
 import Organizations from "./pages/dashboard/Organizations";
 import MyEvents from "./pages/dashboard/MyEvents";
 import QRValidator from "./pages/dashboard/organization/QRValidator";
@@ -37,63 +39,68 @@ import EventEdit from "./pages/dashboard/organization/EventEdit";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import TestQR from "./pages/TestQR";
 import ValidateTicket from "./pages/ValidateTicket";
+import { HelmetProvider } from "react-helmet-async";
 
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<PublicRoute allowAuthenticated><Index /></PublicRoute>} />
-            <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
-            <Route path="/events" element={<PublicRoute allowAuthenticated><Events /></PublicRoute>} />
-            <Route path="/events/:id" element={<PublicRoute allowAuthenticated><EventDetail /></PublicRoute>} />
-            <Route path="/clubs" element={<PublicRoute allowAuthenticated><Clubs /></PublicRoute>} />
-            <Route path="/clubs/:id" element={<PublicRoute allowAuthenticated><ClubDetail /></PublicRoute>} />
-            <Route path="/faq" element={<PublicRoute allowAuthenticated><FAQ /></PublicRoute>} />
-            <Route path="/contact" element={<PublicRoute allowAuthenticated><Contact /></PublicRoute>} />
-            <Route path="/legal/terms" element={<PublicRoute allowAuthenticated><Terms /></PublicRoute>} />
-            <Route path="/legal/privacy" element={<PublicRoute allowAuthenticated><Privacy /></PublicRoute>} />
-            <Route path="/legal/mentions" element={<PublicRoute allowAuthenticated><Mentions /></PublicRoute>} />
+  <HelmetProvider>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<PublicRoute allowAuthenticated><Index /></PublicRoute>} />
+              <Route path="/auth" element={<PublicRoute><Auth /></PublicRoute>} />
+              <Route path="/update-password" element={<UpdatePassword />} />
+              <Route path="/events" element={<PublicRoute allowAuthenticated><Events /></PublicRoute>} />
+              <Route path="/events/:id" element={<PublicRoute allowAuthenticated><EventDetail /></PublicRoute>} />
+              <Route path="/clubs" element={<PublicRoute allowAuthenticated><Clubs /></PublicRoute>} />
+              <Route path="/clubs/:id" element={<PublicRoute allowAuthenticated><ClubDetail /></PublicRoute>} />
+              <Route path="/faq" element={<PublicRoute allowAuthenticated><FAQ /></PublicRoute>} />
+              <Route path="/calendar" element={<PublicRoute allowAuthenticated><Calendar /></PublicRoute>} />
+              <Route path="/contact" element={<PublicRoute allowAuthenticated><Contact /></PublicRoute>} />
+              <Route path="/legal/terms" element={<PublicRoute allowAuthenticated><Terms /></PublicRoute>} />
+              <Route path="/legal/privacy" element={<PublicRoute allowAuthenticated><Privacy /></PublicRoute>} />
+              <Route path="/legal/mentions" element={<PublicRoute allowAuthenticated><Mentions /></PublicRoute>} />
 
-            {/* Protected Routes */}
-            <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-            <Route path="/dashboard/events/new" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
-            <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
+              {/* Protected Routes */}
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/dashboard/events/new" element={<ProtectedRoute><CreateEvent /></ProtectedRoute>} />
+              <Route path="/payment-success" element={<ProtectedRoute><PaymentSuccess /></ProtectedRoute>} />
 
-            {/* Special Routes */}
-            <Route path="/test-qr" element={<TestQR />} />
-            <Route path="/validate-ticket" element={<ValidateTicket />} />
+              {/* Special Routes */}
+              <Route path="/test-qr" element={<TestQR />} />
+              <Route path="/validate-ticket" element={<ValidateTicket />} />
 
-            {/* Protected Dashboard Routes */}
-            <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
-              <Route index element={<Overview />} />
-              <Route path="my-events" element={<MyEvents />} />
-              <Route path="org/:orgId/qr-validator" element={<QRValidator />} />
-              <Route path="org/:orgId/tickets" element={<Tickets />} />
-              <Route path="organizations" element={<Organizations />} />
-              <Route path="organizations/new" element={<NewOrganization />} />
-              <Route path="org/:orgId" element={<OrganizationDashboard />} />
-              <Route path="org/:orgId/events" element={<OrgEvents />} />
-              <Route path="org/:orgId/events/new" element={<CreateOrgEvent />} />
-              <Route path="org/:orgId/events/:eventId/edit" element={<EventEdit />} />
-              <Route path="org/:orgId/events/:eventId/analytics" element={<Analytics />} />
-              <Route path="org/:orgId/analytics" element={<Analytics />} />
-              <Route path="org/:orgId/integrations" element={<Integrations />} />
-              <Route path="org/:orgId/settings" element={<Settings />} />
-            </Route>
+              {/* Protected Dashboard Routes */}
+              <Route path="/dashboard" element={<ProtectedRoute><DashboardLayout /></ProtectedRoute>}>
+                <Route index element={<Overview />} />
+                <Route path="my-events" element={<MyEvents />} />
+                <Route path="org/:orgId/qr-validator" element={<QRValidator />} />
+                <Route path="org/:orgId/tickets" element={<Tickets />} />
+                <Route path="organizations" element={<Organizations />} />
+                <Route path="organizations/new" element={<NewOrganization />} />
+                <Route path="org/:orgId" element={<OrganizationDashboard />} />
+                <Route path="org/:orgId/events" element={<OrgEvents />} />
+                <Route path="org/:orgId/events/new" element={<CreateOrgEvent />} />
+                <Route path="org/:orgId/events/:eventId/edit" element={<EventEdit />} />
+                <Route path="org/:orgId/events/:eventId/analytics" element={<Analytics />} />
+                <Route path="org/:orgId/analytics" element={<Analytics />} />
+                <Route path="org/:orgId/integrations" element={<Integrations />} />
+                <Route path="org/:orgId/settings" element={<Settings />} />
+              </Route>
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </HelmetProvider>
 );
 
 export default App;

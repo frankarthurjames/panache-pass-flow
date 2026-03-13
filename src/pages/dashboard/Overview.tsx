@@ -212,9 +212,9 @@ const Overview = () => {
           </p>
         </div>
         <Button size="lg" asChild className="rounded-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 border-0 shadow-md transition-all hover:shadow-lg">
-          <Link to="/dashboard/organizations/new">
+          <Link to="/dashboard/events/new">
             <Plus className="w-5 h-5 mr-2" />
-            Créer une organisation
+            Créer un événement
           </Link>
         </Button>
       </div>

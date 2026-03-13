@@ -120,8 +120,7 @@ const NewOrganization = () => {
           slug: formData.slug,
           created_by_user_id: user.id,
           billing_email: formData.billingEmail || null,
-          billing_country: formData.billingCountry || 'FR',
-          category: formData.category
+          billing_country: formData.billingCountry || 'FR'
         })
         .select()
         .single();
@@ -214,15 +213,14 @@ const NewOrganization = () => {
               <Label>Type d'organisation</Label>
               <div className="grid grid-cols-3 gap-4">
                 {[
-                  { id: 'company', label: 'Entreprise', icon: Building2 },
                   { id: 'club', label: 'Club', icon: Building2 },
-                  { id: 'association', label: 'Association', icon: Building2 },
+                  { id: 'company', label: 'Entreprise', icon: Building2 },
                 ].map((type) => (
                   <div
                     key={type.id}
                     className={`cursor-pointer rounded-lg border-2 p-4 flex flex-col items-center gap-2 transition-all ${formData.category === type.id
-                        ? "border-primary bg-primary/5"
-                        : "border-muted hover:border-primary/50"
+                      ? "border-primary bg-primary/5"
+                      : "border-muted hover:border-primary/50"
                       }`}
                     onClick={() => handleInputChange("category", type.id)}
                   >
@@ -336,8 +334,7 @@ const NewOrganization = () => {
               <div className="flex justify-between py-2 border-b">
                 <span className="font-medium">Type :</span>
                 <Badge variant="outline" className="capitalize">
-                  {formData.category === 'company' ? 'Entreprise' :
-                    formData.category === 'club' ? 'Club' : 'Association'}
+                  {formData.category === 'club' ? 'Club' : 'Entreprise'}
                 </Badge>
               </div>
               <div className="flex justify-between py-2 border-b">
@@ -404,18 +401,18 @@ const NewOrganization = () => {
           <div
             key={step.number}
             className={`flex items-center space-x-3 p-3 rounded-lg border ${currentStep === step.number
-                ? "border-primary bg-primary/5"
-                : currentStep > step.number
-                  ? "border-green-200 bg-green-50"
-                  : "border-border bg-muted/30"
+              ? "border-primary bg-primary/5"
+              : currentStep > step.number
+                ? "border-green-200 bg-green-50"
+                : "border-border bg-muted/30"
               }`}
           >
             <div
               className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep === step.number
-                  ? "bg-primary text-primary-foreground"
-                  : currentStep > step.number
-                    ? "bg-green-600 text-white"
-                    : "bg-muted text-muted-foreground"
+                ? "bg-primary text-primary-foreground"
+                : currentStep > step.number
+                  ? "bg-green-600 text-white"
+                  : "bg-muted text-muted-foreground"
                 }`}
             >
               {currentStep > step.number ? (

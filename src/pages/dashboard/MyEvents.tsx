@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { Calendar, MapPin, Users, Download, Ticket, ExternalLink, Loader2, FileText, Receipt, QrCode, ChevronDown, ChevronUp } from "lucide-react";
+import { Calendar, MapPin, Users, Download, Ticket, ExternalLink, Loader2, FileText, Receipt, QrCode, ChevronDown, ChevronUp, Plus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -582,13 +582,19 @@ const MyEvents = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold">Mes événements</h1>
-          <p className="text-muted-foreground">
-            Gérez vos réservations et téléchargez vos billets
-          </p>
-        </div>
+      <div>
+        <h1 className="text-3xl font-bold">Mes événements</h1>
+        <p className="text-muted-foreground">
+          Gérez vos réservations et téléchargez vos billets
+        </p>
+      </div>
+      <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
+        <Button asChild className="rounded-xl bg-orange-500 hover:bg-orange-600">
+          <Link to="/dashboard/events/new">
+            <Plus className="w-4 h-4 mr-2" />
+            Créer un événement
+          </Link>
+        </Button>
         <div className="w-full md:w-72">
           <Input
             placeholder="Rechercher un événement..."

@@ -13,6 +13,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/integrations/supabase/client";
+import { SEO } from "@/components/SEO";
 
 interface Club {
     id: string;
@@ -31,15 +32,18 @@ const Clubs = () => {
     useEffect(() => {
         const fetchClubs = async () => {
             try {
-                // Fetch organizations with category 'club'
-                // Note: 'category' column must exist in the database
+                // Fetch all organizations (filtering by category 'club' is disabled as column is missing)
                 const { data, error } = await supabase
                     .from('organizations')
-                    .select('id, name, category, address, logo_url')
-                    .eq('category', 'club');
+                    .select('id, name, address, logo_url');
 
                 if (error) throw error;
-                setClubs(data || []);
+                // Add a mock category property to satisfy the interface
+                const clubsWithMockCategory = (data || []).map(org => ({
+                    ...org,
+                    category: 'Club'
+                }));
+                setClubs(clubsWithMockCategory);
             } catch (error) {
                 console.error("Error fetching clubs:", error);
                 // Fallback to empty list or handle error appropriately
@@ -64,6 +68,10 @@ const Clubs = () => {
 
     return (
         <div className="min-h-screen bg-white font-sans">
+            <SEO
+                title="Découvrez les clubs"
+                description="Trouvez les meilleurs clubs sportifs et associations sur Panache. Tennis, Football, Natation et plus encore."
+            />
             <Navbar variant="orange" />
 
             {/* Header Section */}

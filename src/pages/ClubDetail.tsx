@@ -1,55 +1,83 @@
 
-import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { useParams, Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Badge } from "@/components/ui/badge";
 import { EventCard } from "@/components/EventCard";
-import { Facebook, Instagram, Linkedin, MapPin, Phone, Globe, Mail } from "lucide-react";
+import { Facebook, Instagram, Linkedin, MapPin, Phone, Globe, Mail, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
+import { SEO } from "@/components/SEO";
 
 const ClubDetail = () => {
     const { id } = useParams();
+    const [club, setClub] = useState<any>(null);
+    const [clubEvents, setClubEvents] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    // Mock Data (would typically fetch based on ID)
-    const club = {
-        name: "FC Lyon",
-        category: "Football",
-        description: "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like).",
-        logo: "https://upload.wikimedia.org/wikipedia/fr/thumb/c/c7/Logo_FC_Lyon_2020.svg/1200px-Logo_FC_Lyon_2020.svg.png",
-        coverImage: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=1600&q=80",
-        phone: "04 36 45 23 14",
-        website: "www.football-club-lyon.fr",
-        email: "contact@football-club-lyon.fr",
-        address: "356 avenue Jean Jaurès, 69007 Lyon",
-        socials: {
-            linkedin: "#",
-            instagram: "#",
-            facebook: "#"
-        }
-    };
+    useEffect(() => {
+        const fetchClubData = async () => {
+            if (!id) return;
+            try {
+                setLoading(true);
+                // Fetch organization
+                const { data: org, error: orgError } = await supabase
+                    .from('organizations')
+                    .select('*')
+                    .eq('id', id)
+                    .single();
 
-    const events = [
-        {
-            id: 1,
-            title: "Skate Parc Gerland",
-            date: "22 juin 2021",
-            location: "69001 Lyon",
-            image: "https://images.unsplash.com/photo-1564982752979-3f7bc974d29a?w=800&q=80",
-            tag: "BMX",
-            tagColor: "bg-orange-500"
-        },
-        {
-            id: 2,
-            title: "Open 6ème sens",
-            date: "22 juin 2021",
-            location: "69001 Lyon",
-            image: "https://images.unsplash.com/photo-1622163642998-1ea36b1dde3b?w=800&q=80",
-            tag: "Tennis",
-            tagColor: "bg-orange-500"
-        }
-    ];
+                if (orgError) throw orgError;
+                setClub(org);
+
+                // Fetch published events for this org
+                const { data: events, error: eventsError } = await supabase
+                    .from('events')
+                    .select('*, ticket_types(price_cents)')
+                    .eq('organization_id', id)
+                    .eq('status', 'published')
+                    .gte('starts_at', new Date().toISOString())
+                    .order('starts_at', { ascending: true });
+
+                if (eventsError) throw eventsError;
+                setClubEvents(events || []);
+
+            } catch (err) {
+                console.error("Error fetching club data:", err);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchClubData();
+    }, [id]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2 className="h-12 w-12 animate-spin text-orange-500" />
+            </div>
+        );
+    }
+
+    if (!club) {
+        return (
+            <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
+                <h1 className="text-2xl font-bold">Club introuvable</h1>
+                <Link to="/" className="text-orange-500 hover:underline">Retour à l'accueil</Link>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-white font-sans">
+            <SEO
+                title={club.name}
+                description={club.description?.substring(0, 160) || `Découvrez le club ${club.name} sur Panache.`}
+                image={club.logo_url || club.banner_url}
+            />
             <Navbar variant="transparent" />
 
             {/* Hero Section */}
@@ -63,7 +91,7 @@ const ClubDetail = () => {
                 {/* Background Image Overlay (Optional, using solid pink as per mock for now, but mock has image) */}
                 <div className="absolute inset-0 z-0 opacity-50">
                     <img
-                        src={club.coverImage}
+                        src={club.banner_url || "https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=1600&q=80"}
                         alt="Cover"
                         className="w-full h-full object-cover"
                     />
@@ -75,22 +103,15 @@ const ClubDetail = () => {
                         <h1 className="text-5xl font-bold mb-4">{club.name}</h1>
                         <div className="flex gap-3 mb-6">
                             <Badge className="bg-orange-500 hover:bg-orange-600 text-white border-0 px-3 py-1 text-sm">
-                                {club.category}
-                            </Badge>
-                            <Badge className="bg-orange-500 hover:bg-orange-600 text-white border-0 px-3 py-1 text-sm">
-                                Foot salle
+                                Club
                             </Badge>
                         </div>
                         <div className="flex gap-4">
-                            <a href={club.socials.linkedin} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition-colors">
-                                <Linkedin className="h-5 w-5" />
-                            </a>
-                            <a href={club.socials.instagram} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition-colors">
-                                <Instagram className="h-5 w-5" />
-                            </a>
-                            <a href={club.socials.facebook} className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition-colors">
-                                <Facebook className="h-5 w-5" />
-                            </a>
+                            {club.website && (
+                                <a href={club.website} target="_blank" rel="noopener noreferrer" className="bg-white/20 p-2 rounded-full hover:bg-white/30 transition-colors">
+                                    <Globe className="h-5 w-5" />
+                                </a>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -110,18 +131,36 @@ const ClubDetail = () => {
                         <section>
                             <h2 className="text-2xl font-bold mb-6">Événements</h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                {events.map(event => (
-                                    <EventCard
-                                        key={event.id}
-                                        id={event.id}
-                                        title={event.title}
-                                        date={event.date}
-                                        location={event.location}
-                                        image={event.image}
-                                        tag={event.tag}
-                                        tagColor={event.tagColor}
-                                    />
-                                ))}
+                                {clubEvents.length > 0 ? (
+                                    clubEvents.map(event => {
+                                        const minPrice = event.ticket_types && event.ticket_types.length > 0
+                                            ? Math.min(...event.ticket_types.map((t: any) => t.price_cents))
+                                            : 0;
+
+                                        const hasMultiplePrices = event.ticket_types && new Set(event.ticket_types.map((t: any) => t.price_cents)).size > 1;
+                                        const minPriceStr = minPrice > 0 ? `${(minPrice / 100).toFixed(0)}€` : 'Gratuit';
+                                        const priceDisplay = hasMultiplePrices ? `Dès ${minPriceStr}` : minPriceStr;
+
+                                        const sportMatch = event.title.match(/^\[(.*?)\]/);
+                                        const tag = sportMatch ? sportMatch[1] : "Sport";
+
+                                        return (
+                                            <EventCard
+                                                key={event.id}
+                                                id={event.id}
+                                                title={event.title}
+                                                date={format(new Date(event.starts_at), "d MMMM yyyy", { locale: fr })}
+                                                location={event.city || event.venue || "Lieu à confirmer"}
+                                                image={event.images?.[0] || 'https://images.unsplash.com/photo-1564982752979-3f7bc974d29a?w=800&q=80'}
+                                                tag={tag}
+                                                tagColor="bg-orange-500"
+                                                price={priceDisplay}
+                                            />
+                                        );
+                                    })
+                                ) : (
+                                    <p className="text-gray-500 col-span-2">Aucun événement prévu prochainement.</p>
+                                )}
                             </div>
                         </section>
                     </div>
@@ -137,14 +176,20 @@ const ClubDetail = () => {
                                         <Phone className="h-5 w-5 text-gray-400" />
                                         <span className="font-medium">{club.phone}</span>
                                     </div>
-                                    <div className="flex items-center gap-3 text-gray-700">
-                                        <Globe className="h-5 w-5 text-gray-400" />
-                                        <a href={`https://${club.website}`} className="font-medium hover:underline">{club.website}</a>
-                                    </div>
-                                    <div className="flex items-center gap-3 text-gray-700">
-                                        <Mail className="h-5 w-5 text-gray-400" />
-                                        <a href={`mailto:${club.email}`} className="font-medium hover:underline">{club.email}</a>
-                                    </div>
+                                    {club.website && (
+                                        <div className="flex items-center gap-3 text-gray-700">
+                                            <Globe className="h-5 w-5 text-gray-400" />
+                                            <a href={club.website.startsWith('http') ? club.website : `https://${club.website}`} target="_blank" rel="noopener noreferrer" className="font-medium hover:underline">
+                                                {club.website.replace(/^https?:\/\//, '')}
+                                            </a>
+                                        </div>
+                                    )}
+                                    {club.billing_email && (
+                                        <div className="flex items-center gap-3 text-gray-700">
+                                            <Mail className="h-5 w-5 text-gray-400" />
+                                            <a href={`mailto:${club.billing_email}`} className="font-medium hover:underline">{club.billing_email}</a>
+                                        </div>
+                                    )}
                                     <div className="flex items-start gap-3 text-gray-700">
                                         <MapPin className="h-5 w-5 text-gray-400 mt-1" />
                                         <span className="font-medium max-w-[200px]">{club.address}</span>
@@ -158,7 +203,7 @@ const ClubDetail = () => {
                                 <div className="absolute top-0 left-0 w-full h-8 bg-white" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 0)" }}></div>
 
                                 <div className="bg-white p-4 rounded-xl shadow-lg relative z-10 transform rotate-3">
-                                    <img src={club.logo} alt={club.name} className="h-24 w-24 object-contain" />
+                                    <img src={club.logo_url || "https://upload.wikimedia.org/wikipedia/fr/thumb/c/c7/Logo_FC_Lyon_2020.svg/1200px-Logo_FC_Lyon_2020.svg.png"} alt={club.name} className="h-24 w-24 object-contain" />
                                 </div>
                             </div>
                         </div>

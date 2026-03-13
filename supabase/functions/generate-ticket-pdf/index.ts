@@ -85,7 +85,7 @@ serve(async (req) => {
 
     // ---- QR payload (URL de validation)
     const baseUrl = Deno.env.get("APP_BASE_URL") || "https://panache-esport.com";
-    const validationUrl = `${baseUrl.replace(/\/+$/,"")}/validate-ticket?registrationId=${registration.id}&eventId=${registration.event_id}&userId=${registration.user_id}`;
+    const validationUrl = `${baseUrl.replace(/\/+$/, "")}/validate-ticket?registrationId=${registration.id}&eventId=${registration.event_id}&userId=${registration.user_id}`;
 
     const qr = qrcode(0, "M");
     qr.addData(validationUrl);
@@ -120,26 +120,28 @@ serve(async (req) => {
     doc.setFont("helvetica", "bold");
     doc.setFontSize(11);
 
-    // Logo Panache - utiliser le logo depuis les assets publics
+    // Logo Panache - use global public logo
     try {
-      // Récupérer le logo depuis le public folder
-      const logoUrl = `${Deno.env.get("SUPABASE_URL")}/storage/v1/object/public/event-images/panache-logo-text.png`;
+      const logoUrl = "https://wlxbydzshqijlfejqafp.supabase.co/storage/v1/object/public/event-images/panache-logo-text.png";
+      console.log("Fetching logo from:", logoUrl);
       const logoResponse = await fetch(logoUrl);
-      
+
       if (logoResponse.ok) {
         const logoBuffer = await logoResponse.arrayBuffer();
         const logoBase64 = btoa(String.fromCharCode(...new Uint8Array(logoBuffer)));
         const logoDataUrl = `data:image/png;base64,${logoBase64}`;
-        // @ts-ignore
+        // @ts-ignore jsPDF type issues in Deno
         doc.addImage(logoDataUrl, "PNG", leftColX, titleY - 2, 35, 12);
-        console.log("Logo loaded successfully");
+        console.log("Panache logo embedded successfully");
       } else {
-        console.log("Logo not found, using text fallback");
-        doc.text("Panache Esport", leftColX, titleY + 6);
+        console.warn("Logo fetch failed with status:", logoResponse.status);
+        doc.setFontSize(14);
+        doc.text("PANACHE", leftColX, titleY + 6);
       }
     } catch (error) {
-      console.log("Error loading logo:", error);
-      doc.text("Panache Esport", leftColX, titleY + 6);
+      console.error("Error embedding logo:", error);
+      doc.setFontSize(14);
+      doc.text("PANACHE", leftColX, titleY + 6);
     }
 
     // Ticket ID + date/heure à droite

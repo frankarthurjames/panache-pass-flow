@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { SEO } from "@/components/SEO";
 import { Loader2, Mail, Lock, User } from "lucide-react";
 import panacheLogoText from "@/assets/panache-logo-text.png";
 
@@ -15,7 +17,7 @@ const Auth = () => {
   const navigate = useNavigate();
   const { signIn, signUp, user, loading } = useAuth();
   const { toast } = useToast();
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState(searchParams.get('tab') === 'signup' ? 'signup' : 'signin');
 
@@ -46,11 +48,11 @@ const Auth = () => {
 
     try {
       const { error } = await signIn(formData.email, formData.password);
-      
+
       if (error) {
         toast({
           title: "Erreur de connexion",
-          description: error.message === "Invalid login credentials" 
+          description: error.message === "Invalid login credentials"
             ? "Email ou mot de passe incorrect"
             : error.message,
           variant: "destructive",
@@ -75,7 +77,7 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (formData.password !== formData.confirmPassword) {
       toast({
         title: "Erreur",
@@ -98,7 +100,7 @@ const Auth = () => {
 
     try {
       const { error } = await signUp(formData.email, formData.password, formData.displayName);
-      
+
       if (error) {
         toast({
           title: "Erreur d'inscription",
@@ -135,12 +137,16 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+      <SEO
+        title={activeTab === 'signin' ? "Connexion" : activeTab === 'signup' ? "Inscription" : "Réinitialisation"}
+        description="Connectez-vous à votre compte Panache pour gérer vos événements et réservations."
+      />
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center mb-6">
-            <div className="w-16 h-16 rounded-lg flex items-center justify-center overflow-hidden">
+            <Link to="/" className="w-24 h-24 rounded-lg flex items-center justify-center overflow-hidden hover:opacity-80 transition-opacity">
               <img src={panacheLogoText} alt="Panache" className="w-full h-full object-contain" />
-            </div>
+            </Link>
           </div>
           <CardDescription>
             Votre plateforme de billetterie sportive
@@ -172,7 +178,16 @@ const Auth = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Mot de passe</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="signin-password">Mot de passe</Label>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('forgot')}
+                      className="text-sm text-orange-600 hover:text-orange-700 font-medium bg-transparent border-0 cursor-pointer"
+                    >
+                      Mot de passe oublié ?
+                    </button>
+                  </div>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -196,6 +211,64 @@ const Auth = () => {
                   ) : (
                     "Se connecter"
                   )}
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="forgot" className="space-y-4">
+              <div className="space-y-2 text-center mb-4">
+                <h3 className="text-lg font-semibold">Mot de passe oublié ?</h3>
+                <p className="text-sm text-muted-foreground">
+                  Entrez votre email pour recevoir un lien de réinitialisation.
+                </p>
+              </div>
+              <form onSubmit={async (e) => {
+                e.preventDefault();
+                setIsLoading(true);
+                const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+                  redirectTo: `${window.location.origin}/update-password`,
+                });
+                setIsLoading(false);
+                if (error) {
+                  toast({
+                    title: "Erreur",
+                    description: error.message,
+                    variant: "destructive",
+                  });
+                } else {
+                  toast({
+                    title: "Email envoyé",
+                    description: "Vérifiez votre boîte mail pour réinitialiser votre mot de passe.",
+                  });
+                  setActiveTab('signin');
+                }
+              }} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="forgot-email">Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="forgot-email"
+                      name="email"
+                      type="email"
+                      placeholder="votre@email.com"
+                      className="pl-10"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      required
+                    />
+                  </div>
+                </div>
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Envoi..." : "Envoyer le lien"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => setActiveTab('signin')}
+                >
+                  Retour à la connexion
                 </Button>
               </form>
             </TabsContent>

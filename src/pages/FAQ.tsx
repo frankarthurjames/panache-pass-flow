@@ -1,5 +1,6 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { SEO } from "@/components/SEO";
 import {
   Accordion,
   AccordionContent,
@@ -53,8 +54,12 @@ const FAQ = () => {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <SEO
+        title="Questions Fréquentes"
+        description="Besoin d'aide ? Consultez notre FAQ pour tout savoir sur l'utilisation de Panache."
+      />
       <Navbar />
-      
+
       <div className="flex-1 py-12 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-4xl">
           <div className="text-center mb-12">

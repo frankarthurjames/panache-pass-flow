@@ -1,18 +1,23 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { SEO } from "@/components/SEO";
 
 const Privacy = () => {
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <SEO
+        title="Politique de Confidentialité"
+        description="Consultez la politique de confidentialité de Panache pour savoir comment nous traitons vos données."
+      />
       <Navbar />
-      
+
       <div className="flex-1 py-12 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto max-w-4xl">
           <div className="prose prose-gray dark:prose-invert max-w-none">
             <h1 className="text-4xl font-bold mb-8 text-foreground">
               Politique de Confidentialité
             </h1>
-            
+
             <p className="text-muted-foreground mb-6">
               Dernière mise à jour : 12 janvier 2025
             </p>
@@ -99,7 +104,7 @@ const Privacy = () => {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4 text-foreground">7. Sécurité</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour protéger 
+                Nous mettons en œuvre des mesures techniques et organisationnelles appropriées pour protéger
                 vos données contre tout accès non autorisé, modification, divulgation ou destruction.
               </p>
             </section>
@@ -107,7 +112,7 @@ const Privacy = () => {
             <section className="mb-8">
               <h2 className="text-2xl font-semibold mb-4 text-foreground">8. Contact</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Pour exercer vos droits ou pour toute question : 
+                Pour exercer vos droits ou pour toute question :
                 <a href="mailto:privacy@panache.fr" className="text-primary hover:underline ml-1">
                   privacy@panache.fr
                 </a>

@@ -6,6 +6,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Upload, X, Image as ImageIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface ImageUploadProps {
   value: string[];
@@ -27,7 +28,7 @@ export const ImageUpload = ({ value = [], onChange, maxImages = 5, label = "Imag
     }
 
     console.log(`ImageUpload: ${files.length} file(s) selected, current images: ${value.length}/${maxImages}`);
-    
+
     const remainingSlots = maxImages - value.length;
     const filesToUpload = Array.from(files).slice(0, remainingSlots);
 
@@ -52,7 +53,7 @@ export const ImageUpload = ({ value = [], onChange, maxImages = 5, label = "Imag
       for (let i = 0; i < filesToUpload.length; i++) {
         const file = filesToUpload[i];
         console.log(`ImageUpload: Processing file ${i + 1}/${filesToUpload.length}: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)`);
-        
+
         // Validate file type
         if (!file.type.startsWith('image/')) {
           console.error(`ImageUpload: Invalid file type: ${file.type}`);
@@ -92,7 +93,7 @@ export const ImageUpload = ({ value = [], onChange, maxImages = 5, label = "Imag
         console.log('ImageUpload: Public URL generated:', urlData.publicUrl);
         uploadedUrls.push(urlData.publicUrl);
         successCount++;
-        
+
         // Update progress
         setUploadProgress(((i + 1) / filesToUpload.length) * 100);
       }
@@ -126,19 +127,31 @@ export const ImageUpload = ({ value = [], onChange, maxImages = 5, label = "Imag
     onChange(newImages);
   };
 
+  const setAsPrimary = (index: number) => {
+    if (index === 0) return;
+    const newImages = [...value];
+    const [primaryImage] = newImages.splice(index, 1);
+    newImages.unshift(primaryImage);
+    onChange(newImages);
+    toast.success("Image définie comme principale (bannière)");
+  };
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
         <Label>{label}</Label>
         <p className="text-sm text-muted-foreground">
-          Téléchargez jusqu'à {maxImages} images (JPG, PNG, WebP - max 10MB chacune)
+          Téléchargez jusqu'à {maxImages} images. La première sera utilisée comme bannière.
         </p>
       </div>
 
       {value.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {value.map((imageUrl, index) => (
-            <Card key={index} className="relative group overflow-hidden">
+            <Card key={index} className={cn(
+              "relative group overflow-hidden border-2 transition-all",
+              index === 0 ? "border-orange-500 ring-2 ring-orange-500/20" : "border-transparent"
+            )}>
               <CardContent className="p-0">
                 <div className="aspect-video relative">
                   <img
@@ -146,15 +159,35 @@ export const ImageUpload = ({ value = [], onChange, maxImages = 5, label = "Imag
                     alt={`Image ${index + 1}`}
                     className="w-full h-full object-cover"
                   />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="icon"
-                    className="absolute top-2 right-2 h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => handleRemoveImage(index)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
+
+                  {index === 0 && (
+                    <div className="absolute top-2 left-2 bg-orange-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+                      PRINCIPALE
+                    </div>
+                  )}
+
+                  <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    {index !== 0 && (
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        className="h-6 px-2 text-[10px] font-medium"
+                        onClick={() => setAsPrimary(index)}
+                      >
+                        Mettre en 1er
+                      </Button>
+                    )}
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => handleRemoveImage(index)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -172,7 +205,7 @@ export const ImageUpload = ({ value = [], onChange, maxImages = 5, label = "Imag
             onChange={handleFileSelect}
             className="hidden"
           />
-          
+
           <Button
             type="button"
             variant="outline"

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Search, ChevronDown, Loader2 } from "lucide-react";
 import { useSearchParams, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { SEO } from "@/components/SEO";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,13 +26,19 @@ interface Event {
   tag: string;
   tagColor: string;
   price: string;
+  price_cents: number;
   starts_at: string;
 }
 
+const CATEGORIES = ["Tous", "Tennis", "Athlétisme", "Kayak", "Natation", "BMX", "VTT", "Football"];
+
 const Events = () => {
-  const [searchParams] = useSearchParams();
-  const [searchQuery, setSearchQuery] = useState("");
-  const [displayedEvents, setDisplayedEvents] = useState<Event[]>([]);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialSport = searchParams.get('sport') || "Tous";
+  const initialQuery = searchParams.get('q') || "";
+
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
+  const [selectedSport, setSelectedSport] = useState(initialSport);
   const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState("Date");
@@ -48,6 +55,7 @@ const Events = () => {
             ticket_types ( price_cents )
           `)
           .eq('status', 'published')
+          .gte('starts_at', new Date().toISOString())
           .order('starts_at', { ascending: true });
 
         if (error) throw error;
@@ -57,15 +65,25 @@ const Events = () => {
             ? Math.min(...event.ticket_types.map((t: any) => t.price_cents))
             : 0;
 
-          // Infer tag from title or description for demo purposes
-          let tag = "Sport";
+          // Infer tag from title bracket first, then fallback to title/description search
+          const sportMatch = event.title.match(/^\[(.*?)\]/);
+          let tag = sportMatch ? sportMatch[1] : "Sport";
           let tagColor = "bg-orange-500";
-          const titleLower = event.title.toLowerCase();
-          if (titleLower.includes("tennis")) { tag = "Tennis"; tagColor = "bg-orange-500"; }
-          else if (titleLower.includes("bmx") || titleLower.includes("skate")) { tag = "BMX"; tagColor = "bg-orange-400"; }
-          else if (titleLower.includes("natation") || titleLower.includes("piscine")) { tag = "Natation"; tagColor = "bg-blue-500"; }
-          else if (titleLower.includes("running") || titleLower.includes("marathon")) { tag = "Athlétisme"; tagColor = "bg-red-500"; }
-          else if (titleLower.includes("vtt") || titleLower.includes("vélo")) { tag = "VTT"; tagColor = "bg-green-600"; }
+
+          if (!sportMatch) {
+            const titleLower = event.title.toLowerCase();
+            if (titleLower.includes("tennis")) { tag = "Tennis"; tagColor = "bg-orange-500"; }
+            else if (titleLower.includes("bmx") || titleLower.includes("skate")) { tag = "BMX"; tagColor = "bg-orange-400"; }
+            else if (titleLower.includes("natation") || titleLower.includes("piscine") || titleLower.includes("aquatique")) { tag = "Natation"; tagColor = "bg-blue-500"; }
+            else if (titleLower.includes("running") || titleLower.includes("marathon") || titleLower.includes("athlétisme")) { tag = "Athlétisme"; tagColor = "bg-red-500"; }
+            else if (titleLower.includes("vtt") || titleLower.includes("vélo") || titleLower.includes("cyclisme")) { tag = "VTT"; tagColor = "bg-green-600"; }
+            else if (titleLower.includes("football") || titleLower.includes("foot ")) { tag = "Football"; tagColor = "bg-emerald-600"; }
+            else if (titleLower.includes("kayak") || titleLower.includes("canoë")) { tag = "Kayak"; tagColor = "bg-sky-500"; }
+          }
+
+          const hasMultiplePrices = event.ticket_types && new Set(event.ticket_types.map((t: any) => t.price_cents)).size > 1;
+          const minPriceStr = minPrice > 0 ? `${(minPrice / 100).toFixed(0)}€` : 'Gratuit';
+          const priceDisplay = hasMultiplePrices ? `Dès ${minPriceStr}` : minPriceStr;
 
           return {
             id: event.id,
@@ -75,13 +93,12 @@ const Events = () => {
             image: event.images?.[0] || 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop',
             tag,
             tagColor,
-            price: minPrice > 0 ? `${(minPrice / 100).toFixed(0)}€` : 'Gratuit',
+            price: priceDisplay,
+            price_cents: minPrice,
             starts_at: event.starts_at
           };
         }) || [];
-
         setAllEvents(formattedEvents);
-        setDisplayedEvents(formattedEvents);
       } catch (err) {
         console.error('Error:', err);
       } finally {
@@ -92,9 +109,11 @@ const Events = () => {
     fetchEvents();
   }, []);
 
-  // Filter logic
-  useEffect(() => {
-    let filtered = allEvents;
+  // Combined filtering and sorting logic
+  const displayedEvents = useMemo(() => {
+    let filtered = [...allEvents];
+
+    // Search filter
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       filtered = filtered.filter(e =>
@@ -103,11 +122,57 @@ const Events = () => {
         e.tag.toLowerCase().includes(q)
       );
     }
-    setDisplayedEvents(filtered);
-  }, [searchQuery, allEvents]);
+
+    // Sport filter
+    if (selectedSport !== "Tous") {
+      filtered = filtered.filter(e => e.tag === selectedSport);
+    }
+
+    // Sorting
+    filtered.sort((a, b) => {
+      switch (sortBy) {
+        case "Date":
+          return new Date(a.starts_at).getTime() - new Date(b.starts_at).getTime();
+        case "Prix":
+          return a.price_cents - b.price_cents;
+        case "Nom":
+          return a.title.localeCompare(b.title);
+        default:
+          return 0;
+      }
+    });
+
+    return filtered;
+  }, [searchQuery, selectedSport, sortBy, allEvents]);
+
+  const handleSportSelect = (sport: string) => {
+    setSelectedSport(sport);
+    const newParams = new URLSearchParams(searchParams);
+    if (sport === "Tous") {
+      newParams.delete('sport');
+    } else {
+      newParams.set('sport', sport);
+    }
+    setSearchParams(newParams);
+  };
+
+  const handleSearchChange = (val: string) => {
+    setSearchQuery(val);
+    const newParams = new URLSearchParams(searchParams);
+    if (val) {
+      newParams.set('q', val);
+    } else {
+      newParams.delete('q');
+    }
+    setSearchParams(newParams);
+  };
 
   return (
     <div className="min-h-screen bg-white font-sans">
+      <SEO
+        title="Tous les événements"
+        description="Parcourez et réservez parmi une large sélection d'événements sportifs et activités."
+      />
       <Navbar variant="orange" />
 
       {/* Hero Header Section */}
@@ -129,16 +194,16 @@ const Events = () => {
         />
 
         <div className="relative z-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto text-white">
-          <h1 className="text-4xl md:text-6xl font-bold mb-10 tracking-tight">Toutes les activités</h1>
+          <h1 className="text-4xl md:text-6xl font-bold mb-10 tracking-tight">Tous les événements</h1>
 
           <div className="flex flex-col md:flex-row gap-6 items-center justify-between">
             {/* Search Bar */}
             <div className="relative w-full md:max-w-xl text-black">
               <Input
-                placeholder="Rechercher une activité, un lieu..."
+                placeholder="Rechercher un événement, un lieu..."
                 className="h-14 rounded-full pl-6 pr-14 border-0 bg-white/95 focus:bg-white transition-colors shadow-lg text-lg"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
               />
               <Button
                 className="absolute right-2 top-2 h-10 w-10 rounded-full p-0 flex items-center justify-center hover:scale-105 transition-transform shadow-md"
@@ -166,6 +231,23 @@ const Events = () => {
               </DropdownMenu>
             </div>
           </div>
+
+          {/* Sport Pills */}
+          <div className="mt-10 flex gap-3 overflow-x-auto pb-2 no-scrollbar">
+            {CATEGORIES.map((sport) => (
+              <Button
+                key={sport}
+                onClick={() => handleSportSelect(sport)}
+                variant={selectedSport === sport ? "default" : "outline"}
+                className={`rounded-full px-6 h-10 font-medium transition-all ${selectedSport === sport
+                  ? "bg-[#F97316] hover:bg-[#EA580C] text-white border-0"
+                  : "bg-white/10 text-white border-white/20 hover:bg-white/20"
+                  }`}
+              >
+                {sport}
+              </Button>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -177,7 +259,7 @@ const Events = () => {
           </div>
         ) : displayedEvents.length === 0 ? (
           <div className="text-center py-20 text-gray-500">
-            Aucune activité trouvée.
+            Aucun événement trouvé.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -191,6 +273,7 @@ const Events = () => {
                 image={event.image}
                 tag={event.tag}
                 tagColor={event.tagColor}
+                price={event.price}
               />
             ))}
           </div>
