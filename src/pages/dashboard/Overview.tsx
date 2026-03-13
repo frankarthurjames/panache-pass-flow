@@ -1,12 +1,19 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { Plus, Building2, Users, Calendar, TrendingUp, Activity } from "lucide-react";
+import { Plus, Building2, Users, Calendar, TrendingUp } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+
+// Core components
+import { PageContainer } from "@/components/layout/PageContainer";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { DashboardCard } from "@/components/dashboard/DashboardCard";
+import { StatsCard } from "@/components/dashboard/StatsCard";
+import { DataTable } from "@/components/dashboard/DataTable";
+import { EmptyState } from "@/components/dashboard/EmptyState";
 
 const Overview = () => {
   const { user } = useAuth();
@@ -19,7 +26,6 @@ const Overview = () => {
       if (!user) return;
 
       try {
-        // Récupérer les organisations
         const { data: orgMembers, error: membersError } = await supabase
           .from('organization_members')
           .select(`
@@ -46,7 +52,6 @@ const Overview = () => {
         let totalRevenueThisMonth = 0;
         let totalRevenueLastMonth = 0;
 
-        // Dates pour les comparaisons
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -62,20 +67,17 @@ const Overview = () => {
             validMembers.map(async (member: any) => {
               const org = member.organizations;
 
-              // Compter les événements totaux
               const { count: eventsCount } = await supabase
                 .from('events')
                 .select('*', { count: 'exact', head: true })
                 .eq('organization_id', org.id);
 
-              // Compter les événements ce mois
               const { count: eventsThisMonth } = await supabase
                 .from('events')
                 .select('*', { count: 'exact', head: true })
                 .eq('organization_id', org.id)
                 .gte('created_at', startOfMonth.toISOString());
 
-              // Compter les événements le mois dernier
               const { count: eventsLastMonth } = await supabase
                 .from('events')
                 .select('*', { count: 'exact', head: true })
@@ -83,20 +85,17 @@ const Overview = () => {
                 .gte('created_at', startOfLastMonth.toISOString())
                 .lt('created_at', startOfMonth.toISOString());
 
-              // Compter les participants totaux
               const { count: participantsCount } = await supabase
                 .from('registrations')
                 .select('*, events!inner(*)')
                 .eq('events.organization_id', org.id);
 
-              // Compter les participants cette semaine
               const { count: participantsThisWeek } = await supabase
                 .from('registrations')
                 .select('*, events!inner(*)')
                 .eq('events.organization_id', org.id)
                 .gte('created_at', startOfWeek.toISOString());
 
-              // Compter les participants la semaine dernière
               const { count: participantsLastWeek } = await supabase
                 .from('registrations')
                 .select('*, events!inner(*)')
@@ -104,93 +103,82 @@ const Overview = () => {
                 .gte('created_at', startOfLastWeek.toISOString())
                 .lt('created_at', startOfWeek.toISOString());
 
-              // Calculer les revenus totaux
-              const { data: allPayments } = await supabase
-                .from('payments')
-                .select('amount_cents, orders!inner(*, events!inner(*))')
-                .eq('orders.events.organization_id', org.id);
+              const { data: revenueData } = await supabase
+                .from('orders')
+                .select('amount_cents, status, events!inner(*), created_at')
+                .eq('events.organization_id', org.id)
+                .eq('status', 'paid');
 
-              // Calculer les revenus ce mois
-              const { data: paymentsThisMonth } = await supabase
-                .from('payments')
-                .select('amount_cents, orders!inner(*, events!inner(*))')
-                .eq('orders.events.organization_id', org.id)
-                .gte('created_at', startOfMonth.toISOString());
+              const orgRevenue = revenueData ? revenueData.reduce((sum, order) => sum + (order.amount_cents || 0), 0) / 100 : 0;
+              const orgRevenueThisMonth = revenueData ? revenueData
+                .filter(o => new Date(o.created_at) >= startOfMonth)
+                .reduce((sum, order) => sum + (order.amount_cents || 0), 0) / 100 : 0;
+              const orgRevenueLastMonth = revenueData ? revenueData
+                .filter(o => new Date(o.created_at) >= startOfLastMonth && new Date(o.created_at) < startOfMonth)
+                .reduce((sum, order) => sum + (order.amount_cents || 0), 0) / 100 : 0;
 
-              // Calculer les revenus le mois dernier
-              const { data: paymentsLastMonth } = await supabase
-                .from('payments')
-                .select('amount_cents, orders!inner(*, events!inner(*))')
-                .eq('orders.events.organization_id', org.id)
-                .gte('created_at', startOfLastMonth.toISOString())
-                .lt('created_at', startOfMonth.toISOString());
-
-              const monthlyRevenue = paymentsThisMonth?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
-              const totalOrgRevenue = allPayments?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
-
-              // Ajouter aux totaux globaux
               totalEvents += eventsCount || 0;
               totalEventsThisMonth += eventsThisMonth || 0;
               totalEventsLastMonth += eventsLastMonth || 0;
               totalParticipants += participantsCount || 0;
               totalParticipantsThisWeek += participantsThisWeek || 0;
               totalParticipantsLastWeek += participantsLastWeek || 0;
-              totalRevenue += totalOrgRevenue;
-              totalRevenueThisMonth += monthlyRevenue;
-              totalRevenueLastMonth += paymentsLastMonth?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
+              totalRevenue += orgRevenue;
+              totalRevenueThisMonth += orgRevenueThisMonth;
+              totalRevenueLastMonth += orgRevenueLastMonth;
 
               return {
-                id: org.id,
-                name: org.name,
-                logo: org.logo_url,
-                eventsCount: eventsCount || 0,
-                totalParticipants: participantsCount || 0,
-                monthlyRevenue: `${(monthlyRevenue / 100).toFixed(0)}€`,
-                status: "Actif",
-                lastActivity: "Il y a 2h"
+                ...org,
+                role: member.role,
+                stats: {
+                  events: eventsCount || 0,
+                  participants: participantsCount || 0,
+                  revenue: orgRevenue
+                }
               };
             })
           );
 
           setOrganizations(orgsWithStats);
-
-          // Calculer les variations
-          const eventsVariation = totalEventsThisMonth - totalEventsLastMonth;
-          const participantsVariation = totalParticipantsThisWeek - totalParticipantsLastWeek;
-          const revenueVariation = totalRevenueThisMonth - totalRevenueLastMonth;
-
-          // Mettre à jour les stats globales avec de vraies données
+          
           setGlobalStats([
             {
-              title: "Organisations actives",
-              value: validMembers.length.toString(),
-              change: `+${validMembers.length} ce mois`,
-              icon: Building2,
+              title: "Événements",
+              value: totalEvents,
+              icon: <Calendar className="h-5 w-5" />,
+              trend: {
+                value: `+${totalEventsThisMonth}`,
+                label: "ce mois",
+                isPositive: totalEventsThisMonth > totalEventsLastMonth,
+                isNeutral: totalEventsThisMonth === totalEventsLastMonth
+              }
             },
             {
-              title: "Événements total",
-              value: totalEvents.toString(),
-              change: `${eventsVariation >= 0 ? '+' : ''}${eventsVariation} ce mois`,
-              icon: Calendar,
+              title: "Participants",
+              value: totalParticipants,
+              icon: <Users className="h-5 w-5" />,
+              trend: {
+                value: `+${totalParticipantsThisWeek}`,
+                label: "cette semaine",
+                isPositive: totalParticipantsThisWeek > totalParticipantsLastWeek,
+                isNeutral: totalParticipantsThisWeek === totalParticipantsLastWeek
+              }
             },
             {
-              title: "Participants total",
-              value: totalParticipants.toString(),
-              change: `${participantsVariation >= 0 ? '+' : ''}${participantsVariation} cette semaine`,
-              icon: Users,
-            },
-            {
-              title: "Revenus total",
-              value: `${(totalRevenue / 100).toFixed(0)}€`,
-              change: `${revenueVariation >= 0 ? '+' : ''}${(revenueVariation / 100).toFixed(0)}€ ce mois`,
-              icon: TrendingUp,
-            },
+              title: "Revenus",
+              value: `${totalRevenue.toFixed(2)}€`,
+              icon: <TrendingUp className="h-5 w-5" />,
+              trend: {
+                value: `${totalRevenueThisMonth > 0 ? '+' : ''}${totalRevenueThisMonth.toFixed(2)}€`,
+                label: "ce mois",
+                isPositive: totalRevenueThisMonth > totalRevenueLastMonth,
+                isNeutral: totalRevenueThisMonth === totalRevenueLastMonth
+              }
+            }
           ]);
         }
       } catch (error) {
-        console.error('Error fetching data:', error);
-        setOrganizations([]);
-        setGlobalStats([]);
+        console.error("Error fetching overview data:", error);
       } finally {
         setLoading(false);
       }
@@ -199,124 +187,123 @@ const Overview = () => {
     fetchData();
   }, [user]);
 
-  return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">
-            Bonjour, {user?.user_metadata?.display_name || user?.email?.split('@')[0] || 'Organisateur'} 👋
-          </h1>
-          <p className="text-muted-foreground">
-            Vue d'ensemble de toutes vos organisations et activités
-          </p>
+  if (loading) {
+    return (
+      <PageContainer>
+        <div className="flex justify-center items-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
         </div>
-        <Button size="lg" asChild className="rounded-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 border-0 shadow-md transition-all hover:shadow-lg">
-          <Link to="/dashboard/events/new">
-            <Plus className="w-5 h-5 mr-2" />
-            Créer un événement
+      </PageContainer>
+    );
+  }
+
+  const columns = [
+    {
+      header: "Organisation",
+      accessorKey: "name",
+      cell: (org: any) => (
+        <div className="flex items-center gap-3">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={org.logo_url} />
+            <AvatarFallback>{org.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+          </Avatar>
+          <div className="flex flex-col">
+            <span className="font-semibold text-gray-900">{org.name}</span>
+            <span className="text-xs text-gray-500 capitalize">{org.role}</span>
+          </div>
+        </div>
+      )
+    },
+    {
+      header: "Événements",
+      accessorKey: "events",
+      cell: (org: any) => (
+        <Badge variant="secondary" className="bg-gray-100 text-gray-700 font-semibold rounded-md">
+          {org.stats.events}
+        </Badge>
+      )
+    },
+    {
+      header: "Participants",
+      accessorKey: "participants",
+      cell: (org: any) => (
+        <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 font-semibold rounded-md">
+          {org.stats.participants}
+        </Badge>
+      )
+    },
+    {
+      header: "Revenus",
+      accessorKey: "revenue",
+      className: "text-right",
+      cell: (org: any) => (
+        <span className="font-bold text-gray-900">
+          {org.stats.revenue.toFixed(2)}€
+        </span>
+      )
+    },
+    {
+      header: "Actions",
+      accessorKey: "actions",
+      className: "text-right",
+      cell: (org: any) => (
+        <Button variant="ghost" size="sm" asChild className="hover:bg-gray-100">
+          <Link to={`/dashboard/org/${org.id}`}>
+            Gérer
           </Link>
         </Button>
-      </div>
+      )
+    }
+  ];
 
-      {/* Global Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {globalStats.map((stat) => (
-          <Card key={stat.title} className="rounded-xl border-gray-100 shadow-sm hover:shadow-md transition-all">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </CardTitle>
-              <div className="p-2 bg-orange-50 rounded-lg">
-                <stat.icon className="h-4 w-4 text-orange-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold mb-1 text-gray-900">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.change}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      {/* Organizations Grid */}
-      <div>
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold">Mes organisations</h2>
-          <Button variant="outline" size="sm" asChild>
-            <Link to="/dashboard/organizations">
-              Voir toutes
+  return (
+    <PageContainer>
+      <PageHeader
+        title="Vue d'ensemble"
+        description="Gérez toutes vos organisations et événements depuis un seul endroit."
+        action={
+          <Button asChild className="bg-black hover:bg-black/90 text-white shadow-sm font-semibold rounded-xl">
+            <Link to="/dashboard/organizations/new">
+              <Plus className="w-4 h-4 mr-2" />
+              Créer une organisation
             </Link>
           </Button>
+        }
+      />
+
+      {organizations.length > 0 ? (
+        <div className="space-y-8">
+          {/* Global Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {globalStats.map((stat, index) => (
+              <StatsCard key={index} {...stat} />
+            ))}
+          </div>
+
+          {/* Organizations List */}
+          <DashboardCard
+            title="Mes organisations"
+            description="Vue détaillée de l'activité de vos organisations"
+            contentClassName="p-0"
+          >
+            <DataTable 
+              data={organizations} 
+              columns={columns} 
+              keyExtractor={(org) => org.id} 
+              className="border-0 shadow-none"
+            />
+          </DashboardCard>
         </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {loading ? (
-            <div className="text-center py-8 col-span-2">Chargement...</div>
-          ) : organizations.map((org) => (
-            <Link key={org.id} to={`/dashboard/org/${org.id}`}>
-              <Card className="hover:shadow-lg transition-shadow cursor-pointer">
-                <CardContent className="p-6">
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="w-12 h-12">
-                        <AvatarImage src={org.logo || ""} />
-                        <AvatarFallback className="text-lg font-semibold">
-                          {org.name.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h3 className="font-semibold text-lg">{org.name}</h3>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary" className="flex items-center gap-1">
-                            <Activity className="w-3 h-3" />
-                            {org.status}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {org.lastActivity}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <div className="text-2xl font-bold text-primary">{org.eventsCount}</div>
-                      <div className="text-xs text-muted-foreground">Événements</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-primary">{org.totalParticipants}</div>
-                      <div className="text-xs text-muted-foreground">Participants</div>
-                    </div>
-                    <div>
-                      <div className="text-2xl font-bold text-primary">{org.monthlyRevenue}</div>
-                      <div className="text-xs text-muted-foreground">Ce mois</div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
-
-        {organizations.length === 0 && (
-          <Card className="p-12 text-center">
-            <Building2 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Aucune organisation créée</h3>
-            <p className="text-muted-foreground mb-6">
-              Créez votre première organisation pour commencer à organiser des événements
-            </p>
-            <Button asChild>
-              <Link to="/dashboard/organizations/new">
-                <Plus className="w-4 h-4 mr-2" />
-                Créer ma première organisation
-              </Link>
-            </Button>
-          </Card>
-        )}
-      </div>
-    </div>
+      ) : (
+        <EmptyState
+          icon={<Building2 className="w-8 h-8" />}
+          title="Bienvenue sur votre tableau de bord"
+          description="Vous ne faites partie d'aucune organisation pour le moment. Créez-en une pour commencer à publier des événements."
+          actionLabel="Créer ma première organisation"
+          actionUrl="/dashboard/organizations/new"
+        />
+      )}
+    </PageContainer>
   );
 };
 
