@@ -605,10 +605,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      is_org_owner: {
-        Args: { org_id: string }
-        Returns: boolean
-      }
+      is_org_owner: { Args: { org_id: string }; Returns: boolean }
     }
     Enums: {
       event_status: "draft" | "published" | "archived"
