@@ -127,7 +127,7 @@ export function DashboardSidebar() {
                 {organizations.length === 0 ? (
                   <SelectItem value="new">
                     <div className="flex items-center gap-2">
-                      <Plus className="w-4 h-4" />
+                      
                       <span>Nouvelle organisation</span>
                     </div>
                   </SelectItem>
@@ -209,7 +209,7 @@ export function DashboardSidebar() {
             asChild
           >
             <NavLink to="/dashboard/organizations/new">
-              <Plus className="w-4 h-4" />
+              
               {!collapsed && <span className="ml-2">Nouvelle organisation</span>}
             </NavLink>
           </Button>

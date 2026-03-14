@@ -601,7 +601,7 @@ const QRValidator = () => {
                         variant="default"
                         className="flex-1 rounded-full"
                       >
-                        <QrCode className="w-4 h-4 mr-2" />
+                        
                         Capturer QR
                       </Button>
                     )}

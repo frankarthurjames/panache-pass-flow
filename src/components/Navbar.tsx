@@ -86,7 +86,7 @@ export const Navbar = ({ variant = "transparent" }: NavbarProps) => {
                         color: isOrange ? "#000000" : "#FFFFFF"
                       }}
                     >
-                      <User className="w-4 h-4" />
+                      
                       <span className="hidden sm:inline">
                         {user.user_metadata?.display_name || user.email}
                       </span>

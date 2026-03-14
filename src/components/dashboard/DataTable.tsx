@@ -28,22 +28,22 @@ export const DataTable = <T extends any>({
 }: DataTableProps<T>) => {
   if (!data || data.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 border border-dashed rounded-xl border-gray-200 bg-gray-50/50">
-        <p className="text-gray-500 font-medium">{emptyMessage}</p>
+      <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-3xl border-gray-200 bg-gray-50/50 m-6">
+        <p className="text-gray-400 font-bold uppercase tracking-widest">{emptyMessage}</p>
       </div>
     );
   }
 
   return (
-    <div className={cn("rounded-md border bg-white overflow-hidden shadow-sm", className)}>
+    <div className={cn("bg-white overflow-hidden", className)}>
       <Table>
-        <TableHeader className="bg-gray-50 border-b border-gray-100">
-          <TableRow>
+        <TableHeader className="bg-gray-50/50 border-b-2 border-gray-100">
+          <TableRow className="hover:bg-transparent">
             {columns.map((col, i) => (
               <TableHead 
                 key={i} 
                 className={cn(
-                  "py-4 font-semibold text-gray-500 text-xs uppercase tracking-wider", 
+                  "py-6 px-8 font-black text-gray-400 text-xs uppercase tracking-[0.2em]", 
                   col.className
                 )}
               >
@@ -58,12 +58,12 @@ export const DataTable = <T extends any>({
               key={keyExtractor(item)}
               onClick={() => onRowClick?.(item)}
               className={cn(
-                "transition-colors hover:bg-gray-50",
-                onRowClick && "cursor-pointer"
+                "transition-all hover:bg-orange-50/30 group",
+                onRowClick && "cursor-pointer active:scale-[0.99]"
               )}
             >
               {columns.map((col, i) => (
-                <TableCell key={i} className={cn("py-4 align-middle border-b border-gray-50 last:border-0", col.className)}>
+                <TableCell key={i} className={cn("py-6 px-8 align-middle border-b-2 border-gray-50 last:border-0", col.className)}>
                   {col.cell ? col.cell(item) : (item[col.accessorKey] as ReactNode)}
                 </TableCell>
               ))}

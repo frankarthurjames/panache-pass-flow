@@ -187,7 +187,7 @@ const MyEvents = () => {
           <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
             <Button asChild className="bg-orange-500 hover:bg-orange-600 text-white shadow-md font-bold rounded-xl h-10 px-5">
               <Link to="/dashboard/events/new">
-                <Plus className="w-4 h-4 mr-2" />
+                
                 Créer un événement
               </Link>
             </Button>

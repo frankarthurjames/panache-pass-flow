@@ -264,7 +264,7 @@ const Overview = () => {
         action={
           <Button asChild className="bg-black hover:bg-black/90 text-white shadow-sm font-semibold rounded-xl">
             <Link to="/dashboard/organizations/new">
-              <Plus className="w-4 h-4 mr-2" />
+              
               Créer une organisation
             </Link>
           </Button>
@@ -296,7 +296,7 @@ const Overview = () => {
         </div>
       ) : (
         <EmptyState
-          icon={<Building2 className="w-8 h-8" />}
+          icon={undefined}
           title="Bienvenue sur votre tableau de bord"
           description="Vous ne faites partie d'aucune organisation pour le moment. Créez-en une pour commencer à publier des événements."
           actionLabel="Créer ma première organisation"

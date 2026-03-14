@@ -180,13 +180,13 @@ const Auth = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="signin-password">Mot de passe</Label>
-                    <button
+                    <Button
                       type="button"
                       onClick={() => setActiveTab('forgot')}
                       className="text-sm text-orange-600 hover:text-orange-700 font-medium bg-transparent border-0 cursor-pointer"
                     >
                       Mot de passe oublié ?
-                    </button>
+                    </Button>
                   </div>
                   <div className="relative">
                     <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />

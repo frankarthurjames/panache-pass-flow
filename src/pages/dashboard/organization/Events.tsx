@@ -494,20 +494,20 @@ const Events = () => {
         </div>
         {loadingStripe ? (
           <Button size="lg" disabled>
-            <Plus className="w-5 h-5 mr-2" />
+            
             Vérification...
           </Button>
         ) : stripeStatus?.connected && stripeStatus?.charges_enabled ? (
           <Button size="lg" asChild>
             <Link to={`/dashboard/org/${orgId}/events/new`}>
-              <Plus className="w-5 h-5 mr-2" />
+              
               Créer un événement
             </Link>
           </Button>
         ) : (
           <Button size="lg" asChild>
             <Link to={`/dashboard/org/${orgId}/settings`}>
-              <Plus className="w-5 h-5 mr-2" />
+              
               Configurer Stripe d'abord
             </Link>
           </Button>
@@ -622,7 +622,7 @@ const Events = () => {
                     <div className="text-sm text-muted-foreground space-y-1">
                       <div className="flex items-center gap-6 flex-wrap">
                         <span className="flex items-center gap-1">
-                          <Calendar className="w-4 h-4" />
+                          
                           {event.date}
                         </span>
                         {event.venue && (
@@ -633,7 +633,7 @@ const Events = () => {
                           </span>
                         )}
                         <span className="flex items-center gap-1">
-                          <Users className="w-4 h-4" />
+                          
                           {event.participants}
                         </span>
                         <span className="flex items-center gap-1">
@@ -653,18 +653,18 @@ const Events = () => {
                 <div className="flex items-center gap-2">
                   <Button variant="ghost" size="sm" asChild>
                     <Link to={`/events/${event.id}`}>
-                      <Eye className="w-4 h-4" />
+                      
                     </Link>
                   </Button>
                   <Button variant="ghost" size="sm" asChild>
                     <Link to={`/dashboard/org/${orgId}/events/${event.id}/edit`}>
-                      <Edit className="w-4 h-4" />
+                      
                     </Link>
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm">
-                        <MoreHorizontal className="w-4 h-4" />
+                        
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -677,7 +677,7 @@ const Events = () => {
                         Statistiques détaillées
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleExportParticipants(event.id.toString())}>
-                        <Download className="w-4 h-4 mr-2" />
+                        
                         Exporter les participants
                       </DropdownMenuItem>
                       <DropdownMenuItem 
@@ -736,7 +736,7 @@ const Events = () => {
                 ? `/dashboard/org/${orgId}/settings`
                 : `/dashboard/org/${orgId}/events/new`
             }>
-              <Plus className="w-4 h-4 mr-2" />
+              
               {!stripeStatus?.connected || !stripeStatus?.charges_enabled 
                 ? "Configurer Stripe"
                 : "Créer mon premier événement"

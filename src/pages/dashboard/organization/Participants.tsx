@@ -126,7 +126,7 @@ const Participants = () => {
             Email groupé
           </Button>
           <Button variant="outline">
-            <Download className="w-4 h-4 mr-2" />
+            
             Exporter
           </Button>
         </div>

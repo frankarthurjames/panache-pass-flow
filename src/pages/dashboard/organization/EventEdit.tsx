@@ -285,7 +285,7 @@ const EventEdit = () => {
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" asChild className="rounded-full hover:bg-gray-100">
             <Link to={`/dashboard/org/${orgId}/events`}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
+              
               Retour aux événements
             </Link>
           </Button>
@@ -297,7 +297,7 @@ const EventEdit = () => {
         <div className="flex gap-2">
           <Button variant="outline" asChild className="rounded-full border-gray-200 hover:bg-gray-50">
             <Link to={`/events/${eventId}`}>
-              <Eye className="w-4 h-4 mr-2" />
+              
               Aperçu
             </Link>
           </Button>
@@ -306,7 +306,7 @@ const EventEdit = () => {
             disabled={saving || isFinished}
             className="rounded-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white border-0 shadow-md hover:shadow-lg transition-all"
           >
-            <Save className="w-4 h-4 mr-2" />
+            
             {saving ? "Sauvegarde..." : "Sauvegarder"}
           </Button>
         </div>
@@ -482,7 +482,7 @@ const EventEdit = () => {
                 Email groupé
               </Button>
               <Button variant="outline" onClick={handleExportParticipants} className="rounded-lg border-gray-200 hover:bg-gray-50">
-                <Download className="w-4 h-4 mr-2" />
+                
                 Exporter
               </Button>
             </div>

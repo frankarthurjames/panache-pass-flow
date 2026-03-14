@@ -213,7 +213,7 @@ const OrganizationDashboard = () => {
         </div>
         <Button size="lg" asChild className="rounded-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 border-0 shadow-md transition-all hover:shadow-lg">
           <Link to={`/dashboard/org/${orgId}/events/new`}>
-            <Plus className="w-5 h-5 mr-2" />
+            
             Créer un événement
           </Link>
         </Button>
@@ -269,11 +269,11 @@ const OrganizationDashboard = () => {
                       <div className="text-sm text-muted-foreground space-y-1">
                         <div className="flex items-center gap-4">
                           <span className="flex items-center gap-1">
-                            <Calendar className="w-4 h-4" />
+                            
                             {event.date}
                           </span>
                           <span className="flex items-center gap-1">
-                            <Users className="w-4 h-4" />
+                            
                             {event.participants}
                           </span>
                           <span className="flex items-center gap-1">
@@ -288,18 +288,18 @@ const OrganizationDashboard = () => {
                   <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm" asChild>
                       <Link to={`/events/${event.id}`}>
-                        <Eye className="w-4 h-4" />
+                        
                       </Link>
                     </Button>
                     <Button variant="ghost" size="sm" asChild>
                       <Link to={`/dashboard/org/${orgId}/events/${event.id}/edit`}>
-                        <Edit className="w-4 h-4" />
+                        
                       </Link>
                     </Button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="w-4 h-4" />
+                          
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -326,7 +326,7 @@ const OrganizationDashboard = () => {
             </p>
             <Button asChild>
               <Link to={`/dashboard/org/${orgId}/events/new`}>
-                <Plus className="w-4 h-4 mr-2" />
+                
                 Créer mon premier événement
               </Link>
             </Button>

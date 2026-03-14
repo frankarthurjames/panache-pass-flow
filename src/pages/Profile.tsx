@@ -147,7 +147,7 @@ const Profile = () => {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center">
-                    <User className="w-5 h-5 mr-2" />
+                    
                     Informations personnelles
                   </CardTitle>
                   <CardDescription>
@@ -252,9 +252,7 @@ const Profile = () => {
                 <Button size="lg" onClick={handleSave} disabled={loading}>
                   {loading ? (
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <Save className="w-4 h-4 mr-2" />
-                  )}
+                  ) : null}
                   {loading ? 'Sauvegarde...' : 'Sauvegarder les modifications'}
                 </Button>
               </div>

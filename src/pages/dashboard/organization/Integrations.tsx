@@ -192,7 +192,7 @@ const Integrations = () => {
                           integration.connected ? (
                             <>
                               <Button variant="outline" size="sm" onClick={() => window.open('https://dashboard.stripe.com/', '_blank')}>
-                                <ExternalLink className="w-4 h-4 mr-2" />
+                                
                                 Dashboard Stripe
                               </Button>
                               <Button variant="ghost" size="sm" onClick={handleDisconnectStripe}>
@@ -205,7 +205,7 @@ const Integrations = () => {
                                 Connecter Stripe
                               </Button>
                               <Button variant="ghost" size="sm" onClick={() => window.open('https://stripe.com/fr', '_blank')}>
-                                <ExternalLink className="w-4 h-4 mr-2" />
+                                
                                 En savoir plus
                               </Button>
                             </>
@@ -226,7 +226,7 @@ const Integrations = () => {
                                 {integration.available ? 'Connecter' : 'Bientôt disponible'}
                               </Button>
                               <Button variant="ghost" size="sm" disabled={!integration.available}>
-                                <ExternalLink className="w-4 h-4 mr-2" />
+                                
                                 En savoir plus
                               </Button>
                             </>

@@ -270,7 +270,7 @@ const Settings = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <Building2 className="w-5 h-5" />
+                
                 Informations générales
               </CardTitle>
               <CardDescription>
@@ -497,7 +497,7 @@ const Settings = () => {
                       size="sm"
                       onClick={() => window.open('https://dashboard.stripe.com/', '_blank')}
                     >
-                      <ExternalLink className="w-4 h-4 mr-2" />
+                      
                       Dashboard Stripe
                     </Button>
                     <Button
@@ -540,7 +540,7 @@ const Settings = () => {
                     onClick={handleConnectStripe}
                     disabled={loadingStripe || !orgData.name || !orgData.billingEmail}
                   >
-                    <CreditCard className="w-4 h-4 mr-2" />
+                    
                     {loadingStripe ? "Connexion..." : "Connecter Stripe"}
                   </Button>
                   {(!orgData.name || !orgData.billingEmail) && (

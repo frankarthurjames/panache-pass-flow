@@ -23,31 +23,28 @@ export const StatsCard = ({
   className
 }: StatsCardProps) => {
   return (
-    <Card className={cn("border-gray-100 shadow-sm", className)}>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between space-y-0 pb-2">
-          <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">{title}</p>
-          <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-500">
+    <Card className={cn("border-2 border-gray-100 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300", className)}>
+      <CardContent className="p-8">
+        <div className="flex items-center justify-between space-y-0 pb-4">
+          <p className="text-xs font-black text-gray-400 uppercase tracking-widest">{title}</p>
+          <div className="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500">
             {icon}
           </div>
         </div>
         <div>
-          <div className="text-3xl font-extrabold text-gray-900 tracking-tight">{value}</div>
+          <div className="text-4xl font-black text-black tracking-tight">{value}</div>
           {trend && (
-            <p className={cn(
-              "text-xs font-medium mt-2 flex items-center gap-1",
-              trend.isNeutral ? "text-gray-500" : trend.isPositive ? "text-emerald-600" : "text-red-600"
-            )}>
+            <div className="mt-4 flex items-center gap-2">
               <span className={cn(
-                "px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase",
-                trend.isNeutral ? "bg-gray-100 text-gray-600" : trend.isPositive ? "bg-emerald-50 text-emerald-700" : "bg-red-50 text-red-700"
+                "px-2 py-1 rounded-lg text-xs font-black uppercase tracking-wider",
+                trend.isNeutral ? "bg-gray-100 text-gray-600" : trend.isPositive ? "bg-emerald-50 text-emerald-600" : "bg-red-50 text-red-600"
               )}>
                 {trend.value}
               </span>
-              <span className="text-gray-400 font-medium">
+              <span className="text-sm font-bold text-gray-400">
                 {trend.label}
               </span>
-            </p>
+            </div>
           )}
         </div>
       </CardContent>

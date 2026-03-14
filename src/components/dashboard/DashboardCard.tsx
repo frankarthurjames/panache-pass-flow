@@ -20,19 +20,19 @@ export const DashboardCard = ({
   contentClassName
 }: DashboardCardProps) => {
   return (
-    <Card className={cn("border-gray-100 shadow-sm overflow-hidden", className)}>
-      <CardHeader className="bg-gray-50/50 border-b border-gray-100 px-6 py-4 flex flex-row items-center justify-between">
+    <Card className={cn("border-2 border-gray-100 shadow-xl overflow-hidden rounded-3xl", className)}>
+      <CardHeader className="bg-white border-b-2 border-gray-50 px-8 py-6 flex flex-row items-center justify-between">
         <div className="space-y-1">
-          <CardTitle className="text-lg font-bold text-gray-900">{title}</CardTitle>
+          <CardTitle className="text-2xl font-black text-black">{title}</CardTitle>
           {description && (
-            <CardDescription className="text-xs text-gray-500 font-medium">
+            <CardDescription className="text-sm font-bold text-gray-400 uppercase tracking-widest">
               {description}
             </CardDescription>
           )}
         </div>
         {action && <div>{action}</div>}
       </CardHeader>
-      <CardContent className={cn("p-6", contentClassName)}>
+      <CardContent className={cn("p-8", contentClassName)}>
         {children}
       </CardContent>
     </Card>

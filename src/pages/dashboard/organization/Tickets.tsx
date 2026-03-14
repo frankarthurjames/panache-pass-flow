@@ -255,9 +255,7 @@ const Tickets = () => {
                       >
                         {downloadingTickets[ticket.id] ? (
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        ) : (
-                          <Download className="w-4 h-4 mr-2" />
-                        )}
+                          ) : null}
                         {downloadingTickets[ticket.id] ? 'Génération...' : 'Télécharger'}
                       </Button>
                     </div>

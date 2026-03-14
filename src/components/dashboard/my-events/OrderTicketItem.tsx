@@ -31,7 +31,7 @@ export const OrderTicketItem = ({ order, handleDownloadTicket, handleDownloadInv
             className="text-xs h-8 text-gray-600 hover:text-gray-900 hover:bg-gray-200/50"
             onClick={() => handleDownloadInvoice(order.id)}
           >
-            <Receipt className="w-4 h-4 mr-2" /> Reçu
+             Reçu
           </Button>
         </div>
       </div>

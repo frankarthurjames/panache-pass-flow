@@ -171,7 +171,7 @@ const CreateEvent = () => {
           <div className="flex items-center gap-4 mb-4">
             <Button variant="ghost" size="sm" asChild>
               <Link to="/dashboard">
-                <ArrowLeft className="w-4 h-4 mr-2" />
+                
                 Retour au dashboard
               </Link>
             </Button>
@@ -185,11 +185,11 @@ const CreateEvent = () => {
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm">
-                <Eye className="w-4 h-4 mr-2" />
+                
                 Prévisualiser
               </Button>
               <Button size="sm">
-                <Save className="w-4 h-4 mr-2" />
+                
                 Sauvegarder le brouillon
               </Button>
             </div>
@@ -415,7 +415,7 @@ const CreateEvent = () => {
                 </div>
 
                 <Button variant="outline" onClick={addTicketType}>
-                  <Plus className="w-4 h-4 mr-2" />
+                  
                   Ajouter un type de billet
                 </Button>
               </CardContent>
@@ -425,7 +425,7 @@ const CreateEvent = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <Users className="w-5 h-5 mr-2" />
+                  
                   Participants
                 </CardTitle>
                 <CardDescription>
@@ -481,7 +481,7 @@ const CreateEvent = () => {
               </Button>
               <div className="flex gap-4">
                 <Button variant="outline" onClick={() => handleSubmit("draft")} disabled={isSubmitting}>
-                  <Save className="w-4 h-4 mr-2" />
+                  
                   Sauvegarder le brouillon
                 </Button>
                 <Button onClick={() => handleSubmit("published")} disabled={isSubmitting}>

@@ -437,7 +437,7 @@ const CreateEvent = () => {
                 </p>
               </div>
               <Button onClick={addTicketType} variant="outline" size="sm">
-                <Plus className="w-4 h-4 mr-2" />
+                
                 Ajouter un type
               </Button>
             </div>
@@ -640,7 +640,7 @@ const CreateEvent = () => {
                     variant="outline" 
                     onClick={() => navigate(`/dashboard/org/${orgId}/events`)}
                   >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    
                     Retour aux événements
                   </Button>
                   <Button 
@@ -662,7 +662,7 @@ const CreateEvent = () => {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/org/${orgId}/events`)}>
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          
           Retour
         </Button>
         <div>
@@ -708,9 +708,7 @@ const CreateEvent = () => {
                   : "bg-muted text-muted-foreground"
               }`}
             >
-              {currentStep > step.number ? (
-                <CheckCircle className="w-4 h-4" />
-              ) : (
+              {currentStep > step.number ? null : (
                 <step.icon className="w-4 h-4" />
               )}
             </div>
@@ -742,7 +740,7 @@ const CreateEvent = () => {
           onClick={prevStep}
           disabled={currentStep === 1}
         >
-          <ArrowLeft className="w-4 h-4 mr-2" />
+          
           Précédent
         </Button>
         

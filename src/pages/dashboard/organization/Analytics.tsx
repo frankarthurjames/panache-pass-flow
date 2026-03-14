@@ -378,12 +378,12 @@ const Analytics = () => {
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="sm" asChild>
             <Link to={`/dashboard/org/${orgId}/events`}>
-              <ArrowLeft className="w-4 h-4 mr-2" />
+              
               Retour aux événements
             </Link>
           </Button>
           <Button variant="outline" onClick={handleExportReport}>
-            <Download className="w-4 h-4 mr-2" />
+            
             Exporter le rapport
           </Button>
         </div>
@@ -394,7 +394,7 @@ const Analytics = () => {
             <p className="text-muted-foreground">{eventData.title}</p>
             <Badge variant="secondary">{eventData.status}</Badge>
             <span className="text-muted-foreground flex items-center gap-1">
-              <Calendar className="w-4 h-4" />
+              
               {eventData.date}
             </span>
           </div>
