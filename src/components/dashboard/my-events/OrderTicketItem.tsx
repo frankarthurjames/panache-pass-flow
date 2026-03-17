@@ -14,24 +14,24 @@ export const OrderTicketItem = ({ order, handleDownloadTicket, handleDownloadInv
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-      <div className="bg-gray-50 px-5 py-3 flex items-center justify-between border-b border-gray-200">
-        <div className="flex items-center gap-2">
-          <Ticket className="w-4 h-4 text-gray-500" />
-          <span className="font-semibold text-gray-900">
-            Commande #{order.id.substring(0, 8).toUpperCase()}
+      <div className="bg-gray-50 px-3 py-2.5 sm:px-5 sm:py-3 flex flex-wrap items-center justify-between gap-2 border-b border-gray-200">
+        <div className="flex items-center gap-2 min-w-0">
+          <Ticket className="w-4 h-4 text-gray-500 shrink-0" />
+          <span className="font-semibold text-gray-900 text-sm truncate">
+            #{order.id.substring(0, 8).toUpperCase()}
           </span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <span className="text-sm font-bold text-gray-900">
             {order.totalPaid.toFixed(2)}€
           </span>
           <Button
             variant="ghost"
             size="sm"
-            className="text-xs h-8 text-gray-600 hover:text-gray-900 hover:bg-gray-200/50"
+            className="text-xs h-7 sm:h-8 text-gray-600 hover:text-gray-900 hover:bg-gray-200/50"
             onClick={() => handleDownloadInvoice(order.id)}
           >
-             Reçu
+            <Receipt className="w-3.5 h-3.5 mr-1" /> Reçu
           </Button>
         </div>
       </div>

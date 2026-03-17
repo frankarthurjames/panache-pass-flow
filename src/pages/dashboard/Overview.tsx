@@ -262,7 +262,7 @@ const Overview = () => {
         title="Vue d'ensemble"
         description="Gérez toutes vos organisations et événements depuis un seul endroit."
         action={
-          <Button asChild className="bg-black hover:bg-black/90 text-white shadow-sm font-semibold rounded-xl">
+          <Button asChild className="bg-black hover:bg-black/90 text-white shadow-sm font-semibold rounded-xl w-full sm:w-auto">
             <Link to="/dashboard/organizations/new">
               
               Créer une organisation
