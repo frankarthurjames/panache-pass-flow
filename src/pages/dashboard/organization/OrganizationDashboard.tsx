@@ -1,17 +1,15 @@
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Calendar, Users, TrendingUp, Eye, Edit, MoreHorizontal, Euro, BarChart } from "lucide-react";
+import { Plus, Calendar, Users, TrendingUp } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+
+import { PageContainer } from "@/components/layout/PageContainer";
+import { StatsCard } from "@/components/dashboard/StatsCard";
+import { EmptyState } from "@/components/dashboard/EmptyState";
+import { EventCardRow } from "@/components/dashboard/EventCardRow";
 
 const OrganizationDashboard = () => {
   const { orgId } = useParams();
@@ -25,7 +23,6 @@ const OrganizationDashboard = () => {
       if (!orgId) return;
 
       try {
-        // Récupérer l'organisation
         const { data: org, error: orgError } = await supabase
           .from('organizations')
           .select('*')
@@ -35,33 +32,22 @@ const OrganizationDashboard = () => {
         if (orgError) throw orgError;
         setOrganization(org);
 
-        // Récupérer les événements récents
         const { data: events, error: eventsError } = await supabase
           .from('events')
-          .select(`
-            id,
-            title,
-            starts_at,
-            status,
-            capacity,
-            created_at
-          `)
+          .select(`id, title, starts_at, status, capacity, created_at`)
           .eq('organization_id', orgId)
           .order('created_at', { ascending: false })
           .limit(5);
 
         if (eventsError) throw eventsError;
 
-        // Pour chaque événement, récupérer les statistiques
         const eventsWithStats = await Promise.all(
           events.map(async (event: any) => {
-            // Compter les participants
             const { count: participantsCount } = await supabase
               .from('registrations')
               .select('*', { count: 'exact', head: true })
               .eq('event_id', event.id);
 
-            // Calculer les revenus
             const { data: payments } = await supabase
               .from('payments')
               .select('amount_cents, orders!inner(*)')
@@ -79,9 +65,7 @@ const OrganizationDashboard = () => {
               id: event.id,
               title: event.title,
               date: new Date(event.starts_at).toLocaleDateString('fr-FR', {
-                day: 'numeric',
-                month: 'short',
-                year: 'numeric'
+                day: 'numeric', month: 'short', year: 'numeric'
               }),
               status: statusMap[event.status]?.label || 'En attente',
               participants: `${participantsCount || 0}/${event.capacity || 0}`,
@@ -93,7 +77,7 @@ const OrganizationDashboard = () => {
 
         setUserEvents(eventsWithStats);
 
-        // Calculer les stats globales avec comparaisons de périodes
+        // Stats with period comparison
         const now = new Date();
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -104,24 +88,14 @@ const OrganizationDashboard = () => {
         startOfLastWeek.setDate(startOfWeek.getDate() - 7);
 
         const totalEvents = events.length;
-
-        // Compter les événements créés ce mois
-        const eventsThisMonth = events.filter(event =>
-          new Date(event.created_at) >= startOfMonth
-        ).length;
-
-        // Compter les événements créés le mois dernier
-        const eventsLastMonth = events.filter(event => {
-          const eventDate = new Date(event.created_at);
-          return eventDate >= startOfLastMonth && eventDate < startOfMonth;
+        const eventsThisMonth = events.filter(e => new Date(e.created_at) >= startOfMonth).length;
+        const eventsLastMonth = events.filter(e => {
+          const d = new Date(e.created_at);
+          return d >= startOfLastMonth && d < startOfMonth;
         }).length;
 
-        const totalParticipants = eventsWithStats.reduce((sum, event) => {
-          const participants = parseInt(event.participants.split('/')[0]);
-          return sum + participants;
-        }, 0);
+        const totalParticipants = eventsWithStats.reduce((sum, e) => sum + parseInt(e.participants.split('/')[0]), 0);
 
-        // Compter les participants cette semaine
         const participantsThisWeek = await supabase
           .from('registrations')
           .select('*, events!inner(*)')
@@ -135,12 +109,8 @@ const OrganizationDashboard = () => {
           .gte('created_at', startOfLastWeek.toISOString())
           .lt('created_at', startOfWeek.toISOString());
 
-        const totalRevenue = eventsWithStats.reduce((sum, event) => {
-          const revenue = parseInt(event.revenue.replace('€', ''));
-          return sum + revenue;
-        }, 0);
+        const totalRevenue = eventsWithStats.reduce((sum, e) => sum + parseInt(e.revenue.replace('€', '')), 0);
 
-        // Calculer les revenus ce mois
         const paymentsThisMonth = await supabase
           .from('payments')
           .select('amount_cents, orders!inner(*, events!inner(*))')
@@ -154,32 +124,42 @@ const OrganizationDashboard = () => {
           .gte('created_at', startOfLastMonth.toISOString())
           .lt('created_at', startOfMonth.toISOString());
 
-        const monthlyRevenue = paymentsThisMonth.data?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
-        const lastMonthRevenue = paymentsLastMonth.data?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
-
-        // Calculer les variations
-        const eventsVariation = eventsThisMonth - eventsLastMonth;
-        const participantsVariation = (participantsThisWeek.count || 0) - (participantsLastWeek.count || 0);
-        const revenueVariation = monthlyRevenue - lastMonthRevenue;
+        const monthlyRevenue = paymentsThisMonth.data?.reduce((sum, p) => sum + p.amount_cents, 0) || 0;
+        const lastMonthRevenue = paymentsLastMonth.data?.reduce((sum, p) => sum + p.amount_cents, 0) || 0;
 
         setStats([
           {
             title: "Événements créés",
             value: totalEvents.toString(),
-            change: `${eventsVariation >= 0 ? '+' : ''}${eventsVariation} ce mois`,
-            icon: Calendar,
+            icon: <Calendar className="h-5 w-5" />,
+            trend: {
+              value: `${eventsThisMonth - eventsLastMonth >= 0 ? '+' : ''}${eventsThisMonth - eventsLastMonth}`,
+              label: "ce mois",
+              isPositive: eventsThisMonth > eventsLastMonth,
+              isNeutral: eventsThisMonth === eventsLastMonth
+            }
           },
           {
             title: "Total participants",
             value: totalParticipants.toString(),
-            change: `${participantsVariation >= 0 ? '+' : ''}${participantsVariation} cette semaine`,
-            icon: Users,
+            icon: <Users className="h-5 w-5" />,
+            trend: {
+              value: `${(participantsThisWeek.count || 0) - (participantsLastWeek.count || 0) >= 0 ? '+' : ''}${(participantsThisWeek.count || 0) - (participantsLastWeek.count || 0)}`,
+              label: "cette semaine",
+              isPositive: (participantsThisWeek.count || 0) > (participantsLastWeek.count || 0),
+              isNeutral: (participantsThisWeek.count || 0) === (participantsLastWeek.count || 0)
+            }
           },
           {
             title: "Revenus générés",
             value: `${totalRevenue}€`,
-            change: `${revenueVariation >= 0 ? '+' : ''}${(revenueVariation / 100).toFixed(0)}€ ce mois`,
-            icon: TrendingUp,
+            icon: <TrendingUp className="h-5 w-5" />,
+            trend: {
+              value: `${monthlyRevenue - lastMonthRevenue >= 0 ? '+' : ''}${((monthlyRevenue - lastMonthRevenue) / 100).toFixed(0)}€`,
+              label: "ce mois",
+              isPositive: monthlyRevenue > lastMonthRevenue,
+              isNeutral: monthlyRevenue === lastMonthRevenue
+            }
           },
         ]);
 
@@ -194,9 +174,9 @@ const OrganizationDashboard = () => {
   }, [orgId]);
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <PageContainer>
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:gap-6">
+      <div className="flex flex-col gap-4 sm:gap-6 mb-8">
         <div className="flex items-center gap-3 sm:gap-4">
           <Avatar className="w-12 h-12 sm:w-16 sm:h-16 shrink-0">
             <AvatarImage src={organization?.logo_url || ""} />
@@ -219,23 +199,10 @@ const OrganizationDashboard = () => {
         </Button>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {stats.map((stat) => (
-          <Card key={stat.title} className="rounded-xl border-gray-100 shadow-sm hover:shadow-md transition-all">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                {stat.title}
-              </CardTitle>
-              <div className="p-2 bg-orange-50 rounded-lg">
-                <stat.icon className="h-4 w-4 text-orange-500" />
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold mb-1 text-gray-900">{stat.value}</div>
-              <p className="text-xs text-muted-foreground">{stat.change}</p>
-            </CardContent>
-          </Card>
+      {/* Stats Cards — reusing StatsCard */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        {stats.map((stat, i) => (
+          <StatsCard key={i} {...stat} />
         ))}
       </div>
 
@@ -244,9 +211,7 @@ const OrganizationDashboard = () => {
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold">Événements récents</h2>
           <Button variant="outline" size="sm" asChild>
-            <Link to={`/dashboard/org/${orgId}/events`}>
-              Voir tous
-            </Link>
+            <Link to={`/dashboard/org/${orgId}/events`}>Voir tous</Link>
           </Button>
         </div>
 
@@ -254,90 +219,30 @@ const OrganizationDashboard = () => {
           {loading ? (
             <div className="text-center py-8">Chargement...</div>
           ) : userEvents.map((event) => (
-            <Card key={event.id} className="hover:shadow-lg transition-shadow">
-              <CardContent className="p-4 sm:p-6">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <h3 className="font-semibold text-base sm:text-lg truncate">{event.title}</h3>
-                      <Badge variant="secondary" className="flex items-center gap-1 shrink-0">
-                        <div className={`w-2 h-2 rounded-full ${event.statusColor}`} />
-                        {event.status}
-                      </Badge>
-                    </div>
-                    <div className="text-xs sm:text-sm text-muted-foreground">
-                      <div className="flex flex-wrap items-center gap-3 sm:gap-4">
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5" />
-                          {event.date}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Users className="w-3.5 h-3.5" />
-                          {event.participants}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Euro className="w-3.5 h-3.5" />
-                          {event.revenue}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-1 sm:gap-2 shrink-0 self-end sm:self-center">
-                    <Button variant="outline" size="sm" asChild className="gap-1 text-xs sm:text-sm">
-                      <Link to={`/dashboard/org/${orgId}/events/${event.id}/analytics`}>
-                        <BarChart className="w-3.5 h-3.5" />
-                        <span className="hidden sm:inline">Stats</span>
-                      </Link>
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                      <Link to={`/events/${event.id}`}>
-                        <Eye className="w-4 h-4" />
-                      </Link>
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                      <Link to={`/dashboard/org/${orgId}/events/${event.id}/edit`}>
-                        <Edit className="w-4 h-4" />
-                      </Link>
-                    </Button>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="w-4 h-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Dupliquer</DropdownMenuItem>
-                        <DropdownMenuItem>Statistiques</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">
-                          Supprimer
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <EventCardRow
+              key={event.id}
+              event={event}
+              orgId={orgId!}
+              dropdownItems={[
+                { label: "Dupliquer", onClick: () => {} },
+                { label: "Statistiques", onClick: () => {} },
+                { label: "Supprimer", onClick: () => {}, destructive: true },
+              ]}
+            />
           ))}
         </div>
 
-        {userEvents.length === 0 && (
-          <Card className="p-12 text-center">
-            <Calendar className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-            <h3 className="text-xl font-semibold mb-2">Aucun événement créé</h3>
-            <p className="text-muted-foreground mb-6">
-              Créez votre premier événement pour commencer à vendre des billets
-            </p>
-            <Button asChild>
-              <Link to={`/dashboard/org/${orgId}/events/new`}>
-                
-                Créer mon premier événement
-              </Link>
-            </Button>
-          </Card>
+        {!loading && userEvents.length === 0 && (
+          <EmptyState
+            icon={<Calendar className="w-16 h-16" />}
+            title="Aucun événement créé"
+            description="Créez votre premier événement pour commencer à vendre des billets"
+            actionLabel="Créer mon premier événement"
+            actionUrl={`/dashboard/org/${orgId}/events/new`}
+          />
         )}
       </div>
-    </div>
+    </PageContainer>
   );
 };
 
