@@ -165,11 +165,11 @@ const EventDetail = () => {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 -mt-32 relative z-10 pb-24">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 lg:-mt-32 relative z-10 pb-24">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
 
           {/* Left Column: Description */}
-          <div className="lg:col-span-2 pt-12 lg:pt-32">
+          <div className="lg:col-span-2 pt-6 lg:pt-32">
             <h2 className="text-2xl font-bold mb-6">Description</h2>
             <div className="prose max-w-none text-gray-600 leading-relaxed mb-12">
               {event.description || "Aucune description disponible."}
