@@ -483,31 +483,31 @@ const Events = () => {
   }, [hasMore, isLoadingMore, currentPage, allEvents.length]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+      <div className="flex flex-col gap-4 sm:gap-6">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Événements</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Événements</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Gérez tous vos événements depuis cette page
           </p>
         </div>
         {loadingStripe ? (
-          <Button size="lg" disabled>
-            
+          <Button size="default" disabled className="w-full sm:w-auto">
+            <Plus className="w-4 h-4 mr-2" />
             Vérification...
           </Button>
         ) : stripeStatus?.connected && stripeStatus?.charges_enabled ? (
-          <Button size="lg" asChild>
+          <Button size="default" asChild className="w-full sm:w-auto">
             <Link to={`/dashboard/org/${orgId}/events/new`}>
-              
+              <Plus className="w-4 h-4 mr-2" />
               Créer un événement
             </Link>
           </Button>
         ) : (
-          <Button size="lg" asChild>
+          <Button size="default" asChild className="w-full sm:w-auto">
             <Link to={`/dashboard/org/${orgId}/settings`}>
-              
+              <Plus className="w-4 h-4 mr-2" />
               Configurer Stripe d'abord
             </Link>
           </Button>
