@@ -2,6 +2,7 @@
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
 import { User, LogOut, Menu, X } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { useState } from "react";
