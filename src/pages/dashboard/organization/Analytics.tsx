@@ -116,7 +116,7 @@ const Analytics = () => {
               name
             )
           `)
-          .eq('event_id', eventId)
+          .eq('event_id', targetEventId)
           .order('created_at', { ascending: false })
           .limit(10);
 
