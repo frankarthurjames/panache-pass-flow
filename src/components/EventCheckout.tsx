@@ -195,9 +195,7 @@ const EventCheckout = ({ eventId, eventTitle, eventDate, ticketTypes, registrati
       <div className="lg:w-2/5 p-8 bg-black text-white flex flex-col justify-between">
         <div>
           <div className="flex items-center gap-2 mb-6">
-            <div className="bg-orange-500 p-2 rounded-xl">
-              <Sparkles className="h-5 w-5 text-white" />
-            </div>
+
             <span className="text-xs font-bold uppercase tracking-widest text-orange-400">Paiement sécurisé</span>
           </div>
 

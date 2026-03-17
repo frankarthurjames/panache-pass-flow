@@ -9,12 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useNavigate, useParams } from "react-router-dom";
-import { 
-  Calendar as CalendarIcon, 
-  MapPin, 
-  Ticket, 
-  CheckCircle, 
-  ArrowLeft, 
+import {
+  Calendar as CalendarIcon,
+  MapPin,
+  Ticket,
+  CheckCircle,
+  ArrowLeft,
   ArrowRight,
   Plus,
   Trash2
@@ -78,7 +78,7 @@ const CreateEvent = () => {
     },
     {
       number: 2,
-      title: "Date et lieu", 
+      title: "Date et lieu",
       description: "Quand et où se déroule l'événement",
       icon: MapPin
     },
@@ -97,7 +97,7 @@ const CreateEvent = () => {
   ];
 
   const categories = [
-    "Tennis", "Football", "Basketball", "Volleyball", "Badminton", 
+    "Tennis", "Football", "Basketball", "Volleyball", "Badminton",
     "Course à pied", "Cyclisme", "Natation", "Arts martiaux", "Fitness", "Autre"
   ];
 
@@ -105,7 +105,7 @@ const CreateEvent = () => {
   useEffect(() => {
     const checkStripeStatus = async () => {
       if (!user || !orgId) return;
-      
+
       setLoadingStripe(true);
       try {
         const response = await supabase.functions.invoke('check-connect-status', {
@@ -178,14 +178,14 @@ const CreateEvent = () => {
       case 1:
         return formData.title.trim() !== "" && formData.category !== "";
       case 2:
-        return formData.startsAt && 
-               formData.venue.trim() !== "" && 
-               formData.city.trim() !== "" &&
-               (!formData.endsAt || formData.endsAt >= formData.startsAt); // End date must be after start date
+        return formData.startsAt &&
+          formData.venue.trim() !== "" &&
+          formData.city.trim() !== "" &&
+          (!formData.endsAt || formData.endsAt >= formData.startsAt); // End date must be after start date
       case 3:
-        return formData.ticketTypes.every(t => 
-          t.name.trim() !== "" && 
-          t.quantity.trim() !== "" && 
+        return formData.ticketTypes.every(t =>
+          t.name.trim() !== "" &&
+          t.quantity.trim() !== "" &&
           parseInt(t.quantity) > 0 && // Quantity must be positive
           (!t.priceCents || parseInt(t.priceCents) >= 0) // Price must be positive if set
         );
@@ -206,7 +206,7 @@ const CreateEvent = () => {
     }
 
     setIsSubmitting(true);
-    
+
     try {
       // Create the event
       const eventData = {
@@ -280,7 +280,7 @@ const CreateEvent = () => {
                 placeholder="Ex: Tournoi de Tennis Open 2025"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="category">Catégorie *</Label>
               <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
@@ -296,7 +296,7 @@ const CreateEvent = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="description">Description</Label>
               <Textarea
@@ -307,7 +307,7 @@ const CreateEvent = () => {
                 rows={6}
               />
             </div>
-            
+
             <ImageUpload
               value={formData.images}
               onChange={(images) => handleInputChange("images", images)}
@@ -354,7 +354,7 @@ const CreateEvent = () => {
                   </PopoverContent>
                 </Popover>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Date de fin</Label>
                 <Popover>
@@ -389,7 +389,7 @@ const CreateEvent = () => {
                 </Popover>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="venue">Lieu de l'événement *</Label>
               <Input
@@ -399,7 +399,7 @@ const CreateEvent = () => {
                 placeholder="Ex: Gymnase Jean Moulin"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="city">Ville *</Label>
               <Input
@@ -409,7 +409,7 @@ const CreateEvent = () => {
                 placeholder="Ex: Lyon"
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="capacity">Capacité maximale</Label>
               <Input
@@ -437,11 +437,11 @@ const CreateEvent = () => {
                 </p>
               </div>
               <Button onClick={addTicketType} variant="outline" size="sm">
-                
+
                 Ajouter un type
               </Button>
             </div>
-            
+
             <div className="space-y-4">
               {formData.ticketTypes.map((ticketType, index) => (
                 <Card key={ticketType.id} className="p-4">
@@ -458,7 +458,7 @@ const CreateEvent = () => {
                       </Button>
                     )}
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor={`name-${index}`}>Nom du billet *</Label>
@@ -469,7 +469,7 @@ const CreateEvent = () => {
                         placeholder="Ex: Standard, VIP, Étudiant"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor={`price-${index}`}>Prix (€)</Label>
                       <Input
@@ -488,7 +488,7 @@ const CreateEvent = () => {
                         Laissez vide pour un billet gratuit
                       </p>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor={`quantity-${index}`}>Quantité disponible *</Label>
                       <Input
@@ -499,7 +499,7 @@ const CreateEvent = () => {
                         placeholder="50"
                       />
                     </div>
-                    
+
                     <div className="space-y-2">
                       <Label htmlFor={`maxPerOrder-${index}`}>Max par commande</Label>
                       <Input
@@ -511,7 +511,7 @@ const CreateEvent = () => {
                       />
                     </div>
                   </div>
-                  
+
                 </Card>
               ))}
             </div>
@@ -528,7 +528,7 @@ const CreateEvent = () => {
                 Vérifiez les informations ci-dessous avant de finaliser
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <h4 className="font-semibold text-lg">Informations générales</h4>
@@ -554,7 +554,7 @@ const CreateEvent = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div className="space-y-4">
                 <h4 className="font-semibold text-lg">Types de billets</h4>
                 <div className="space-y-3">
@@ -576,7 +576,7 @@ const CreateEvent = () => {
                 </div>
               </div>
             </div>
-            
+
             <div className="border-t pt-6">
               <div className="flex items-center justify-between">
                 <div>
@@ -585,8 +585,8 @@ const CreateEvent = () => {
                     Choisissez si vous voulez publier immédiatement ou sauvegarder en brouillon
                   </p>
                 </div>
-                <Select 
-                  value={formData.status} 
+                <Select
+                  value={formData.status}
                   onValueChange={(value: "draft" | "published") => handleInputChange("status", value)}
                 >
                   <SelectTrigger className="w-[200px]">
@@ -614,7 +614,7 @@ const CreateEvent = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-4xl mx-auto">
             <div className="text-center py-12">
-              <p>Vérification de la configuration Stripe...</p>
+              {/* <p>Vérification de la configuration Stripe...</p> */}
             </div>
           </div>
         </div>
@@ -636,14 +636,14 @@ const CreateEvent = () => {
                   Vous devez configurer votre compte Stripe pour pouvoir créer des événements payants.
                 </p>
                 <div className="flex justify-center gap-4">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => navigate(`/dashboard/org/${orgId}/events`)}
                   >
-                    
+
                     Retour aux événements
                   </Button>
-                  <Button 
+                  <Button
                     onClick={() => navigate(`/dashboard/org/${orgId}/settings`)}
                   >
                     Configurer Stripe
@@ -662,7 +662,7 @@ const CreateEvent = () => {
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => navigate(`/dashboard/org/${orgId}/events`)}>
-          
+
           Retour
         </Button>
         <div>
@@ -691,22 +691,20 @@ const CreateEvent = () => {
         {steps.map((step) => (
           <div
             key={step.number}
-            className={`flex items-center space-x-3 p-3 rounded-lg border ${
-              currentStep === step.number
+            className={`flex items-center space-x-3 p-3 rounded-lg border ${currentStep === step.number
                 ? "border-primary bg-primary/5"
                 : currentStep > step.number
-                ? "border-green-200 bg-green-50"
-                : "border-border bg-muted/30"
-            }`}
+                  ? "border-green-200 bg-green-50"
+                  : "border-border bg-muted/30"
+              }`}
           >
             <div
-              className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                currentStep === step.number
+              className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep === step.number
                   ? "bg-primary text-primary-foreground"
                   : currentStep > step.number
-                  ? "bg-green-600 text-white"
-                  : "bg-muted text-muted-foreground"
-              }`}
+                    ? "bg-green-600 text-white"
+                    : "bg-muted text-muted-foreground"
+                }`}
             >
               {currentStep > step.number ? null : (
                 <step.icon className="w-4 h-4" />
@@ -740,10 +738,10 @@ const CreateEvent = () => {
           onClick={prevStep}
           disabled={currentStep === 1}
         >
-          
+
           Précédent
         </Button>
-        
+
         {currentStep < steps.length ? (
           <Button
             onClick={nextStep}
@@ -754,10 +752,10 @@ const CreateEvent = () => {
           </Button>
         ) : (
           <Button onClick={handleSubmit} disabled={isSubmitting}>
-            {isSubmitting 
-              ? "Création en cours..." 
-              : formData.status === "published" 
-                ? "Publier l'événement" 
+            {isSubmitting
+              ? "Création en cours..."
+              : formData.status === "published"
+                ? "Publier l'événement"
                 : "Sauvegarder en brouillon"
             }
             <CheckCircle className="w-4 h-4 ml-2" />
