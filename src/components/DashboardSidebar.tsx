@@ -212,12 +212,3 @@ export function DashboardSidebar() {
     </Sidebar>
   );
 }
-
-              {!collapsed && <span className="ml-2">Nouvelle organisation</span>}
-            </NavLink>
-          </Button>
-        </div>
-      </SidebarContent>
-    </Sidebar>
-  );
-}
