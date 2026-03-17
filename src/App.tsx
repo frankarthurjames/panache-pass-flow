@@ -40,6 +40,7 @@ import EventEdit from "./pages/dashboard/organization/EventEdit";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import TestQR from "./pages/TestQR";
 import ValidateTicket from "./pages/ValidateTicket";
+import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import { HelmetProvider } from "react-helmet-async";
 
 const queryClient = new QueryClient();
