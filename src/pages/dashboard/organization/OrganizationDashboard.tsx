@@ -286,14 +286,20 @@ const OrganizationDashboard = () => {
                   </div>
 
                   <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" asChild className="gap-1">
+                      <Link to={`/dashboard/org/${orgId}/events/${event.id}/analytics`}>
+                        <BarChart className="w-4 h-4" />
+                        Stats
+                      </Link>
+                    </Button>
                     <Button variant="ghost" size="sm" asChild>
                       <Link to={`/events/${event.id}`}>
-                        
+                        <Eye className="w-4 h-4" />
                       </Link>
                     </Button>
                     <Button variant="ghost" size="sm" asChild>
                       <Link to={`/dashboard/org/${orgId}/events/${event.id}/edit`}>
-                        
+                        <Edit className="w-4 h-4" />
                       </Link>
                     </Button>
                     <DropdownMenu>
