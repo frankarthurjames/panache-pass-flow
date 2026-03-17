@@ -122,7 +122,7 @@ const EventDetail = () => {
       <Navbar variant="orange" />
 
       {/* Slanted Hero Section */}
-      <div className="relative h-[500px] overflow-hidden">
+      <div className="relative h-[350px] sm:h-[500px] overflow-hidden">
         <div className="absolute inset-0">
           <img
             src={event.images?.[0] || "https://images.unsplash.com/photo-1552674605-4694559e5bc7?w=1600&q=80"}
