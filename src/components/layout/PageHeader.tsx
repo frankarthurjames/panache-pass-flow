@@ -15,13 +15,13 @@ export const PageHeader = ({
   className 
 }: PageHeaderProps) => {
   return (
-    <div className={cn("flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12", className)}>
+    <div className={cn("flex flex-col md:flex-row md:items-end md:justify-between gap-4 sm:gap-6 mb-8 sm:mb-12", className)}>
       <div className="flex-1 min-w-0">
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight text-black truncate mb-3 leading-tight">
+        <h1 className="text-2xl sm:text-4xl md:text-5xl font-black tracking-tight text-black mb-2 sm:mb-3 leading-tight break-words">
           {title}
         </h1>
         {description && (
-          <p className="text-base md:text-lg font-medium text-gray-400">
+          <p className="text-sm sm:text-base md:text-lg font-medium text-gray-400">
             {description}
           </p>
         )}

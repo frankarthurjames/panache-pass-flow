@@ -483,31 +483,31 @@ const Events = () => {
   }, [hasMore, isLoadingMore, currentPage, allEvents.length]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+      <div className="flex flex-col gap-4 sm:gap-6">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Événements</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl sm:text-3xl font-bold mb-2">Événements</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
             Gérez tous vos événements depuis cette page
           </p>
         </div>
         {loadingStripe ? (
-          <Button size="lg" disabled>
-            
+          <Button size="default" disabled className="w-full sm:w-auto">
+            <Plus className="w-4 h-4 mr-2" />
             Vérification...
           </Button>
         ) : stripeStatus?.connected && stripeStatus?.charges_enabled ? (
-          <Button size="lg" asChild>
+          <Button size="default" asChild className="w-full sm:w-auto">
             <Link to={`/dashboard/org/${orgId}/events/new`}>
-              
+              <Plus className="w-4 h-4 mr-2" />
               Créer un événement
             </Link>
           </Button>
         ) : (
-          <Button size="lg" asChild>
+          <Button size="default" asChild className="w-full sm:w-auto">
             <Link to={`/dashboard/org/${orgId}/settings`}>
-              
+              <Plus className="w-4 h-4 mr-2" />
               Configurer Stripe d'abord
             </Link>
           </Button>
@@ -535,46 +535,48 @@ const Events = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
-            placeholder="Rechercher un événement..."
+            placeholder="Rechercher..."
             className="pl-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Statut" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les statuts</SelectItem>
-            <SelectItem value="published">Publié</SelectItem>
-            <SelectItem value="draft">Brouillon</SelectItem>
-            <SelectItem value="cancelled">Annulé</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Catégorie" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Toutes catégories</SelectItem>
-            <SelectItem value="Tennis">Tennis</SelectItem>
-            <SelectItem value="Course">Course</SelectItem>
-            <SelectItem value="Badminton">Badminton</SelectItem>
-            <SelectItem value="Football">Football</SelectItem>
-            <SelectItem value="Basketball">Basketball</SelectItem>
-            <SelectItem value="Volleyball">Volleyball</SelectItem>
-            <SelectItem value="Natation">Natation</SelectItem>
-            <SelectItem value="Golf">Golf</SelectItem>
-            <SelectItem value="Rugby">Rugby</SelectItem>
-            <SelectItem value="Handball">Handball</SelectItem>
-            <SelectItem value="Sport">Sport</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[150px]">
+              <SelectValue placeholder="Statut" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous</SelectItem>
+              <SelectItem value="published">Publié</SelectItem>
+              <SelectItem value="draft">Brouillon</SelectItem>
+              <SelectItem value="cancelled">Annulé</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-full sm:w-[150px]">
+              <SelectValue placeholder="Catégorie" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes</SelectItem>
+              <SelectItem value="Tennis">Tennis</SelectItem>
+              <SelectItem value="Course">Course</SelectItem>
+              <SelectItem value="Badminton">Badminton</SelectItem>
+              <SelectItem value="Football">Football</SelectItem>
+              <SelectItem value="Basketball">Basketball</SelectItem>
+              <SelectItem value="Volleyball">Volleyball</SelectItem>
+              <SelectItem value="Natation">Natation</SelectItem>
+              <SelectItem value="Golf">Golf</SelectItem>
+              <SelectItem value="Rugby">Rugby</SelectItem>
+              <SelectItem value="Handball">Handball</SelectItem>
+              <SelectItem value="Sport">Sport</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Events List */}
@@ -607,70 +609,67 @@ const Events = () => {
           <div className="text-center py-8">Chargement...</div>
         ) : filteredEvents.map((event) => (
           <Card key={event.id} className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4 flex-1">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold text-lg">{event.title}</h3>
-                      <Badge variant="secondary" className="flex items-center gap-1">
-                        <div className={`w-2 h-2 rounded-full ${event.statusColor}`} />
-                        {event.status}
-                      </Badge>
-                      <Badge variant="outline">{event.category}</Badge>
-                    </div>
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      <div className="flex items-center gap-6 flex-wrap">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <h3 className="font-semibold text-base sm:text-lg truncate">{event.title}</h3>
+                    <Badge variant="secondary" className="flex items-center gap-1 shrink-0">
+                      <div className={`w-2 h-2 rounded-full ${event.statusColor}`} />
+                      {event.status}
+                    </Badge>
+                    <Badge variant="outline" className="shrink-0">{event.category}</Badge>
+                  </div>
+                  <div className="text-xs sm:text-sm text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-3 sm:gap-6">
+                      <span className="flex items-center gap-1">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {event.date}
+                      </span>
+                      {event.venue && (
                         <span className="flex items-center gap-1">
-                          
-                          {event.date}
+                          <span className="w-3.5 h-3.5 text-center">📍</span>
+                          <span className="truncate max-w-[120px] sm:max-w-[200px]">{event.venue}{event.city && `, ${event.city}`}</span>
                         </span>
-                        {event.venue && (
-                          <span className="flex items-center gap-1">
-                            <span className="w-4 h-4">📍</span>
-                            {event.venue}
-                            {event.city && `, ${event.city}`}
-                          </span>
-                        )}
-                        <span className="flex items-center gap-1">
-                          
-                          {event.participants}
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <TrendingUp className="w-4 h-4" />
-                          {event.revenue}
-                        </span>
-                      </div>
-                      {event.description && (
-                        <p className="text-xs text-muted-foreground mt-2 line-clamp-2">
-                          {event.description}
-                        </p>
                       )}
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3.5 h-3.5" />
+                        {event.participants}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <TrendingUp className="w-3.5 h-3.5" />
+                        {event.revenue}
+                      </span>
                     </div>
+                    {event.description && (
+                      <p className="text-xs text-muted-foreground mt-2 line-clamp-1 sm:line-clamp-2">
+                        {event.description}
+                      </p>
+                    )}
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="sm" asChild className="gap-1">
+                <div className="flex items-center gap-1 sm:gap-2 shrink-0 self-end sm:self-center">
+                  <Button variant="outline" size="sm" asChild className="gap-1 text-xs sm:text-sm">
                     <Link to={`/dashboard/org/${orgId}/events/${event.id}/analytics`}>
-                      <BarChart className="w-4 h-4" />
-                      Stats
+                      <BarChart className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">Stats</span>
                     </Link>
                   </Button>
-                  <Button variant="ghost" size="sm" asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                     <Link to={`/events/${event.id}`}>
-                      
+                      <Eye className="w-4 h-4" />
                     </Link>
                   </Button>
-                  <Button variant="ghost" size="sm" asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
                     <Link to={`/dashboard/org/${orgId}/events/${event.id}/edit`}>
-                      
+                      <Edit className="w-4 h-4" />
                     </Link>
                   </Button>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal className="w-4 h-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -683,7 +682,7 @@ const Events = () => {
                         Statistiques détaillées
                       </DropdownMenuItem>
                       <DropdownMenuItem onClick={() => handleExportParticipants(event.id.toString())}>
-                        
+                        <Download className="w-4 h-4 mr-2" />
                         Exporter les participants
                       </DropdownMenuItem>
                       <DropdownMenuItem 
