@@ -18,7 +18,7 @@ interface DataTableProps<T> {
   className?: string;
 }
 
-export const DataTable = <T extends any>({
+export const DataTable = <T,>({
   data,
   columns,
   keyExtractor,
@@ -40,10 +40,10 @@ export const DataTable = <T extends any>({
         <TableHeader className="bg-gray-50/50 border-b-2 border-gray-100">
           <TableRow className="hover:bg-transparent">
             {columns.map((col, i) => (
-              <TableHead 
-                key={i} 
+              <TableHead
+                key={i}
                 className={cn(
-                  "py-6 px-8 font-black text-gray-400 text-xs uppercase tracking-[0.2em]", 
+                  "py-6 px-8 font-black text-gray-400 text-xs uppercase tracking-[0.2em]",
                   col.className
                 )}
               >
@@ -54,7 +54,7 @@ export const DataTable = <T extends any>({
         </TableHeader>
         <TableBody>
           {data.map((item) => (
-            <TableRow 
+            <TableRow
               key={keyExtractor(item)}
               onClick={() => onRowClick?.(item)}
               className={cn(
