@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Building2, LayoutDashboard, Settings, Users, Calendar, BarChart3, CreditCard, Plus, Home, QrCode, Ticket } from "lucide-react";
+import { Building2, LayoutDashboard, Settings, Users, Calendar, CreditCard, Plus, Home, QrCode, Ticket } from "lucide-react";
 import { NavLink, useParams, useNavigate } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import {
