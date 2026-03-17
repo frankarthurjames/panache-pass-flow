@@ -94,6 +94,7 @@ const App = () => (
                 <Route path="org/:orgId/analytics" element={<Analytics />} />
                 <Route path="org/:orgId/integrations" element={<Integrations />} />
                 <Route path="org/:orgId/settings" element={<Settings />} />
+                <Route path="admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
               </Route>
 
               <Route path="*" element={<NotFound />} />
