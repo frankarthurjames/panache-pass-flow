@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Building2, LayoutDashboard, Settings, Calendar, CreditCard, Plus, Home, QrCode, Ticket, ArrowLeft } from "lucide-react";
+import { Building2, LayoutDashboard, Settings, Calendar, CreditCard, Plus, Home, QrCode, Ticket, ArrowLeft, ShieldCheck } from "lucide-react";
 import { NavLink, useParams, useNavigate, useLocation } from "react-router-dom";
+import { useAdmin } from "@/hooks/useAdmin";
 import { Logo } from "@/components/Logo";
 import {
   Sidebar,
