@@ -198,7 +198,7 @@ const ClubDetail = () => {
                             </div>
 
                             {/* Club Logo Area */}
-                            <div className="bg-[#DC2626] p-8 flex justify-center items-center relative overflow-hidden h-48">
+                            <div className="bg-primary p-8 flex justify-center items-center relative overflow-hidden h-48">
                                 {/* Slanted divider */}
                                 <div className="absolute top-0 left-0 w-full h-8 bg-white" style={{ clipPath: "polygon(0 0, 100% 0, 100% 100%, 0 0)" }}></div>
 
