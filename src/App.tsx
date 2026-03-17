@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { PublicRoute } from "@/components/PublicRoute";
+import { AdminRoute } from "@/components/AdminRoute";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import Events from "./pages/Events";
@@ -39,6 +40,7 @@ import EventEdit from "./pages/dashboard/organization/EventEdit";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import TestQR from "./pages/TestQR";
 import ValidateTicket from "./pages/ValidateTicket";
+import AdminDashboard from "./pages/dashboard/AdminDashboard";
 import { HelmetProvider } from "react-helmet-async";
 
 const queryClient = new QueryClient();
@@ -92,6 +94,7 @@ const App = () => (
                 <Route path="org/:orgId/analytics" element={<Analytics />} />
                 <Route path="org/:orgId/integrations" element={<Integrations />} />
                 <Route path="org/:orgId/settings" element={<Settings />} />
+                <Route path="admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
               </Route>
 
               <Route path="*" element={<NotFound />} />

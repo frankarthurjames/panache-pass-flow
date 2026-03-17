@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-import { Building2, LayoutDashboard, Settings, Calendar, CreditCard, Plus, Home, QrCode, Ticket, ArrowLeft } from "lucide-react";
+import { Building2, LayoutDashboard, Settings, Calendar, CreditCard, Plus, Home, QrCode, Ticket, ArrowLeft, ShieldCheck } from "lucide-react";
 import { NavLink, useParams, useNavigate, useLocation } from "react-router-dom";
+import { useAdmin } from "@/hooks/useAdmin";
 import { Logo } from "@/components/Logo";
 import {
   Sidebar,
@@ -48,6 +49,7 @@ export function DashboardSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { isAdmin } = useAdmin();
   const [organizations, setOrganizations] = useState<any[]>([]);
 
   // Determine if we're currently inside an org context
@@ -191,6 +193,25 @@ export function DashboardSidebar() {
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
+
+            {/* Admin link */}
+            {isAdmin && (
+              <SidebarGroup>
+                <SidebarGroupLabel className="text-gray-500 font-medium">Administration</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild>
+                        <NavLink to="/dashboard/admin" className={getNavClassName}>
+                          <ShieldCheck className="w-4 h-4" />
+                          {!collapsed && <span>Admin Panache</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )}
 
             {/* Create Organization */}
             <div className="mt-auto p-2">
