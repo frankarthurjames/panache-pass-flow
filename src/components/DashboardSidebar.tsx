@@ -49,6 +49,7 @@ export function DashboardSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const { user } = useAuth();
+  const { isAdmin } = useAdmin();
   const [organizations, setOrganizations] = useState<any[]>([]);
 
   // Determine if we're currently inside an org context
