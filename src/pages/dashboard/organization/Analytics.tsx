@@ -183,7 +183,7 @@ const Analytics = () => {
         const { data: paymentsThisMonth } = await supabase
           .from('payments')
           .select('amount_cents, orders!inner(*)')
-          .eq('orders.event_id', eventId)
+          .eq('orders.event_id', targetEventId)
           .gte('created_at', startOfMonth.toISOString());
 
         const { data: paymentsLastMonth } = await supabase
