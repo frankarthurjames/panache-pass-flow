@@ -8,6 +8,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
+import { PageContainer } from "@/components/layout/PageContainer";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { EmptyState } from "@/components/dashboard/EmptyState";
+
 const Organizations = () => {
   const { user } = useAuth();
   const [organizations, setOrganizations] = useState<any[]>([]);
@@ -18,7 +22,6 @@ const Organizations = () => {
       if (!user) return;
 
       try {
-        // Récupérer les organisations où l'utilisateur est membre
         const { data: orgMembers, error: membersError } = await supabase
           .from('organization_members')
           .select(`
@@ -37,12 +40,10 @@ const Organizations = () => {
 
         if (orgMembers) {
           const validMembers = orgMembers.filter((m: any) => m.organizations);
-          // Pour chaque organisation, récupérer les statistiques
           const orgsWithStats = await Promise.all(
             validMembers.map(async (member: any) => {
               const org = member.organizations;
 
-              // Dates pour les comparaisons
               const now = new Date();
               const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
               const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
@@ -52,98 +53,35 @@ const Organizations = () => {
               const startOfLastWeek = new Date(startOfWeek);
               startOfLastWeek.setDate(startOfWeek.getDate() - 7);
 
-              // Compter les événements totaux
               const { count: totalEventsCount } = await supabase
                 .from('events')
                 .select('*', { count: 'exact', head: true })
                 .eq('organization_id', org.id);
 
-              // Compter les événements créés ce mois
-              const { count: eventsThisMonth } = await supabase
-                .from('events')
-                .select('*', { count: 'exact', head: true })
-                .eq('organization_id', org.id)
-                .gte('created_at', startOfMonth.toISOString());
-
-              // Compter les événements créés le mois dernier
-              const { count: eventsLastMonth } = await supabase
-                .from('events')
-                .select('*', { count: 'exact', head: true })
-                .eq('organization_id', org.id)
-                .gte('created_at', startOfLastMonth.toISOString())
-                .lt('created_at', startOfMonth.toISOString());
-
-              // Compter les participants totaux (seulement les paiements confirmés)
               const { count: totalParticipantsCount } = await supabase
                 .from('registrations')
                 .select('*, events!inner(*), orders!inner(*)')
                 .eq('events.organization_id', org.id)
                 .eq('orders.status', 'paid');
 
-              // Compter les participants cette semaine
-              const { count: participantsThisWeek } = await supabase
-                .from('registrations')
-                .select('*, events!inner(*), orders!inner(*)')
-                .eq('events.organization_id', org.id)
-                .eq('orders.status', 'paid')
-                .gte('created_at', startOfWeek.toISOString());
-
-              // Compter les participants la semaine dernière
-              const { count: participantsLastWeek } = await supabase
-                .from('registrations')
-                .select('*, events!inner(*), orders!inner(*)')
-                .eq('events.organization_id', org.id)
-                .eq('orders.status', 'paid')
-                .gte('created_at', startOfLastWeek.toISOString())
-                .lt('created_at', startOfWeek.toISOString());
-
-              // Calculer les revenus totaux
-              const { data: allPayments } = await supabase
-                .from('payments')
-                .select('amount_cents, orders!inner(*, events!inner(*))')
-                .eq('orders.events.organization_id', org.id);
-
-              // Calculer les revenus ce mois
               const { data: paymentsThisMonth } = await supabase
                 .from('payments')
                 .select('amount_cents, orders!inner(*, events!inner(*))')
                 .eq('orders.events.organization_id', org.id)
                 .gte('created_at', startOfMonth.toISOString());
 
-              // Calculer les revenus le mois dernier
-              const { data: paymentsLastMonth } = await supabase
-                .from('payments')
-                .select('amount_cents, orders!inner(*, events!inner(*))')
-                .eq('orders.events.organization_id', org.id)
-                .gte('created_at', startOfLastMonth.toISOString())
-                .lt('created_at', startOfMonth.toISOString());
-
-              const totalRevenue = allPayments?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
               const monthlyRevenue = paymentsThisMonth?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
-              const lastMonthRevenue = paymentsLastMonth?.reduce((sum, payment) => sum + payment.amount_cents, 0) || 0;
-
-              // Calculer les variations
-              const eventsVariation = (eventsThisMonth || 0) - (eventsLastMonth || 0);
-              const participantsVariation = (participantsThisWeek || 0) - (participantsLastWeek || 0);
-              const revenueVariation = monthlyRevenue - lastMonthRevenue;
 
               return {
                 id: org.id,
                 name: org.name,
                 logo: org.logo_url,
                 eventsCount: totalEventsCount || 0,
-                eventsVariation: eventsVariation,
                 totalParticipants: totalParticipantsCount || 0,
-                participantsVariation: participantsVariation,
-                totalRevenue: `${(totalRevenue / 100).toFixed(0)}€`,
                 monthlyRevenue: `${(monthlyRevenue / 100).toFixed(0)}€`,
-                revenueVariation: revenueVariation,
                 status: "Actif",
-                lastActivity: "Il y a 2h", // À implémenter plus tard
                 createdAt: new Date(org.created_at).toLocaleDateString('fr-FR', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric'
+                  day: 'numeric', month: 'short', year: 'numeric'
                 })
               };
             })
@@ -163,24 +101,20 @@ const Organizations = () => {
   }, [user]);
 
   return (
-    <div className="space-y-8">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div>
-          <h1 className="text-3xl font-bold mb-2">Mes organisations</h1>
-          <p className="text-muted-foreground">
-            Gérez toutes vos organisations depuis cette page
-          </p>
-        </div>
-        <Button size="lg" asChild className="rounded-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 border-0 shadow-md transition-all hover:shadow-lg">
-          <Link to="/dashboard/organizations/new">
-            
-            Créer une organisation
-          </Link>
-        </Button>
-      </div>
+    <PageContainer>
+      <PageHeader
+        title="Mes organisations"
+        description="Gérez toutes vos organisations depuis cette page"
+        action={
+          <Button size="lg" asChild className="rounded-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 border-0 shadow-md transition-all hover:shadow-lg w-full sm:w-auto">
+            <Link to="/dashboard/organizations/new">
+              <Plus className="w-4 h-4 mr-2" />
+              Créer une organisation
+            </Link>
+          </Button>
+        }
+      />
 
-      {/* Organizations List */}
       <div className="space-y-4">
         {loading ? (
           <div className="text-center py-8">Chargement...</div>
@@ -228,9 +162,7 @@ const Organizations = () => {
 
                 <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                   <Button variant="outline" size="sm" asChild>
-                    <Link to={`/dashboard/org/${org.id}`}>
-                      Gérer
-                    </Link>
+                    <Link to={`/dashboard/org/${org.id}`}>Gérer</Link>
                   </Button>
                   <Button variant="ghost" size="sm" asChild>
                     <Link to={`/dashboard/org/${org.id}/settings`}>
@@ -244,22 +176,16 @@ const Organizations = () => {
         ))}
       </div>
 
-      {organizations.length === 0 && (
-        <Card className="p-12 text-center">
-          <Building2 className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <h3 className="text-xl font-semibold mb-2">Aucune organisation créée</h3>
-          <p className="text-muted-foreground mb-6">
-            Créez votre première organisation pour commencer à organiser des événements
-          </p>
-          <Button asChild>
-            <Link to="/dashboard/organizations/new">
-              
-              Créer ma première organisation
-            </Link>
-          </Button>
-        </Card>
+      {!loading && organizations.length === 0 && (
+        <EmptyState
+          icon={<Building2 className="w-16 h-16" />}
+          title="Aucune organisation créée"
+          description="Créez votre première organisation pour commencer à organiser des événements"
+          actionLabel="Créer ma première organisation"
+          actionUrl="/dashboard/organizations/new"
+        />
       )}
-    </div>
+    </PageContainer>
   );
 };
 
