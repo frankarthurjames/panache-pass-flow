@@ -7,6 +7,7 @@ interface Column<T> {
   accessorKey: keyof T;
   cell?: (item: T) => ReactNode;
   className?: string;
+  hideOnMobile?: boolean;
 }
 
 interface DataTableProps<T> {
@@ -28,14 +29,14 @@ export const DataTable = <T,>({
 }: DataTableProps<T>) => {
   if (!data || data.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 border-2 border-dashed rounded-3xl border-gray-200 bg-gray-50/50 m-6">
-        <p className="text-gray-400 font-bold uppercase tracking-widest">{emptyMessage}</p>
+      <div className="flex flex-col items-center justify-center p-8 sm:p-12 border-2 border-dashed rounded-3xl border-gray-200 bg-gray-50/50 m-4 sm:m-6">
+        <p className="text-gray-400 font-bold uppercase tracking-widest text-center">{emptyMessage}</p>
       </div>
     );
   }
 
   return (
-    <div className={cn("bg-white overflow-hidden", className)}>
+    <div className={cn("bg-white overflow-x-auto", className)}>
       <Table>
         <TableHeader className="bg-gray-50/50 border-b-2 border-gray-100">
           <TableRow className="hover:bg-transparent">
@@ -43,7 +44,8 @@ export const DataTable = <T,>({
               <TableHead
                 key={i}
                 className={cn(
-                  "py-6 px-8 font-black text-gray-400 text-xs uppercase tracking-[0.2em]",
+                  "py-4 px-4 sm:py-6 sm:px-8 font-black text-gray-400 text-xs uppercase tracking-[0.2em] whitespace-nowrap",
+                  col.hideOnMobile && "hidden sm:table-cell",
                   col.className
                 )}
               >
@@ -63,7 +65,14 @@ export const DataTable = <T,>({
               )}
             >
               {columns.map((col, i) => (
-                <TableCell key={i} className={cn("py-6 px-8 align-middle border-b-2 border-gray-50 last:border-0", col.className)}>
+                <TableCell
+                  key={i}
+                  className={cn(
+                    "py-4 px-4 sm:py-6 sm:px-8 align-middle border-b-2 border-gray-50 last:border-0",
+                    col.hideOnMobile && "hidden sm:table-cell",
+                    col.className
+                  )}
+                >
                   {col.cell ? col.cell(item) : (item[col.accessorKey] as ReactNode)}
                 </TableCell>
               ))}
