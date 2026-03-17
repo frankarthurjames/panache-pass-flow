@@ -91,6 +91,11 @@ export const Navbar = ({ variant = "transparent" }: NavbarProps) => {
                   <DropdownMenuItem asChild>
                     <Link to="/dashboard">Dashboard</Link>
                   </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem asChild>
+                      <Link to="/dashboard/admin">Admin Panache</Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild>
                     <Link to="/profile">Profil</Link>
                   </DropdownMenuItem>
