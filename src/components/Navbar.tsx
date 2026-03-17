@@ -27,6 +27,7 @@ const navLinks = [
 
 export const Navbar = ({ variant = "transparent" }: NavbarProps) => {
   const { user, signOut } = useAuth();
+  const { isAdmin } = useAdmin();
   const navigate = useNavigate();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
