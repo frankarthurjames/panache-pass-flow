@@ -535,46 +535,48 @@ const Events = () => {
       </div>
 
       {/* Filters */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
-            placeholder="Rechercher un événement..."
+            placeholder="Rechercher..."
             className="pl-10"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Statut" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Tous les statuts</SelectItem>
-            <SelectItem value="published">Publié</SelectItem>
-            <SelectItem value="draft">Brouillon</SelectItem>
-            <SelectItem value="cancelled">Annulé</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Catégorie" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Toutes catégories</SelectItem>
-            <SelectItem value="Tennis">Tennis</SelectItem>
-            <SelectItem value="Course">Course</SelectItem>
-            <SelectItem value="Badminton">Badminton</SelectItem>
-            <SelectItem value="Football">Football</SelectItem>
-            <SelectItem value="Basketball">Basketball</SelectItem>
-            <SelectItem value="Volleyball">Volleyball</SelectItem>
-            <SelectItem value="Natation">Natation</SelectItem>
-            <SelectItem value="Golf">Golf</SelectItem>
-            <SelectItem value="Rugby">Rugby</SelectItem>
-            <SelectItem value="Handball">Handball</SelectItem>
-            <SelectItem value="Sport">Sport</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-2">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[150px]">
+              <SelectValue placeholder="Statut" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous</SelectItem>
+              <SelectItem value="published">Publié</SelectItem>
+              <SelectItem value="draft">Brouillon</SelectItem>
+              <SelectItem value="cancelled">Annulé</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="w-full sm:w-[150px]">
+              <SelectValue placeholder="Catégorie" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toutes</SelectItem>
+              <SelectItem value="Tennis">Tennis</SelectItem>
+              <SelectItem value="Course">Course</SelectItem>
+              <SelectItem value="Badminton">Badminton</SelectItem>
+              <SelectItem value="Football">Football</SelectItem>
+              <SelectItem value="Basketball">Basketball</SelectItem>
+              <SelectItem value="Volleyball">Volleyball</SelectItem>
+              <SelectItem value="Natation">Natation</SelectItem>
+              <SelectItem value="Golf">Golf</SelectItem>
+              <SelectItem value="Rugby">Rugby</SelectItem>
+              <SelectItem value="Handball">Handball</SelectItem>
+              <SelectItem value="Sport">Sport</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Events List */}
