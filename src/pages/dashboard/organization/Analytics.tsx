@@ -189,7 +189,7 @@ const Analytics = () => {
         const { data: paymentsLastMonth } = await supabase
           .from('payments')
           .select('amount_cents, orders!inner(*)')
-          .eq('orders.event_id', eventId)
+          .eq('orders.event_id', targetEventId)
           .gte('created_at', startOfLastMonth.toISOString())
           .lt('created_at', startOfMonth.toISOString());
 

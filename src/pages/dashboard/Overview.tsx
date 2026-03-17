@@ -105,17 +105,17 @@ const Overview = () => {
 
               const { data: revenueData } = await supabase
                 .from('orders')
-                .select('amount_cents, status, events!inner(*), created_at')
+                .select('total_cents, status, events!inner(organization_id), created_at')
                 .eq('events.organization_id', org.id)
                 .eq('status', 'paid');
 
-              const orgRevenue = revenueData ? revenueData.reduce((sum, order) => sum + (order.amount_cents || 0), 0) / 100 : 0;
+              const orgRevenue = revenueData ? revenueData.reduce((sum, order: any) => sum + (order.total_cents || 0), 0) / 100 : 0;
               const orgRevenueThisMonth = revenueData ? revenueData
-                .filter(o => new Date(o.created_at) >= startOfMonth)
-                .reduce((sum, order) => sum + (order.amount_cents || 0), 0) / 100 : 0;
+                .filter((o: any) => new Date(o.created_at) >= startOfMonth)
+                .reduce((sum, order: any) => sum + (order.total_cents || 0), 0) / 100 : 0;
               const orgRevenueLastMonth = revenueData ? revenueData
-                .filter(o => new Date(o.created_at) >= startOfLastMonth && new Date(o.created_at) < startOfMonth)
-                .reduce((sum, order) => sum + (order.amount_cents || 0), 0) / 100 : 0;
+                .filter((o: any) => new Date(o.created_at) >= startOfLastMonth && new Date(o.created_at) < startOfMonth)
+                .reduce((sum, order: any) => sum + (order.total_cents || 0), 0) / 100 : 0;
 
               totalEvents += eventsCount || 0;
               totalEventsThisMonth += eventsThisMonth || 0;
