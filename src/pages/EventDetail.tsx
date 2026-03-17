@@ -201,6 +201,31 @@ const EventDetail = () => {
                 </Carousel>
               </div>
             )}
+
+            {/* Map Section */}
+            {(event.venue || event.city) && (
+              <div className="mt-12">
+                <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                  <MapPin className="h-6 w-6 text-orange-500" />
+                  Localisation
+                </h2>
+                <div className="w-full h-[400px] rounded-3xl overflow-hidden border-4 border-gray-50 shadow-sm transition-all hover:shadow-md">
+                  <iframe
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0 }}
+                    loading="lazy"
+                    allowFullScreen
+                    referrerPolicy="no-referrer-when-downgrade"
+                    src={`https://www.google.com/maps?q=${encodeURIComponent(`${event.venue || ''} ${event.city || ''}`.trim())}&output=embed`}
+                  ></iframe>
+                </div>
+                <div className="mt-4 flex flex-col gap-1">
+                  <p className="font-bold text-gray-900">{event.venue}</p>
+                  <p className="text-gray-500 font-medium">{event.city}</p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Right Column: Floating Details Card */}
