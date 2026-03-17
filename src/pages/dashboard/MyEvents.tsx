@@ -30,15 +30,12 @@ const MyEvents = () => {
           .from('registrations')
           .select(`
             id,
-            first_name,
-            last_name,
             status,
             qr_code,
-            qr_scanned,
             created_at,
             ticket_type:ticket_types(id, name, price_cents),
             event:events(id, title, starts_at, venue, city, status, images),
-            order:orders(id, status, amount_cents)
+            order:orders(id, status, total_cents)
           `)
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
@@ -57,8 +54,8 @@ const MyEvents = () => {
             acc[eventId].orders[orderId] = {
               id: orderId,
               status: curr.order.status,
-              amount: curr.order.amount_cents,
-              totalPaid: curr.order.amount_cents / 100,
+              amount: curr.order.total_cents,
+              totalPaid: curr.order.total_cents / 100,
               registrations: []
             };
           }

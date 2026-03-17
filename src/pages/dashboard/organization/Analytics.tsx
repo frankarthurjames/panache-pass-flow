@@ -116,7 +116,7 @@ const Analytics = () => {
               name
             )
           `)
-          .eq('event_id', eventId)
+          .eq('event_id', targetEventId)
           .order('created_at', { ascending: false })
           .limit(10);
 
@@ -145,7 +145,7 @@ const Analytics = () => {
           const { count } = await supabase
             .from('registrations')
             .select('*', { count: 'exact', head: true })
-            .eq('event_id', eventId)
+            .eq('event_id', targetEventId)
             .gte('created_at', startOfDay.toISOString())
             .lte('created_at', endOfDay.toISOString());
           
@@ -169,13 +169,13 @@ const Analytics = () => {
         const { count: registrationsThisWeek } = await supabase
           .from('registrations')
           .select('*', { count: 'exact', head: true })
-          .eq('event_id', eventId)
+          .eq('event_id', targetEventId)
           .gte('created_at', startOfWeek.toISOString());
 
         const { count: registrationsLastWeek } = await supabase
           .from('registrations')
           .select('*', { count: 'exact', head: true })
-          .eq('event_id', eventId)
+          .eq('event_id', targetEventId)
           .gte('created_at', startOfLastWeek.toISOString())
           .lt('created_at', startOfWeek.toISOString());
 
@@ -183,13 +183,13 @@ const Analytics = () => {
         const { data: paymentsThisMonth } = await supabase
           .from('payments')
           .select('amount_cents, orders!inner(*)')
-          .eq('orders.event_id', eventId)
+          .eq('orders.event_id', targetEventId)
           .gte('created_at', startOfMonth.toISOString());
 
         const { data: paymentsLastMonth } = await supabase
           .from('payments')
           .select('amount_cents, orders!inner(*)')
-          .eq('orders.event_id', eventId)
+          .eq('orders.event_id', targetEventId)
           .gte('created_at', startOfLastMonth.toISOString())
           .lt('created_at', startOfMonth.toISOString());
 
