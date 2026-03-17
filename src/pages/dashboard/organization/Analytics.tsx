@@ -145,7 +145,7 @@ const Analytics = () => {
           const { count } = await supabase
             .from('registrations')
             .select('*', { count: 'exact', head: true })
-            .eq('event_id', eventId)
+            .eq('event_id', targetEventId)
             .gte('created_at', startOfDay.toISOString())
             .lte('created_at', endOfDay.toISOString());
           
