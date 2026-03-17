@@ -194,6 +194,25 @@ export function DashboardSidebar() {
               </SidebarGroupContent>
             </SidebarGroup>
 
+            {/* Admin link */}
+            {isAdmin && (
+              <SidebarGroup>
+                <SidebarGroupLabel className="text-gray-500 font-medium">Administration</SidebarGroupLabel>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    <SidebarMenuItem>
+                      <SidebarMenuButton asChild>
+                        <NavLink to="/dashboard/admin" className={getNavClassName}>
+                          <ShieldCheck className="w-4 h-4" />
+                          {!collapsed && <span>Admin Panache</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            )}
+
             {/* Create Organization */}
             <div className="mt-auto p-2">
               <Button
