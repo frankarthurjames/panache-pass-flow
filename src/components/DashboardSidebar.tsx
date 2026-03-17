@@ -41,7 +41,6 @@ const orgMenuItems = [
   { title: "Tableau de bord", url: "/dashboard/org/:orgId", icon: LayoutDashboard },
   { title: "Événements", url: "/dashboard/org/:orgId/events", icon: Calendar },
   { title: "Billets", url: "/dashboard/org/:orgId/tickets", icon: Ticket },
-  { title: "Statistiques", url: "/dashboard/org/:orgId/analytics", icon: BarChart3 },
   { title: "Scanner QR", url: "/dashboard/org/:orgId/qr-validator", icon: QrCode },
   { title: "Intégrations", url: "/dashboard/org/:orgId/integrations", icon: CreditCard },
   { title: "Paramètres", url: "/dashboard/org/:orgId/settings", icon: Settings },
