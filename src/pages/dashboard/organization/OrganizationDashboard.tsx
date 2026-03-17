@@ -194,26 +194,26 @@ const OrganizationDashboard = () => {
   }, [orgId]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       {/* Header */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-        <div className="flex items-center gap-4">
-          <Avatar className="w-16 h-16">
+      <div className="flex flex-col gap-4 sm:gap-6">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <Avatar className="w-12 h-12 sm:w-16 sm:h-16 shrink-0">
             <AvatarImage src={organization?.logo_url || ""} />
-            <AvatarFallback className="text-xl font-semibold">
+            <AvatarFallback className="text-lg sm:text-xl font-semibold">
               {organization?.name?.charAt(0) || 'O'}
             </AvatarFallback>
           </Avatar>
-          <div>
-            <h1 className="text-3xl font-bold mb-2">{organization?.name || 'Organisation'}</h1>
-            <p className="text-muted-foreground">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-3xl font-bold mb-1 sm:mb-2 truncate">{organization?.name || 'Organisation'}</h1>
+            <p className="text-sm text-muted-foreground">
               Tableau de bord de votre organisation
             </p>
           </div>
         </div>
-        <Button size="lg" asChild className="rounded-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 border-0 shadow-md transition-all hover:shadow-lg">
+        <Button size="default" asChild className="w-full sm:w-auto rounded-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 border-0 shadow-md transition-all hover:shadow-lg">
           <Link to={`/dashboard/org/${orgId}/events/new`}>
-            
+            <Plus className="w-4 h-4 mr-2" />
             Créer un événement
           </Link>
         </Button>

@@ -186,47 +186,47 @@ const Organizations = () => {
           <div className="text-center py-8">Chargement...</div>
         ) : organizations.map((org) => (
           <Card key={org.id} className="hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4 flex-1">
-                  <Avatar className="w-16 h-16">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="flex items-center gap-3 sm:gap-4 flex-1 min-w-0">
+                  <Avatar className="w-12 h-12 sm:w-16 sm:h-16 shrink-0">
                     <AvatarImage src={org.logo || ""} />
-                    <AvatarFallback className="text-xl font-semibold">
+                    <AvatarFallback className="text-lg sm:text-xl font-semibold">
                       {org.name.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
 
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold text-xl">{org.name}</h3>
-                      <Badge variant="secondary" className="flex items-center gap-1">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <h3 className="font-semibold text-lg sm:text-xl truncate">{org.name}</h3>
+                      <Badge variant="secondary" className="flex items-center gap-1 shrink-0">
                         <Activity className="w-3 h-3" />
                         {org.status}
                       </Badge>
                     </div>
 
-                    <div className="text-sm text-muted-foreground mb-3">
-                      Créée le {org.createdAt} • {org.lastActivity}
+                    <div className="text-xs sm:text-sm text-muted-foreground mb-2 sm:mb-3">
+                      Créée le {org.createdAt}
                     </div>
 
-                    <div className="flex items-center gap-8 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-primary" />
+                    <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-xs sm:text-sm">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-3.5 h-3.5 text-primary" />
                         <span>{org.eventsCount} événements</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-primary" />
+                      <div className="flex items-center gap-1.5">
+                        <Users className="w-3.5 h-3.5 text-primary" />
                         <span>{org.totalParticipants} participants</span>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <TrendingUp className="w-4 h-4 text-primary" />
+                      <div className="flex items-center gap-1.5">
+                        <TrendingUp className="w-3.5 h-3.5 text-primary" />
                         <span>{org.monthlyRevenue} ce mois</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
                   <Button variant="outline" size="sm" asChild>
                     <Link to={`/dashboard/org/${org.id}`}>
                       Gérer
