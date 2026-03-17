@@ -54,8 +54,8 @@ const MyEvents = () => {
             acc[eventId].orders[orderId] = {
               id: orderId,
               status: curr.order.status,
-              amount: curr.order.amount_cents,
-              totalPaid: curr.order.amount_cents / 100,
+              amount: curr.order.total_cents,
+              totalPaid: curr.order.total_cents / 100,
               registrations: []
             };
           }
