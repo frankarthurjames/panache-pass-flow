@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { Building2, LayoutDashboard, Settings, Users, Calendar, CreditCard, Plus, Home, QrCode, Ticket } from "lucide-react";
-import { NavLink, useParams, useNavigate } from "react-router-dom";
+import { Building2, LayoutDashboard, Settings, Calendar, CreditCard, Plus, Home, QrCode, Ticket, ArrowLeft } from "lucide-react";
+import { NavLink, useParams, useNavigate, useLocation } from "react-router-dom";
 import { Logo } from "@/components/Logo";
 import {
   Sidebar,
@@ -11,7 +11,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
@@ -25,10 +24,6 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-
-// Organisations dynamiques
-// ... keep existing code (menus)
-
 
 const mainMenuItems = [
   { title: "Accueil", url: "/", icon: Home, exact: true },
@@ -51,11 +46,13 @@ export function DashboardSidebar() {
   const collapsed = state === "collapsed";
   const { orgId } = useParams();
   const navigate = useNavigate();
-  const [selectedOrg, setSelectedOrg] = useState(orgId || "");
+  const location = useLocation();
   const { user } = useAuth();
   const [organizations, setOrganizations] = useState<any[]>([]);
 
-  // Charger les organisations de l'utilisateur
+  // Determine if we're currently inside an org context
+  const isInOrgContext = !!orgId;
+
   useEffect(() => {
     const fetchOrganizations = async () => {
       if (!user) return;
@@ -65,7 +62,6 @@ export function DashboardSidebar() {
 
       if (!error && data) {
         const orgs = data.map((m: any) => m.organizations).filter(Boolean);
-        // Déduplicater les organisations par ID
         const uniqueOrgs = orgs.reduce((acc: any[], org: any) => {
           if (!acc.find(existingOrg => existingOrg.id === org.id)) {
             acc.push(org);
@@ -73,29 +69,18 @@ export function DashboardSidebar() {
           return acc;
         }, []);
         setOrganizations(uniqueOrgs);
-        if (!selectedOrg && uniqueOrgs[0]) {
-          setSelectedOrg(uniqueOrgs[0].id);
-        }
       }
     };
     fetchOrganizations();
   }, [user]);
 
-  // Synchroniser selectedOrg avec l'URL
-  useEffect(() => {
-    if (orgId !== selectedOrg) {
-      setSelectedOrg(orgId || "");
-    }
-  }, [orgId]);
+  const currentOrg = organizations.find(org => org.id === orgId);
 
-  const currentOrg = organizations.find(org => org.id === selectedOrg);
-
-  const handleOrgChange = (newOrgId: string) => {
+  const handleOrgSwitch = (newOrgId: string) => {
     if (newOrgId === "new") {
       navigate("/dashboard/organizations/new");
       return;
     }
-    setSelectedOrg(newOrgId);
     navigate(`/dashboard/org/${newOrgId}`);
   };
 
@@ -107,7 +92,7 @@ export function DashboardSidebar() {
   return (
     <Sidebar className={collapsed ? "w-14" : "w-64"} collapsible="icon">
       <SidebarContent className="px-2">
-        {/* Header avec logo */}
+        {/* Header */}
         <div className="px-2 py-4 border-b border-border/50">
           <Logo
             size={collapsed ? "sm" : "md"}
@@ -115,100 +100,119 @@ export function DashboardSidebar() {
             className="justify-center"
           />
         </div>
-        {/* Organisation Selector */}
-        {!collapsed && (
-          <div className="px-2 py-4">
-            <Select value={selectedOrg} onValueChange={handleOrgChange}>
-              <SelectTrigger className="w-full rounded-xl border-gray-200 focus:ring-orange-500/20">
-                <SelectValue placeholder={organizations.length ? "Sélectionner une organisation" : "Nouvelle organisation"} />
-              </SelectTrigger>
-              <SelectContent className="z-50 bg-popover">
-                {organizations.length === 0 ? (
-                  <SelectItem value="new">
-                    <div className="flex items-center gap-2">
-                      
-                      <span>Nouvelle organisation</span>
-                    </div>
-                  </SelectItem>
-                ) : (
-                  organizations.map((org) => (
-                    <SelectItem key={org.id} value={org.id}>
-                      <div className="flex items-center gap-2">
-                        <Avatar className="w-5 h-5">
-                          <AvatarImage src={org.logo_url || ""} />
-                          <AvatarFallback className="text-xs">
-                            {org.name.charAt(0)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <span>{org.name}</span>
-                      </div>
-                    </SelectItem>
-                  ))
-                )}
-              </SelectContent>
-            </Select>
-          </div>
+
+        {isInOrgContext ? (
+          <>
+            {/* Back to dashboard */}
+            <div className="px-2 pt-4 pb-2">
+              <Button
+                variant="ghost"
+                size={collapsed ? "icon" : "sm"}
+                className="w-full justify-start text-muted-foreground hover:text-foreground"
+                onClick={() => navigate("/dashboard")}
+              >
+                <ArrowLeft className="w-4 h-4" />
+                {!collapsed && <span className="ml-2">Retour</span>}
+              </Button>
+            </div>
+
+            {/* Org switcher */}
+            {!collapsed && organizations.length > 1 && (
+              <div className="px-2 pb-3">
+                <Select value={orgId} onValueChange={handleOrgSwitch}>
+                  <SelectTrigger className="w-full rounded-xl border-gray-200 focus:ring-orange-500/20">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="z-50 bg-popover">
+                    {organizations.map((org) => (
+                      <SelectItem key={org.id} value={org.id}>
+                        <div className="flex items-center gap-2">
+                          <Avatar className="w-5 h-5">
+                            <AvatarImage src={org.logo_url || ""} />
+                            <AvatarFallback className="text-xs">
+                              {org.name.charAt(0)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <span>{org.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {/* Org Navigation */}
+            <SidebarGroup>
+              <SidebarGroupLabel className="text-gray-500 font-medium">
+                {!collapsed ? (currentOrg?.name || "Organisation") : "Org"}
+              </SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {orgMenuItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to={item.url.replace(':orgId', orgId!)}
+                          end={item.url === "/dashboard/org/:orgId"}
+                          className={getNavClassName}
+                        >
+                          <item.icon className="w-4 h-4" />
+                          {!collapsed && <span>{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
+        ) : (
+          <>
+            {/* Main Navigation */}
+            <SidebarGroup>
+              <SidebarGroupLabel className="text-gray-500 font-medium">Principal</SidebarGroupLabel>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  {mainMenuItems.map((item) => (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild>
+                        <NavLink
+                          to={item.url}
+                          end={item.exact}
+                          className={getNavClassName}
+                        >
+                          <item.icon className="w-4 h-4" />
+                          {!collapsed && <span>{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  ))}
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+
+            {/* Create Organization */}
+            <div className="mt-auto p-2">
+              <Button
+                variant="outline"
+                size={collapsed ? "icon" : "sm"}
+                className="w-full"
+                asChild
+              >
+                <NavLink to="/dashboard/organizations/new">
+                  <Plus className="w-4 h-4" />
+                  {!collapsed && <span className="ml-2">Nouvelle organisation</span>}
+                </NavLink>
+              </Button>
+            </div>
+          </>
         )}
+      </SidebarContent>
+    </Sidebar>
+  );
+}
 
-        {/* Main Navigation */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-gray-500 font-medium">Principal</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {mainMenuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end={item.exact}
-                      className={getNavClassName}
-                    >
-                      <item.icon className="w-4 h-4" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Organization Navigation */}
-        {selectedOrg && (
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-gray-500 font-medium">
-              {!collapsed ? currentOrg?.name : "Org"}
-            </SidebarGroupLabel>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                {orgMenuItems.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      <NavLink
-                        to={item.url.replace(':orgId', selectedOrg)}
-                        className={getNavClassName}
-                      >
-                        <item.icon className="w-4 h-4" />
-                        {!collapsed && <span>{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
-        )}
-
-        {/* Create Organization */}
-        <div className="mt-auto p-2">
-          <Button
-            variant="outline"
-            size={collapsed ? "icon" : "sm"}
-            className="w-full"
-            asChild
-          >
-            <NavLink to="/dashboard/organizations/new">
-              
               {!collapsed && <span className="ml-2">Nouvelle organisation</span>}
             </NavLink>
           </Button>
