@@ -9,6 +9,8 @@ import PasswordResetEmail from "../email-templates/brevo-password-reset.tsx";
 import OrgCreatedEmail from "../email-templates/brevo-org-created.tsx";
 import EventCreatedEmail from "../email-templates/brevo-event-created.tsx";
 import CapacityAlertEmail from "../email-templates/brevo-capacity-alert.tsx";
+import EventReminderEmail from "../email-templates/brevo-event-reminder.tsx";
+import PostEventThanksEmail from "../email-templates/brevo-post-event-thanks.tsx";
 
 const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -52,6 +54,14 @@ serve(async (req) => {
                 const emoji = params.percentage >= 100 ? "🔥" : "📈";
                 htmlContent = renderToString(React.createElement(CapacityAlertEmail, params));
                 subject = `${emoji} ${params.eventName} est à ${params.percentage}% !`;
+                break;
+            case "reminder":
+                htmlContent = renderToString(React.createElement(EventReminderEmail, params));
+                subject = `⏰ Rappel : ${params.eventTitle} c'est bientôt !`;
+                break;
+            case "thanks":
+                htmlContent = renderToString(React.createElement(PostEventThanksEmail, params));
+                subject = `🎉 Merci d'avoir participé à ${params.eventTitle} !`;
                 break;
             case "invoice":
                 // Logic for invoice email which might use a generic template or the confirmation one
