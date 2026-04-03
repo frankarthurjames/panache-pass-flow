@@ -140,7 +140,7 @@ const Overview = () => {
           );
 
           setOrganizations(orgsWithStats);
-          
+
           setGlobalStats([
             {
               title: "Événements",
@@ -263,9 +263,8 @@ const Overview = () => {
         description="Gérez toutes vos organisations et événements depuis un seul endroit."
         action={
           <Button asChild className="bg-black hover:bg-black/90 text-white shadow-sm font-semibold rounded-xl w-full sm:w-auto">
-            <Link to="/dashboard/organizations/new">
-              
-              Créer une organisation
+            <Link to={organizations.length > 0 ? `/dashboard/org/${organizations[0].id}/events/new` : "/dashboard/organizations/new"}>
+              Créer un événement
             </Link>
           </Button>
         }
@@ -286,10 +285,10 @@ const Overview = () => {
             description="Vue détaillée de l'activité de vos organisations"
             contentClassName="p-0"
           >
-            <DataTable 
-              data={organizations} 
-              columns={columns} 
-              keyExtractor={(org) => org.id} 
+            <DataTable
+              data={organizations}
+              columns={columns}
+              keyExtractor={(org) => org.id}
               className="border-0 shadow-none"
             />
           </DashboardCard>

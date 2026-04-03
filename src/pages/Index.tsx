@@ -5,6 +5,7 @@ import { Footer } from "@/components/Footer";
 import { Hero } from "@/components/landing/Hero";
 import { SportsSpotlight } from "@/components/landing/SportsSpotlight";
 import { LatestActivities } from "@/components/landing/LatestActivities";
+import { CtaBand } from "@/components/landing/CtaBand";
 import { SEO } from "@/components/SEO";
 
 const Index = () => {
@@ -31,6 +32,8 @@ const Index = () => {
         <SportsSpotlight />
 
         <LatestActivities />
+
+        <CtaBand />
       </main>
 
       <Footer />

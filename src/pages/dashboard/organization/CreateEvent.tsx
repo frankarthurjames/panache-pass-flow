@@ -205,6 +205,14 @@ const CreateEvent = () => {
       return;
     }
 
+    const hasPaidTickets = formData.ticketTypes.some(t => t.priceCents && parseInt(t.priceCents) > 0);
+    const isStripeConfigured = stripeStatus?.connected && stripeStatus?.charges_enabled;
+
+    if (formData.status === 'published' && hasPaidTickets && !isStripeConfigured) {
+      toast.error("Vous devez configurer Stripe pour publier un événement payant. Vous pouvez l'enregistrer en brouillon.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -607,56 +615,6 @@ const CreateEvent = () => {
     }
   };
 
-  // Si Stripe n'est pas configuré, afficher un message d'erreur
-  if (loadingStripe) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto">
-            <div className="text-center py-12">
-              {/* <p>Vérification de la configuration Stripe...</p> */}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (!stripeStatus?.connected || !stripeStatus?.charges_enabled) {
-    return (
-      <div className="min-h-screen bg-background">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-4xl mx-auto">
-            <Card className="p-8 text-center">
-              <div className="space-y-4">
-                <h1 className="text-2xl font-bold text-destructive">
-                  Configuration Stripe requise
-                </h1>
-                <p className="text-muted-foreground">
-                  Vous devez configurer votre compte Stripe pour pouvoir créer des événements payants.
-                </p>
-                <div className="flex justify-center gap-4">
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate(`/dashboard/org/${orgId}/events`)}
-                  >
-
-                    Retour aux événements
-                  </Button>
-                  <Button
-                    onClick={() => navigate(`/dashboard/org/${orgId}/settings`)}
-                  >
-                    Configurer Stripe
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -692,18 +650,18 @@ const CreateEvent = () => {
           <div
             key={step.number}
             className={`flex items-center space-x-3 p-3 rounded-lg border ${currentStep === step.number
-                ? "border-primary bg-primary/5"
-                : currentStep > step.number
-                  ? "border-green-200 bg-green-50"
-                  : "border-border bg-muted/30"
+              ? "border-primary bg-primary/5"
+              : currentStep > step.number
+                ? "border-green-200 bg-green-50"
+                : "border-border bg-muted/30"
               }`}
           >
             <div
               className={`flex items-center justify-center w-8 h-8 rounded-full ${currentStep === step.number
-                  ? "bg-primary text-primary-foreground"
-                  : currentStep > step.number
-                    ? "bg-green-600 text-white"
-                    : "bg-muted text-muted-foreground"
+                ? "bg-primary text-primary-foreground"
+                : currentStep > step.number
+                  ? "bg-green-600 text-white"
+                  : "bg-muted text-muted-foreground"
                 }`}
             >
               {currentStep > step.number ? null : (

@@ -18,7 +18,7 @@ export const CtaBand = () => {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                     <Button size="lg" variant="secondary" asChild className="text-lg px-10 py-4 h-auto bg-white text-orange-600 hover:bg-gray-50">
                         <Link to="/auth?tab=signup">
-                            Créer mon événement gratuitement
+                            Créer votre événement sur Panache
                             <ArrowRight className="ml-2 h-5 w-5" />
                         </Link>
                     </Button>

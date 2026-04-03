@@ -17,6 +17,20 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    // VÉRIFIER L'AUTORISATION (Uniquement par les organisateurs de l'événement ou admins)
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error("Authentification requise");
+    }
+
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser(
+      authHeader.replace('Bearer ', '')
+    );
+
+    if (authError || !user) {
+      throw new Error("Authentification invalide");
+    }
+
     const { qrData } = await req.json();
     console.log("QR Data received:", qrData);
 
@@ -52,6 +66,7 @@ serve(async (req) => {
         *,
         events (
           id,
+          organization_id,
           title,
           starts_at,
           ends_at,
@@ -84,6 +99,20 @@ serve(async (req) => {
 
     if (regError || !registration) {
       throw new Error("Billet non trouvé");
+    }
+
+    // Vérifier les permissions de l'utilisateur qui scanne
+    const { data: memberData } = await supabaseClient
+      .from('organization_members')
+      .select('role')
+      .eq('organization_id', registration.events.organization_id)
+      .eq('user_id', user.id)
+      .single();
+
+    const isAdmin = user.user_metadata?.role === 'admin' || user.email?.endsWith('@panache-esport.com'); // Proxy pour admin si meta pas set
+
+    if (!memberData && !isAdmin) {
+       throw new Error("Vous n'avez pas l'autorisation de valider ce billet");
     }
 
     // Vérifier que la commande est payée

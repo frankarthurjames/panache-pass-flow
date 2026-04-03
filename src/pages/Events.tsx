@@ -125,7 +125,9 @@ const Events = () => {
 
     // Sport filter
     if (selectedSport !== "Tous") {
-      filtered = filtered.filter(e => e.tag === selectedSport);
+      const normalizeStr = (str: string) =>
+        str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
+      filtered = filtered.filter(e => normalizeStr(e.tag) === normalizeStr(selectedSport));
     }
 
     // Sorting

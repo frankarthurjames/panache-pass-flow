@@ -98,6 +98,10 @@ serve(async (req) => {
     const page = { w: 210, h: 297 };
     const margin = 20;
 
+    // ---- Decorative header band (Orange)
+    setFill(palette.accent);
+    doc.rect(0, 0, page.w, 15, "F");
+
     // Helpers
     const setText = (rgb: number[]) => doc.setTextColor(rgb[0], rgb[1], rgb[2]);
     const setLine = (rgb: number[]) => doc.setDrawColor(rgb[0], rgb[1], rgb[2]);
@@ -109,7 +113,7 @@ serve(async (req) => {
       doc.line(x, y, x + w, y);
     };
 
-    const titleY = margin;
+    const titleY = margin + 5;
     const contentY = titleY + 30; // Plus d'espace entre titre et contenu
     const rightColX = page.w - margin - 70; // QR / colonne droite
     const leftColX = margin;

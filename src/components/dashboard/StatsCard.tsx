@@ -12,6 +12,7 @@ interface StatsCardProps {
     isPositive?: boolean;
     isNeutral?: boolean;
   };
+  description?: string;
   className?: string;
 }
 
@@ -20,6 +21,7 @@ export const StatsCard = ({
   value,
   icon,
   trend,
+  description,
   className
 }: StatsCardProps) => {
   return (
@@ -44,6 +46,11 @@ export const StatsCard = ({
               <span className="text-xs sm:text-sm font-bold text-gray-400">
                 {trend.label}
               </span>
+            </div>
+          )}
+          {description && (
+            <div className="mt-2 text-sm text-gray-500 font-medium">
+              {description}
             </div>
           )}
         </div>

@@ -1,6 +1,6 @@
 import { useAuth } from "@/hooks/useAuth";
 
-const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || "")
+const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || "leonceyopa@gmail.com,frankmbatang@gmail.com")
   .split(",")
   .map((e: string) => e.trim().toLowerCase())
   .filter(Boolean);

@@ -178,18 +178,8 @@ const MyEvents = () => {
   return (
     <PageContainer>
       <PageHeader 
-        title="Mes événements" 
+        title="Mes réservations" 
         description="Gérez vos réservations et téléchargez vos billets."
-        action={
-          <div className="flex flex-col sm:flex-row gap-4 w-full md:w-auto">
-            <Button asChild className="bg-orange-500 hover:bg-orange-600 text-white shadow-md font-bold rounded-xl h-10 px-5">
-              <Link to="/dashboard/events/new">
-                
-                Créer un événement
-              </Link>
-            </Button>
-          </div>
-        }
       />
       <div className="space-y-6 mt-6">
         <div className="w-full md:w-72">

@@ -93,6 +93,22 @@ const CreateEvent = () => {
       return;
     }
 
+    // Check if Stripe is needed (paid event)
+    const isPaid = ticketTypes.some(t => parseFloat(t.price) > 0);
+    if (isPaid && status === "published") {
+      const { data: orgData } = await supabase
+        .from('organizations')
+        .select('stripe_account_id, stripe_charges_enabled')
+        .eq('id', selectedOrgId)
+        .single();
+
+      if (!orgData?.stripe_account_id || !orgData?.stripe_charges_enabled) {
+        toast.error("Veuillez configurer Stripe avant de publier un événement payant");
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     setIsSubmitting(true);
     try {
       // Create starts_at from date and time

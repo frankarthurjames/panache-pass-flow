@@ -13,7 +13,7 @@ import {
   Globe,
   Euro,
   Linkedin,
-  Instagram,
+  Twitter,
   Facebook,
   Loader2
 } from "lucide-react";
@@ -152,13 +152,28 @@ const EventDetail = () => {
           </div>
 
           <div className="flex gap-4 mt-6">
-            <a href="#" className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors">
+            <a
+              href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors"
+            >
               <Linkedin className="h-5 w-5" />
             </a>
-            <a href="#" className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors">
-              <Instagram className="h-5 w-5" />
+            <a
+              href={`https://twitter.com/intent/tweet?url=${encodeURIComponent(window.location.href)}&text=${encodeURIComponent(event.title)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors"
+            >
+              <Twitter className="h-5 w-5" />
             </a>
-            <a href="#" className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors">
+            <a
+              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-white/20 hover:bg-white/30 p-2 rounded-full transition-colors"
+            >
               <Facebook className="h-5 w-5" />
             </a>
           </div>
@@ -169,9 +184,9 @@ const EventDetail = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
 
           {/* Left Column: Description */}
-          <div className="lg:col-span-2 pt-6 lg:pt-32">
+          <div className="lg:col-span-2 pt-6 lg:pt-32 text-left">
             <h2 className="text-2xl font-bold mb-6">Description</h2>
-            <div className="prose max-w-none text-gray-600 leading-relaxed mb-12">
+            <div className="prose max-w-none text-gray-600 leading-relaxed mb-12 whitespace-pre-wrap">
               {event.description || "Aucune description disponible."}
             </div>
 

@@ -16,7 +16,7 @@ const FAQ = () => {
     },
     {
       question: "Quels sont les frais de la plateforme ?",
-      answer: "Panache prélève une commission de 3% + 0,30€ par transaction. Cette commission couvre les frais de paiement et l'utilisation de la plateforme."
+      answer: "Panache prélève une commission de 2% + 0,50€ par commande. Cette commission couvre les frais de paiement et l'utilisation de la plateforme."
     },
     {
       question: "Comment puis-je recevoir mes paiements ?",

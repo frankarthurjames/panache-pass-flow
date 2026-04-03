@@ -29,7 +29,7 @@ import { useAuth } from "@/hooks/useAuth";
 const mainMenuItems = [
   { title: "Accueil", url: "/", icon: Home, exact: true },
   { title: "Vue d'ensemble", url: "/dashboard", icon: LayoutDashboard, exact: true },
-  { title: "Mes événements", url: "/dashboard/my-events", icon: Calendar, exact: true },
+  { title: "Mes réservations", url: "/dashboard/my-events", icon: Calendar, exact: true },
   { title: "Organisations", url: "/dashboard/organizations", icon: Building2 },
 ];
 
@@ -78,12 +78,15 @@ export function DashboardSidebar() {
 
   const currentOrg = organizations.find(org => org.id === orgId);
 
+  const { setOpenMobile, isMobile } = useSidebar();
+
   const handleOrgSwitch = (newOrgId: string) => {
     if (newOrgId === "new") {
       navigate("/dashboard/organizations/new");
-      return;
+    } else {
+      navigate(`/dashboard/org/${newOrgId}`);
     }
-    navigate(`/dashboard/org/${newOrgId}`);
+    if (isMobile) setOpenMobile(false);
   };
 
   const getNavClassName = ({ isActive }: { isActive: boolean }) =>
@@ -111,7 +114,10 @@ export function DashboardSidebar() {
                 variant="ghost"
                 size={collapsed ? "icon" : "sm"}
                 className="w-full justify-start text-muted-foreground hover:text-foreground"
-                onClick={() => navigate("/dashboard")}
+                onClick={() => {
+                  navigate("/dashboard");
+                  if (isMobile) setOpenMobile(false);
+                }}
               >
                 <ArrowLeft className="w-4 h-4" />
                 {!collapsed && <span className="ml-2">Retour</span>}
@@ -158,6 +164,7 @@ export function DashboardSidebar() {
                           to={item.url.replace(':orgId', orgId!)}
                           end={item.url === "/dashboard/org/:orgId"}
                           className={getNavClassName}
+                          onClick={() => isMobile && setOpenMobile(false)}
                         >
                           <item.icon className="w-4 h-4" />
                           {!collapsed && <span>{item.title}</span>}
@@ -183,6 +190,7 @@ export function DashboardSidebar() {
                           to={item.url}
                           end={item.exact}
                           className={getNavClassName}
+                          onClick={() => isMobile && setOpenMobile(false)}
                         >
                           <item.icon className="w-4 h-4" />
                           {!collapsed && <span>{item.title}</span>}
@@ -202,7 +210,7 @@ export function DashboardSidebar() {
                   <SidebarMenu>
                     <SidebarMenuItem>
                       <SidebarMenuButton asChild>
-                        <NavLink to="/dashboard/admin" className={getNavClassName}>
+                        <NavLink to="/dashboard/admin" className={getNavClassName} onClick={() => isMobile && setOpenMobile(false)}>
                           <ShieldCheck className="w-4 h-4" />
                           {!collapsed && <span>Admin Panache</span>}
                         </NavLink>
@@ -221,7 +229,7 @@ export function DashboardSidebar() {
                 className="w-full"
                 asChild
               >
-                <NavLink to="/dashboard/organizations/new">
+                <NavLink to="/dashboard/organizations/new" onClick={() => isMobile && setOpenMobile(false)}>
                   <Plus className="w-4 h-4" />
                   {!collapsed && <span className="ml-2">Nouvelle organisation</span>}
                 </NavLink>
