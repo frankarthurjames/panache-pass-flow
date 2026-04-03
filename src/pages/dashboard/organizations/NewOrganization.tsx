@@ -12,12 +12,17 @@ import { toast } from "sonner";
 import { ImageUpload } from "@/components/ImageUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdmin } from "@/hooks/useAdmin";
+import { useEffect } from "react";
 
 const NewOrganization = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { isAdmin } = useAdmin();
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orgCount, setOrgCount] = useState<number | null>(null);
+  const [loadingCount, setLoadingCount] = useState(true);
   const [formData, setFormData] = useState({
     // Step 1: Informations générales
     name: "",
@@ -32,6 +37,28 @@ const NewOrganization = () => {
     acceptStripeTerms: false,
     category: "company", // Default category
   });
+
+  useEffect(() => {
+    const fetchOrgCount = async () => {
+      if (!user) return;
+
+      try {
+        const { count, error } = await supabase
+          .from('organizations')
+          .select('*', { count: 'exact', head: true })
+          .eq('created_by_user_id', user.id);
+
+        if (error) throw error;
+        setOrgCount(count);
+      } catch (error) {
+        console.error('Error fetching org count:', error);
+      } finally {
+        setLoadingCount(false);
+      }
+    };
+
+    fetchOrgCount();
+  }, [user]);
 
   const steps = [
     {
@@ -294,7 +321,7 @@ const NewOrganization = () => {
 
             <div className="flex items-center justify-center">
               <Button variant="outline" size="lg">
-                
+
                 Connecter Stripe maintenant
               </Button>
             </div>
@@ -366,12 +393,65 @@ const NewOrganization = () => {
     }
   };
 
+  if (loadingCount) {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-muted-foreground">Chargement...</p>
+      </div>
+    );
+  }
+
+  // Limite de 2 organisations pour les non-admins
+  const hasReachedLimit = !isAdmin && orgCount !== null && orgCount >= 2;
+
+  if (hasReachedLimit) {
+    return (
+      <div className="space-y-8">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Retour
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold">Limite atteinte</h1>
+            <p className="text-muted-foreground">
+              Vous avez atteint la limite de création d'organisations
+            </p>
+          </div>
+        </div>
+
+        <Card className="max-w-2xl mx-auto border-destructive/50 bg-destructive/5">
+          <CardHeader>
+            <div className="flex items-center gap-3 text-destructive mb-2">
+              <Building2 className="w-8 h-8" />
+              <CardTitle>Limite de compte atteinte</CardTitle>
+            </div>
+            <CardDescription className="text-destructive-foreground/80">
+              Pour le moment, chaque compte est limité à la création de **2 organisations**.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 text-sm">
+            <p>
+              Cette restriction nous permet d'assurer une qualité de service optimale durant cette phase.
+              Si vous avez besoin de créer plus d'organisations pour un cas spécifique, contactez notre support.
+            </p>
+            <div className="flex justify-center pt-4">
+              <Button onClick={() => navigate("/dashboard/organizations")}>
+                Gérer mes organisations existantes
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center gap-4">
         <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
-          
+
           Retour
         </Button>
         <div>
@@ -447,7 +527,7 @@ const NewOrganization = () => {
           onClick={prevStep}
           disabled={currentStep === 1}
         >
-          
+
           Précédent
         </Button>
 
