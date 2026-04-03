@@ -85,7 +85,7 @@ const Events = () => {
 
           // Use DB sport if available, otherwise infer or fallback
           let tag = (event.sports as any)?.name;
-          let tagSlug = (event.sports as any)?.slug || "sport";
+          const tagSlug = (event.sports as any)?.slug || "sport";
           let tagColor = "bg-orange-500";
 
           if (!tag) {
