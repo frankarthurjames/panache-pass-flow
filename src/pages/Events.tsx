@@ -30,28 +30,46 @@ interface Event {
   starts_at: string;
 }
 
-const CATEGORIES = ["Tous", "Tennis", "Athlétisme", "Kayak", "Natation", "BMX", "VTT", "Football"];
+interface Sport {
+  id: string;
+  name: string;
+  slug: string;
+}
 
 const Events = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialSport = searchParams.get('sport') || "Tous";
+  const initialSportParam = searchParams.get('sport') || "Tous";
   const initialQuery = searchParams.get('q') || "";
 
   const [searchQuery, setSearchQuery] = useState(initialQuery);
-  const [selectedSport, setSelectedSport] = useState(initialSport);
+  const [selectedSportSlug, setSelectedSportSlug] = useState(initialSportParam);
+  const [dbSports, setDbSports] = useState<Sport[]>([]);
   const [allEvents, setAllEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState("Date");
 
-  // Fetch events
+  // Fetch sports and events
   useEffect(() => {
-    const fetchEvents = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
+
+        // 1. Fetch Sports
+        const { data: sportsData } = await supabase
+          .from('sports' as any)
+          .select('*')
+          .order('name');
+
+        if (sportsData) {
+          setDbSports(sportsData as any[]);
+        }
+
+        // 2. Fetch Events with sports join
         const { data: eventsData, error } = await supabase
           .from('events')
           .select(`
             *,
+            sports:sport_id ( name, slug ),
             ticket_types ( price_cents )
           `)
           .eq('status', 'published')
@@ -65,20 +83,30 @@ const Events = () => {
             ? Math.min(...event.ticket_types.map((t: any) => t.price_cents))
             : 0;
 
-          // Infer tag from title bracket first, then fallback to title/description search
-          const sportMatch = event.title.match(/^\[(.*?)\]/);
-          let tag = sportMatch ? sportMatch[1] : "Sport";
+          // Use DB sport if available, otherwise infer or fallback
+          let tag = (event.sports as any)?.name;
+          let tagSlug = (event.sports as any)?.slug || "sport";
           let tagColor = "bg-orange-500";
 
-          if (!sportMatch) {
+          if (!tag) {
+            const sportMatch = event.title.match(/^\[(.*?)\]/);
+            tag = sportMatch ? sportMatch[1] : "Sport";
+
             const titleLower = event.title.toLowerCase();
-            if (titleLower.includes("tennis")) { tag = "Tennis"; tagColor = "bg-orange-500"; }
-            else if (titleLower.includes("bmx") || titleLower.includes("skate")) { tag = "BMX"; tagColor = "bg-orange-400"; }
-            else if (titleLower.includes("natation") || titleLower.includes("piscine") || titleLower.includes("aquatique")) { tag = "Natation"; tagColor = "bg-blue-500"; }
-            else if (titleLower.includes("running") || titleLower.includes("marathon") || titleLower.includes("athlétisme")) { tag = "Athlétisme"; tagColor = "bg-red-500"; }
-            else if (titleLower.includes("vtt") || titleLower.includes("vélo") || titleLower.includes("cyclisme")) { tag = "VTT"; tagColor = "bg-green-600"; }
-            else if (titleLower.includes("football") || titleLower.includes("foot ")) { tag = "Football"; tagColor = "bg-emerald-600"; }
-            else if (titleLower.includes("kayak") || titleLower.includes("canoë")) { tag = "Kayak"; tagColor = "bg-sky-500"; }
+            if (titleLower.includes("tennis")) { tagColor = "bg-orange-500"; }
+            else if (titleLower.includes("bmx") || titleLower.includes("skate")) { tagColor = "bg-orange-400"; }
+            else if (titleLower.includes("natation") || titleLower.includes("piscine") || titleLower.includes("aquatique")) { tagColor = "bg-blue-500"; }
+            else if (titleLower.includes("running") || titleLower.includes("marathon") || titleLower.includes("athlétisme")) { tagColor = "bg-red-500"; }
+            else if (titleLower.includes("vtt") || titleLower.includes("vélo") || titleLower.includes("cyclisme")) { tagColor = "bg-green-600"; }
+            else if (titleLower.includes("football") || titleLower.includes("foot ")) { tagColor = "bg-emerald-600"; }
+            else if (titleLower.includes("kayak") || titleLower.includes("canoë")) { tagColor = "bg-sky-500"; }
+          } else {
+            // Colors based on slug for consistency
+            if (tagSlug === "tennis") tagColor = "bg-orange-500";
+            else if (tagSlug === "vtt" || tagSlug === "cyclisme") tagColor = "bg-green-600";
+            else if (tagSlug === "natation") tagColor = "bg-blue-500";
+            else if (tagSlug === "football") tagColor = "bg-emerald-600";
+            else if (tagSlug === "athletisme") tagColor = "bg-red-500";
           }
 
           const hasMultiplePrices = event.ticket_types && new Set(event.ticket_types.map((t: any) => t.price_cents)).size > 1;
@@ -93,6 +121,7 @@ const Events = () => {
             image: event.images?.[0] || 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=800&h=600&fit=crop',
             tag,
             tagColor,
+            tagSlug,
             price: priceDisplay,
             price_cents: minPrice,
             starts_at: event.starts_at
@@ -106,7 +135,7 @@ const Events = () => {
       }
     };
 
-    fetchEvents();
+    fetchData();
   }, []);
 
   // Combined filtering and sorting logic
@@ -123,11 +152,17 @@ const Events = () => {
       );
     }
 
-    // Sport filter
-    if (selectedSport !== "Tous") {
+    // Sport filter (supports slug or name)
+    if (selectedSportSlug !== "Tous") {
       const normalizeStr = (str: string) =>
         str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
-      filtered = filtered.filter(e => normalizeStr(e.tag) === normalizeStr(selectedSport));
+
+      const target = normalizeStr(selectedSportSlug);
+
+      filtered = filtered.filter(e =>
+        normalizeStr((e as any).tagSlug) === target ||
+        normalizeStr(e.tag) === target
+      );
     }
 
     // Sorting
@@ -145,15 +180,15 @@ const Events = () => {
     });
 
     return filtered;
-  }, [searchQuery, selectedSport, sortBy, allEvents]);
+  }, [searchQuery, selectedSportSlug, sortBy, allEvents]);
 
-  const handleSportSelect = (sport: string) => {
-    setSelectedSport(sport);
+  const handleSportSelect = (sportSlug: string) => {
+    setSelectedSportSlug(sportSlug);
     const newParams = new URLSearchParams(searchParams);
-    if (sport === "Tous") {
+    if (sportSlug === "Tous") {
       newParams.delete('sport');
     } else {
-      newParams.set('sport', sport);
+      newParams.set('sport', sportSlug);
     }
     setSearchParams(newParams);
   };
@@ -236,17 +271,27 @@ const Events = () => {
 
           {/* Sport Pills */}
           <div className="mt-10 flex gap-3 overflow-x-auto pb-2 no-scrollbar">
-            {CATEGORIES.map((sport) => (
+            <Button
+              onClick={() => handleSportSelect("Tous")}
+              variant={selectedSportSlug === "Tous" ? "default" : "outline"}
+              className={`rounded-full px-6 h-10 font-medium transition-all ${selectedSportSlug === "Tous"
+                ? "bg-[#F97316] hover:bg-[#EA580C] text-white border-0"
+                : "bg-white/10 text-white border-white/20 hover:bg-white/20"
+                }`}
+            >
+              Tous
+            </Button>
+            {dbSports.map((sport) => (
               <Button
-                key={sport}
-                onClick={() => handleSportSelect(sport)}
-                variant={selectedSport === sport ? "default" : "outline"}
-                className={`rounded-full px-6 h-10 font-medium transition-all ${selectedSport === sport
+                key={sport.id}
+                onClick={() => handleSportSelect(sport.slug)}
+                variant={selectedSportSlug === sport.slug ? "default" : "outline"}
+                className={`rounded-full px-6 h-10 font-medium transition-all ${selectedSportSlug === sport.slug
                   ? "bg-[#F97316] hover:bg-[#EA580C] text-white border-0"
                   : "bg-white/10 text-white border-white/20 hover:bg-white/20"
                   }`}
               >
-                {sport}
+                {sport.name}
               </Button>
             ))}
           </div>

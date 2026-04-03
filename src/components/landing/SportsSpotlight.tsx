@@ -4,10 +4,10 @@ import { Link } from "react-router-dom";
 import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from "@/components/ui/carousel";
 
 const SPORTS = [
-    { name: "Athlétisme", image: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&q=80&w=800" },
-    { name: "Tennis", image: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=800&auto=format&fit=crop&q=60" },
-    { name: "Kayak", image: "https://images.unsplash.com/photo-1541625602330-2277a4c46182?w=800&auto=format&fit=crop&q=60" },
-    { name: "Natation", image: "https://images.unsplash.com/photo-1530549387789-4c1017266635?w=800&auto=format&fit=crop&q=60" },
+    { name: "Athlétisme", slug: "athletisme", image: "https://images.unsplash.com/photo-1461896836934-ffe607ba8211?auto=format&fit=crop&q=80&w=800" },
+    { name: "Tennis", slug: "tennis", image: "https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?w=800&auto=format&fit=crop&q=60" },
+    { name: "Kayak", slug: "kayak", image: "https://images.unsplash.com/photo-1541625602330-2277a4c46182?w=800&auto=format&fit=crop&q=60" },
+    { name: "Natation", slug: "natation", image: "https://images.unsplash.com/photo-1530549387789-4c1017266635?w=800&auto=format&fit=crop&q=60" },
 ];
 
 export const SportsSpotlight = () => {
@@ -49,9 +49,9 @@ export const SportsSpotlight = () => {
     );
 };
 
-const SportCard = ({ sport }: { sport: { name: string; image: string } }) => (
+const SportCard = ({ sport }: { sport: { name: string; slug: string; image: string } }) => (
     <Link
-        to={`/events?sport=${sport.name}`}
+        to={`/events?sport=${sport.slug}`}
         className="group relative h-40 overflow-hidden rounded-lg shadow-lg block"
     >
         <img

@@ -42,11 +42,13 @@ const CreateEvent = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [stripeStatus, setStripeStatus] = useState<any>(null);
   const [loadingStripe, setLoadingStripe] = useState(true);
+  const [sports, setSports] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     // Step 1: Informations générales
     title: "",
     description: "",
-    category: "",
+    sportId: "",
+    category: "", // Keep for legacy if needed, but we'll focus on sportId
     images: [] as string[], // Multiple images instead of single coverImageUrl
     // Step 2: Date et lieu
     startsAt: null as Date | null,
@@ -128,6 +130,21 @@ const CreateEvent = () => {
 
     checkStripeStatus();
   }, [user, orgId]);
+
+  // Récupérer les sports
+  useEffect(() => {
+    const fetchSports = async () => {
+      const { data, error } = await supabase
+        .from('sports' as any)
+        .select('*')
+        .order('name');
+
+      if (!error && data) {
+        setSports(data);
+      }
+    };
+    fetchSports();
+  }, []);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -226,6 +243,7 @@ const CreateEvent = () => {
         city: formData.city,
         capacity: formData.capacity ? parseInt(formData.capacity) : null,
         organization_id: orgId,
+        sport_id: formData.sportId || null,
         images: formData.images,
         status: formData.status
       };
@@ -290,17 +308,28 @@ const CreateEvent = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Catégorie *</Label>
-              <Select value={formData.category} onValueChange={(value) => handleInputChange("category", value)}>
+              <Label htmlFor="sport">Sport *</Label>
+              <Select
+                value={formData.sportId}
+                onValueChange={(value) => {
+                  const selectedSport = sports.find(s => s.id === value);
+                  setFormData(prev => ({
+                    ...prev,
+                    sportId: value,
+                    category: selectedSport ? selectedSport.name : ""
+                  }));
+                }}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionnez une catégorie" />
+                  <SelectValue placeholder="Sélectionnez un sport" />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories.map((category) => (
-                    <SelectItem key={category} value={category.toLowerCase()}>
-                      {category}
+                  {sports.map((sport) => (
+                    <SelectItem key={sport.id} value={sport.id}>
+                      {sport.name}
                     </SelectItem>
                   ))}
+                  <SelectItem value="other">Autre / Non spécifié</SelectItem>
                 </SelectContent>
               </Select>
             </div>
